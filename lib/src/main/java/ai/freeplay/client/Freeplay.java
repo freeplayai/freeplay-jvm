@@ -1,13 +1,16 @@
 package ai.freeplay.client;
 
 import ai.freeplay.client.exceptions.FreeplayException;
+import ai.freeplay.client.flavor.ChatFlavor;
 import ai.freeplay.client.flavor.Flavor;
 import ai.freeplay.client.internal.CallSupport;
+import ai.freeplay.client.model.ChatSession;
 import ai.freeplay.client.model.CompletionResponse;
 import ai.freeplay.client.model.PromptTemplate;
 import ai.freeplay.client.model.Session;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 
 public class Freeplay {
@@ -59,6 +62,45 @@ public class Freeplay {
                 environment,
                 null,   // testRunId
                 null    // flavor
+        );
+    }
+
+    public ChatSession startChat(
+            String projectId,
+            String templateName,
+            Map<String, Object> variables,
+            String environment
+    ) throws FreeplayException {
+        return startChat(projectId, templateName, variables, Collections.emptyMap(), environment);
+    }
+
+    public ChatSession startChat(
+            String projectId,
+            String templateName,
+            Map<String, Object> variables,
+            Map<String, Object> llmParameters,
+            String environment
+    ) throws FreeplayException {
+        return startChat(projectId, null, templateName, variables, llmParameters, environment);
+    }
+
+    public ChatSession startChat(
+            String projectId,
+            ChatFlavor flavor,
+            String templateName,
+            Map<String, Object> variables,
+            Map<String, Object> llmParameters,
+            String environment
+    ) throws FreeplayException {
+        Session session = callSupport.createSession(projectId, environment);
+        Collection<PromptTemplate> prompts = callSupport.getPrompts(projectId, environment);
+        ChatSession chatSession = new ChatSession(callSupport, session.getSessionId(), prompts, templateName, environment);
+        return chatSession.startChat(
+                variables,
+                llmParameters,
+                environment,
+                null,   // testRunId
+                flavor
         );
     }
 }

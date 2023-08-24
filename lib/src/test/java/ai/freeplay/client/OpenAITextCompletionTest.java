@@ -1,6 +1,7 @@
 package ai.freeplay.client;
 
 import ai.freeplay.client.exceptions.FreeplayException;
+import ai.freeplay.client.internal.utilities.MockFixtures;
 import ai.freeplay.client.model.CompletionResponse;
 import org.junit.Before;
 import org.junit.Test;
@@ -10,32 +11,18 @@ import org.mockito.Mockito;
 import java.net.http.HttpClient;
 import java.util.Collections;
 import java.util.Map;
-import java.util.UUID;
 
 import static ai.freeplay.client.ProviderConfig.OpenAIProviderConfig;
+import static ai.freeplay.client.internal.utilities.MockFixtures.*;
 import static ai.freeplay.client.internal.utilities.MockMethods.*;
-import static ai.freeplay.client.internal.utilities.MockPayloads.*;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class FreeplayTest {
+public class OpenAITextCompletionTest {
 
-    private static final String baseUrl = "http://localhost:8080/api";
-
-    public static final String MODEL_TEXT_DAVINCI_003 = "text-davinci-003";
-
-    private final String freeplayApiKey = "<freeplay-api-key>";
-    private final String openaiApiKey = "<openai-api-key>";
-    private final String projectId = UUID.randomUUID().toString();
-
-    private final String projectVersionId = UUID.randomUUID().toString();
-    private final String promptTemplateId = UUID.randomUUID().toString();
-    private final String promptTemplateVersionId = UUID.randomUUID().toString();
     private final String name = "my-prompt";
     private final String content = "Answer this question: {{question}}";
-    private final String textCompletion = "\\n\\nI apologize that your sink isn't working. Can I help you";
-    private final String textCompletionExpected = "\n\nI apologize that your sink isn't working. Can I help you";
 
     private HttpClient mockedClient;
 
@@ -46,8 +33,8 @@ public class FreeplayTest {
 
     @Test
     public void textCompletionReturnsValue() throws Exception {
-        mockCreateSession();
-        mockGetPrompts();
+        mockCreateSession(mockedClient);
+        mockGetPrompts(mockedClient, name, content, Collections.emptyMap(), "openai_text");
         mockCallOpenAI();
 
         CompletionResponse completion;
@@ -55,7 +42,7 @@ public class FreeplayTest {
         try (MockedStatic<HttpClient> httpClientClass = Mockito.mockStatic(HttpClient.class)) {
             httpClientClass.when(HttpClient::newHttpClient).thenReturn(mockedClient);
 
-            Freeplay fpClient = new Freeplay(freeplayApiKey, baseUrl, new OpenAIProviderConfig(openaiApiKey));
+            Freeplay fpClient = new Freeplay(MockFixtures.freeplayApiKey, baseUrl, new OpenAIProviderConfig(openaiApiKey));
             completion = fpClient.getCompletion(
                     projectId,
                     "my-prompt",
@@ -63,24 +50,25 @@ public class FreeplayTest {
                     Map.of("model", MODEL_TEXT_DAVINCI_003),
                     "latest"
             );
+
+            // Completion
+            String textCompletionExpected = "\n\nI apologize that your sink isn't working. Can I help you";
+            assertEquals(textCompletionExpected, completion.getContent());
+
+            // Record call
+            Map<String, Object> recordBodyMap = getCapturedBodyAsMap(mockedClient, 4, 3);
+            assertEquals(promptTemplateVersionId, recordBodyMap.get("project_version_id"));
+            assertEquals(promptTemplateId, recordBodyMap.get("prompt_template_id"));
+            assertEquals("Answer this question: why isn't my sink working?", recordBodyMap.get("prompt_content"));
+            assertEquals("\n\nI apologize that your sink isn't working. Can I help you", recordBodyMap.get("return_content"));
+            assertNull(recordBodyMap.get("test_run_id"));
         }
-
-        // Completion
-        assertEquals(textCompletionExpected, completion.getContent());
-
-        // Record call
-        Map<String, Object> recordBodyMap = getCapturedBodyAsMap(mockedClient, 4, 3);
-        assertEquals(promptTemplateVersionId, recordBodyMap.get("project_version_id"));
-        assertEquals(promptTemplateId, recordBodyMap.get("prompt_template_id"));
-        assertEquals("Answer this question: why isn't my sink working?", recordBodyMap.get("prompt_content"));
-        assertEquals("\n\nI apologize that your sink isn't working. Can I help you", recordBodyMap.get("return_content"));
-        assertNull(recordBodyMap.get("test_run_id"));
     }
 
     @Test
     public void requiresModelParam() throws Exception {
-        mockCreateSession();
-        mockGetPrompts();
+        mockCreateSession(mockedClient);
+        mockGetPrompts(mockedClient, name, content, Collections.emptyMap(), "openai_text");
 
         try (MockedStatic<HttpClient> httpClientClass = Mockito.mockStatic(HttpClient.class)) {
             httpClientClass.when(HttpClient::newHttpClient).thenReturn(mockedClient);
@@ -101,8 +89,8 @@ public class FreeplayTest {
 
     @Test
     public void disallowsPromptParam() throws Exception {
-        mockCreateSession();
-        mockGetPrompts();
+        mockCreateSession(mockedClient);
+        mockGetPrompts(mockedClient, name, content, Collections.emptyMap(), "openai_text");
 
         try (MockedStatic<HttpClient> httpClientClass = Mockito.mockStatic(HttpClient.class)) {
             httpClientClass.when(HttpClient::newHttpClient).thenReturn(mockedClient);
@@ -128,7 +116,7 @@ public class FreeplayTest {
 
     @Test
     public void handlesUnauthorizedOnCreateSession() throws Exception {
-        mockUnauthorizedCreateSession();
+        mockUnauthorizedCreateSession(mockedClient);
 
         try (MockedStatic<HttpClient> httpClientClass = Mockito.mockStatic(HttpClient.class)) {
             httpClientClass.when(HttpClient::newHttpClient).thenReturn(mockedClient);
@@ -149,8 +137,8 @@ public class FreeplayTest {
 
     @Test
     public void handlesUnauthorizedOnGetPrompts() throws Exception {
-        mockCreateSession();
-        mockUnauthorizedGetPrompts();
+        mockCreateSession(mockedClient);
+        mockUnauthorizedGetPrompts(mockedClient);
 
         try (MockedStatic<HttpClient> httpClientClass = Mockito.mockStatic(HttpClient.class)) {
             httpClientClass.when(HttpClient::newHttpClient).thenReturn(mockedClient);
@@ -171,9 +159,9 @@ public class FreeplayTest {
 
     @Test
     public void handlesUnauthorizedCallingOpenAI() throws Exception {
-        mockCreateSession();
-        mockGetPrompts();
-        mockUnauthorizedOpenAICall();
+        mockCreateSession(mockedClient);
+        mockGetPrompts(mockedClient, name, content, Collections.emptyMap(), "openai_text");
+        mockUnauthorizedOpenAITextCall(mockedClient);
 
         try (MockedStatic<HttpClient> httpClientClass = Mockito.mockStatic(HttpClient.class)) {
             httpClientClass.when(HttpClient::newHttpClient).thenReturn(mockedClient);
@@ -195,12 +183,16 @@ public class FreeplayTest {
     @Test
     @SuppressWarnings("unchecked")
     public void handlesLLMParameterMergePrecedence() throws Exception {
-        mockCreateSession();
-        mockGetPrompts(Map.of(
+        mockCreateSession(mockedClient);
+        mockGetPrompts(
+                mockedClient,
+                name,
+                content,
+                Map.of(
                         "model", "gpt-turbo-3.5",
                         "max_tokens", "11",
                         "temperature", "0.22"
-                )
+                ), "openai_text"
         );
         mockCallOpenAI();
 
@@ -219,58 +211,24 @@ public class FreeplayTest {
                     callParams,
                     "latest"
             );
+
+            Map<String, Object> openaiBody = getCapturedBodyAsMap(mockedClient, 4, 2);
+            assertEquals("gpt-turbo-3.5", openaiBody.get("model"));
+            assertEquals("33", openaiBody.get("max_tokens"));
+            assertEquals("0.44", openaiBody.get("temperature"));
+
+            Map<String, Object> recordBody = getCapturedBodyAsMap(mockedClient, 4, 3);
+            Map<String, Object> recordedParameters = (Map<String, Object>) recordBody.get("llm_parameters");
+            assertEquals("gpt-turbo-3.5", recordedParameters.get("model"));
+            assertEquals("33", recordedParameters.get("max_tokens"));
+            assertEquals("0.44", recordedParameters.get("temperature"));
         }
-
-        Map<String, Object> openaiBody = getCapturedBodyAsMap(mockedClient, 4, 2);
-        assertEquals("gpt-turbo-3.5", openaiBody.get("model"));
-        assertEquals("33", openaiBody.get("max_tokens"));
-        assertEquals("0.44", openaiBody.get("temperature"));
-
-        Map<String, Object> recordBody = getCapturedBodyAsMap(mockedClient, 4, 3);
-        Map<String, Object> recordedParameters = (Map<String, Object>) recordBody.get("llm_parameters");
-        assertEquals("gpt-turbo-3.5", recordedParameters.get("model"));
-        assertEquals("33", recordedParameters.get("max_tokens"));
-        assertEquals("0.44", recordedParameters.get("temperature"));
     }
 
     private void mockCallOpenAI() throws Exception {
+        String textCompletion = "\\n\\nI apologize that your sink isn't working. Can I help you";
         when(request(mockedClient, "api.openai.com", "POST", "v1/completions"))
                 .thenReturn(
                         response(200, getOpenAITextResponse(MODEL_TEXT_DAVINCI_003, textCompletion)));
-    }
-
-    private void mockGetPrompts() throws Exception {
-        when(request(mockedClient, "GET", "projects/[^/]*/templates"))
-                .thenReturn(
-                        response(200, getPromptsPayload(projectVersionId, promptTemplateId, promptTemplateVersionId, name, content)));
-    }
-
-    private void mockGetPrompts(Map<String, Object> llmParameters) throws Exception {
-        when(request(mockedClient, "GET", "projects/[^/]*/templates"))
-                .thenReturn(
-                        response(
-                                200,
-                                getPromptsPayload(projectVersionId, promptTemplateId, promptTemplateVersionId, name, content, llmParameters)));
-    }
-
-    private void mockCreateSession() throws Exception {
-        when(request(mockedClient, "POST", "projects/[^/]*/sessions"))
-                .thenReturn(
-                        response(201, getSessionRequestPayload(UUID.randomUUID().toString())));
-    }
-
-    private void mockUnauthorizedCreateSession() throws Exception {
-        when(request(mockedClient, "POST", "projects/[^/]*/sessions"))
-                .thenReturn(response(401, ""));
-    }
-
-    private void mockUnauthorizedGetPrompts() throws Exception {
-        when(request(mockedClient, "GET", "projects/[^/]*/templates"))
-                .thenReturn(response(401, ""));
-    }
-
-    private void mockUnauthorizedOpenAICall() throws Exception {
-        when(request(mockedClient, "api.openai.com", "POST", "v1/completions"))
-                .thenReturn(response(401, getOpenAIUnauthorizedResponse()));
     }
 }

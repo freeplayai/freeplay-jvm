@@ -3,11 +3,11 @@ package ai.freeplay.client.internal;
 import ai.freeplay.client.Freeplay;
 import ai.freeplay.client.ProviderConfig;
 import ai.freeplay.client.exceptions.FreeplayException;
+import ai.freeplay.client.flavor.ChatFlavor;
 import ai.freeplay.client.flavor.Flavor;
+import ai.freeplay.client.flavor.OpenAIChatFlavor;
 import ai.freeplay.client.flavor.OpenAITextFlavor;
-import ai.freeplay.client.model.CompletionResponse;
-import ai.freeplay.client.model.PromptTemplate;
-import ai.freeplay.client.model.Session;
+import ai.freeplay.client.model.*;
 
 import java.net.http.HttpResponse;
 import java.util.*;
@@ -22,7 +22,7 @@ public class CallSupport {
 
     private final String freeplayApiKey;
     private final String baseUrl;
-    private final Flavor<?> flavor;
+    private final Flavor<?> clientFlavor;
     private final Map<String, Object> clientLLMParameters;
     private final ProviderConfig providerConfig;
 
@@ -36,7 +36,7 @@ public class CallSupport {
         this.freeplayApiKey = freeplayApiKey;
         this.baseUrl = baseUrl;
         this.providerConfig = providerConfig;
-        this.flavor = flavor;
+        this.clientFlavor = flavor;
         this.clientLLMParameters = llmParameters != null ? llmParameters : Collections.emptyMap();
     }
 
@@ -48,7 +48,7 @@ public class CallSupport {
         throwIfError(response, 201);
 
         Map<String, Object> sessionMap = HttpUtil.parseBody(response);
-        return new Session(String.valueOf(sessionMap.get("session_id")));
+        return new Session(valueOf(sessionMap.get("session_id")));
     }
 
     @SuppressWarnings("unchecked")
@@ -74,6 +74,12 @@ public class CallSupport {
         }).collect(toList());
     }
 
+    public Optional<PromptTemplate> findPrompt(Collection<PromptTemplate> templates, String templateName) {
+        return templates.stream()
+                .filter(template -> template.getName().equals(templateName))
+                .findFirst();
+    }
+
     @SuppressWarnings("unchecked")
     public <P> CompletionResponse prepareAndMakeCall(
             Collection<PromptTemplate> prompts,
@@ -95,8 +101,7 @@ public class CallSupport {
         Map<String, Object> mergedLLMParameters = getMergedParameters(prompt, llmParameters);
         Flavor<P> activeFlavor = (Flavor<P>) getActiveFlavor(flavor, prompt);
 
-        // Once we do chat consider whether coercing to a String is what we want
-        String formattedPrompt = String.valueOf(activeFlavor.formatPrompt(prompt.getContent(), variables));
+        P formattedPrompt = activeFlavor.formatPrompt(prompt.getContent(), variables);
 
         long start = System.currentTimeMillis();
         CompletionResponse response = activeFlavor.callService(formattedPrompt, providerConfig, mergedLLMParameters);
@@ -108,7 +113,7 @@ public class CallSupport {
                         prompt.getPromptTemplateId(),
                         activeFlavor.getFormatType(),
                         activeFlavor.getProvider(),
-                        String.valueOf(mergedLLMParameters.get("model")),
+                        valueOf(mergedLLMParameters.get("model")),
                         mergedLLMParameters
                 ),
                 new CallInfo(
@@ -118,7 +123,47 @@ public class CallSupport {
                         end,
                         tag,
                         variables,
-                        formattedPrompt,
+                        activeFlavor.serializeForRecord(formattedPrompt),
+                        response.getContent(),
+                        response.isComplete()
+                )
+        );
+        return response;
+    }
+
+    public ChatCompletionResponse makeContinueChatCall(
+            String sessionId,
+            PromptTemplate prompt,
+            Collection<ChatMessage> formattedMessages,
+            Map<String, Object> variables,
+            Map<String, Object> llmParameters,
+            String environment,
+            String testRunId
+    ) throws FreeplayException {
+        Map<String, Object> mergedLLMParameters = getMergedParameters(prompt, llmParameters);
+        ChatFlavor activeFlavor = getActiveChatFlavor(clientFlavor, prompt);
+
+        long start = System.currentTimeMillis();
+        ChatCompletionResponse response = activeFlavor.callChatService(formattedMessages, providerConfig, mergedLLMParameters);
+        long end = System.currentTimeMillis();
+
+        record(
+                new PromptInfo(
+                        prompt.getPromptTemplateVersionId(),
+                        prompt.getPromptTemplateId(),
+                        activeFlavor.getFormatType(),
+                        activeFlavor.getProvider(),
+                        valueOf(mergedLLMParameters.get("model")),
+                        mergedLLMParameters
+                ),
+                new CallInfo(
+                        sessionId,
+                        testRunId,
+                        start,
+                        end,
+                        environment,
+                        variables,
+                        activeFlavor.serializeForRecord(formattedMessages),
                         response.getContent(),
                         response.isComplete()
                 )
@@ -155,6 +200,30 @@ public class CallSupport {
         }
     }
 
+    private Flavor<?> getActiveFlavor(Flavor<?> passedInFlavor, PromptTemplate prompt) {
+        if (passedInFlavor != null) return passedInFlavor;
+        if (this.clientFlavor != null) return this.clientFlavor;
+
+        String flavorName = prompt.getFlavorName();
+        switch (flavorName) {
+            case "openai_text":
+                return new OpenAITextFlavor();
+            case "openai_chat":
+                return new OpenAIChatFlavor();
+            default:
+                throw new FreeplayException(format("Unable to create Flavor for name '%s'.%n", flavorName));
+        }
+    }
+
+    public ChatFlavor getActiveChatFlavor(Flavor<?> flavor, PromptTemplate prompt) {
+        Flavor<?> activeFlavor = getActiveFlavor(flavor, prompt);
+
+        if (!(activeFlavor instanceof ChatFlavor)) {
+            throw new FreeplayException("Chat sessions must use an instance of ChatFlavor");
+        }
+        return (ChatFlavor) activeFlavor;
+    }
+
     private Map<String, Object> getMergedParameters(PromptTemplate promptTemplate, Map<String, Object> callLLMParameters) {
         Map<String, Object> merged = new HashMap<>(16);
         merged.putAll(promptTemplate.getLLMParameters());
@@ -175,30 +244,11 @@ public class CallSupport {
         }
     }
 
-    private Flavor<?> getActiveFlavor(Flavor<?> flavor, PromptTemplate prompt) {
-        if (flavor != null) return flavor;
-        if (this.flavor != null) return this.flavor;
-
-        String flavorName = prompt.getFlavorName();
-        switch (flavorName) {
-            case "openai_text":
-                return new OpenAITextFlavor();
-            default:
-                throw new FreeplayException(format("Unable to create Flavor for name '%s'.%n", flavorName));
-        }
-    }
-
     private static String getFinalTag(String tag) {
         return tag != null ? tag : "latest";
     }
 
     private String getUrl(String path, Object... args) {
         return format("%s/%s", baseUrl, format(path, args));
-    }
-
-    private Optional<PromptTemplate> findPrompt(Collection<PromptTemplate> templates, String templateName) {
-        return templates.stream()
-                .filter(template -> template.getName().equals(templateName))
-                .findFirst();
     }
 }

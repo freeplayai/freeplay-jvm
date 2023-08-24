@@ -10,5 +10,5 @@ plugins {
     id("org.gradle.toolchains.foojay-resolver-convention") version "0.4.0"
 }
 
-rootProject.name = "freeplay-java"
+rootProject.name = "freeplay-jvm"
 include("lib", "examples")

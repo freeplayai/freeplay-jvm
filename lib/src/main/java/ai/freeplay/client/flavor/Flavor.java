@@ -9,9 +9,11 @@ import java.util.Map;
 public interface Flavor<P> {
     P formatPrompt(String template, Map<String, Object> variables);
 
-    CompletionResponse callService(String formattedPrompt, ProviderConfig providerConfig, Map<String, Object> llmParameters) throws FreeplayException;
+    CompletionResponse callService(P formattedPrompt, ProviderConfig providerConfig, Map<String, Object> llmParameters) throws FreeplayException;
 
     String getFormatType();
 
     String getProvider();
+
+    String serializeForRecord(P formattedPrompt);
 }

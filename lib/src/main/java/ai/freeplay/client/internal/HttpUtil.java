@@ -26,14 +26,7 @@ public class HttpUtil {
             Map<String, Object> body,
             String apiKey
     ) throws FreeplayException {
-        String jsonString;
-        try {
-            jsonString = JSON.std
-                    .with(JSON.Feature.WRITE_NULL_PROPERTIES)
-                    .asString(body);
-        } catch (IOException e) {
-            throw new FreeplayException("Error sending POST request.", e);
-        }
+        String jsonString = JSONUtil.asString(body);
         return postJsonWithBearer(url, jsonString, apiKey);
     }
 

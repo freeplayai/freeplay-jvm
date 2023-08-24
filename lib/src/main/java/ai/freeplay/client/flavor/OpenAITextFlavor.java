@@ -14,7 +14,7 @@ import java.util.Map;
 import static ai.freeplay.client.internal.HttpUtil.parseBody;
 import static ai.freeplay.client.internal.HttpUtil.throwIfError;
 
-public class OpenAITextFlavor implements Flavor<String> {
+public class OpenAITextFlavor extends OpenAIFlavor implements Flavor<String> {
 
     private static final String OPENAI_COMPLETIONS_URL = "https://api.openai.com/v1/completions";
 
@@ -56,23 +56,14 @@ public class OpenAITextFlavor implements Flavor<String> {
         return new CompletionResponse(String.valueOf(choice.get("text")), isComplete);
     }
 
-    private static void validateParameters(Map<String, Object> llmParameters) {
-        if (!llmParameters.containsKey("model")) {
-            throw new FreeplayException("The 'model' parameter is required when calling OpenAI");
-        }
-        if (llmParameters.containsKey("prompt")) {
-            throw new FreeplayException("The 'prompt' parameter cannot be specified. It is populated automatically.");
-        }
-    }
-
     @Override
     public String getFormatType() {
         return "openai_text";
     }
 
     @Override
-    public String getProvider() {
-        return "openai";
+    public String serializeForRecord(String formattedPrompt) {
+        return formattedPrompt;
     }
 
     private static void validateChoices(List<Map<String, Object>> choices) throws FreeplayException {
