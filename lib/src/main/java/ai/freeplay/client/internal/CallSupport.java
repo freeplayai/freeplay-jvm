@@ -40,7 +40,7 @@ public class CallSupport {
         this.clientLLMParameters = llmParameters != null ? llmParameters : Collections.emptyMap();
     }
 
-    public Session createSession(String projectId, String tag) throws FreeplayException {
+    public String createSession(String projectId, String tag) throws FreeplayException {
         String finalTag = getFinalTag(tag);
         String url = getUrl("projects/%s/sessions/tag/%s", projectId, finalTag);
 
@@ -48,7 +48,7 @@ public class CallSupport {
         throwIfError(response, 201);
 
         Map<String, Object> sessionMap = HttpUtil.parseBody(response);
-        return new Session(valueOf(sessionMap.get("session_id")));
+        return valueOf(sessionMap.get("session_id"));
     }
 
     @SuppressWarnings("unchecked")
@@ -82,8 +82,8 @@ public class CallSupport {
 
     @SuppressWarnings("unchecked")
     public <P> CompletionResponse prepareAndMakeCall(
-            Collection<PromptTemplate> prompts,
             String sessionId,
+            Collection<PromptTemplate> templates,
             String templateName,
             Map<String, Object> variables,
             Map<String, Object> llmParameters,
@@ -91,17 +91,17 @@ public class CallSupport {
             String testRunId,
             Flavor<P> flavor
     ) throws FreeplayException {
-        Optional<PromptTemplate> maybePrompt = findPrompt(prompts, templateName);
+        Optional<PromptTemplate> maybePrompt = findPrompt(templates, templateName);
         if (maybePrompt.isEmpty()) {
             throw new FreeplayException(
                     "Prompt template " + templateName + " in environment " + tag + " not found.");
         }
-        PromptTemplate prompt = maybePrompt.get();
+        PromptTemplate template = maybePrompt.get();
 
-        Map<String, Object> mergedLLMParameters = getMergedParameters(prompt, llmParameters);
-        Flavor<P> activeFlavor = (Flavor<P>) getActiveFlavor(flavor, prompt);
+        Map<String, Object> mergedLLMParameters = getMergedParameters(template, llmParameters);
+        Flavor<P> activeFlavor = (Flavor<P>) getActiveFlavor(flavor, template);
 
-        P formattedPrompt = activeFlavor.formatPrompt(prompt.getContent(), variables);
+        P formattedPrompt = activeFlavor.formatPrompt(template.getContent(), variables);
 
         long start = System.currentTimeMillis();
         CompletionResponse response = activeFlavor.callService(formattedPrompt, providerConfig, mergedLLMParameters);
@@ -109,8 +109,8 @@ public class CallSupport {
 
         record(
                 new PromptInfo(
-                        prompt.getPromptTemplateVersionId(),
-                        prompt.getPromptTemplateId(),
+                        template.getPromptTemplateVersionId(),
+                        template.getPromptTemplateId(),
                         activeFlavor.getFormatType(),
                         activeFlavor.getProvider(),
                         valueOf(mergedLLMParameters.get("model")),
@@ -133,15 +133,15 @@ public class CallSupport {
 
     public ChatCompletionResponse makeContinueChatCall(
             String sessionId,
-            PromptTemplate prompt,
+            PromptTemplate template,
             Collection<ChatMessage> formattedMessages,
             Map<String, Object> variables,
             Map<String, Object> llmParameters,
-            String environment,
+            String tag,
             String testRunId
     ) throws FreeplayException {
-        Map<String, Object> mergedLLMParameters = getMergedParameters(prompt, llmParameters);
-        ChatFlavor activeFlavor = getActiveChatFlavor(clientFlavor, prompt);
+        Map<String, Object> mergedLLMParameters = getMergedParameters(template, llmParameters);
+        ChatFlavor activeFlavor = getActiveChatFlavor(clientFlavor, template);
 
         long start = System.currentTimeMillis();
         ChatCompletionResponse response = activeFlavor.callChatService(formattedMessages, providerConfig, mergedLLMParameters);
@@ -149,8 +149,8 @@ public class CallSupport {
 
         record(
                 new PromptInfo(
-                        prompt.getPromptTemplateVersionId(),
-                        prompt.getPromptTemplateId(),
+                        template.getPromptTemplateVersionId(),
+                        template.getPromptTemplateId(),
                         activeFlavor.getFormatType(),
                         activeFlavor.getProvider(),
                         valueOf(mergedLLMParameters.get("model")),
@@ -161,7 +161,7 @@ public class CallSupport {
                         testRunId,
                         start,
                         end,
-                        environment,
+                        tag,
                         variables,
                         activeFlavor.serializeForRecord(formattedMessages),
                         response.getContent(),

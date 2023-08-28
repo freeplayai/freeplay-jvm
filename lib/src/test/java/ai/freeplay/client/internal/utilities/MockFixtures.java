@@ -1,12 +1,15 @@
 package ai.freeplay.client.internal.utilities;
 
 import ai.freeplay.client.internal.JSONUtil;
+import ai.freeplay.client.model.PromptTemplate;
 
 import java.net.http.HttpClient;
 import java.util.*;
 
 import static ai.freeplay.client.internal.utilities.MockMethods.request;
 import static ai.freeplay.client.internal.utilities.MockMethods.response;
+import static java.util.Arrays.stream;
+import static java.util.stream.Collectors.toList;
 import static org.mockito.Mockito.when;
 
 public class MockFixtures {
@@ -32,7 +35,20 @@ public class MockFixtures {
 
     public static void mockGetPrompts(
             HttpClient mockedClient,
-            String name,
+            String model,
+            String templateName,
+            String templateContent
+    ) throws Exception {
+        Map<String, Object> llmParameters = new HashMap<>();
+        if (model != null)
+            llmParameters.put("model", model);
+
+        mockGetPrompts(mockedClient, templateName, templateContent, llmParameters, "openai_chat");
+    }
+
+    public static void mockGetPrompts(
+            HttpClient mockedClient,
+            String templateName,
             String content,
             Map<String, Object> llmParameters,
             String flavor
@@ -46,9 +62,47 @@ public class MockFixtures {
                                         projectVersionId,
                                         promptTemplateId,
                                         promptTemplateVersionId,
-                                        name,
+                                        templateName,
                                         content,
                                         llmParameters)));
+    }
+
+    public static void mockGet2Prompts(
+            HttpClient mockedClient,
+            PromptTemplate... templates
+    ) throws Exception {
+
+        List<Map<String, Object>> templateObjects = stream(templates).map((PromptTemplate template) ->
+                object(
+                        "project_version_id", template.getProjectVersionId(),
+                        "prompt_template_id", template.getPromptTemplateId(),
+                        "prompt_template_version_id", template.getPromptTemplateVersionId(),
+                        "flavor_name", template.getFlavorName(),
+                        "name", template.getName(),
+                        "content", template.getContent(),
+                        "params", template.getLLMParameters()
+                )).collect(toList());
+
+        Map<String, Object> payload = object(
+                "templates", array(
+                        (Object[]) templateObjects.toArray(new Map[]{})
+                )
+        );
+
+        when(request(mockedClient, "GET", "projects/[^/]*/templates"))
+                .thenReturn(response(200, JSONUtil.asString(payload)));
+    }
+
+    public static void mockOpenAITextCall(HttpClient mockedClient, String completion) throws Exception {
+        when(request(mockedClient, "api.openai.com", "POST", "v1/completions"))
+                .thenReturn(
+                        response(200, getOpenAITextResponse(MODEL_TEXT_DAVINCI_003, completion)));
+    }
+
+    public static void mockOpenAIChatCall(HttpClient mockedClient, String completion) throws Exception {
+        when(request(mockedClient, "api.openai.com", "POST", "v1/chat/completions"))
+                .thenReturn(
+                        response(200, getOpenAIChatResponse(completion)));
     }
 
     public static void mockUnauthorizedCreateSession(HttpClient mockedClient) throws Exception {
@@ -79,11 +133,11 @@ public class MockFixtures {
     }
 
     public static String getPromptsPayload(
-            String flavor,
+            String flavorName,
             String projectVersionId,
             String promptTemplateId,
             String promptTemplateVersionId,
-            String name,
+            String templateName,
             String content,
             Map<String, Object> llmParameters
     ) {
@@ -93,8 +147,8 @@ public class MockFixtures {
                                 "project_version_id", projectVersionId,
                                 "prompt_template_id", promptTemplateId,
                                 "prompt_template_version_id", promptTemplateVersionId,
-                                "flavor_name", flavor,
-                                "name", name,
+                                "flavor_name", flavorName,
+                                "name", templateName,
                                 "content", content,
                                 "params", llmParameters
                         )
@@ -121,7 +175,6 @@ public class MockFixtures {
 
     public static String getOpenAITextResponse(String model, String response) {
         return "{\n" +
-                "  \"warning\": \"This model version is deprecated. Migrate before January 4, 2024 to avoid disruption of service. Learn more https://platform.openai.com/docs/deprecations\",\n" +
                 "  \"id\": \"cmpl-7pjGh1KgUrY1eDYfTsZqK9pFfAzmj\",\n" +
                 "  \"object\": \"text_completion\",\n" +
                 "  \"created\": 1692563095,\n" +
@@ -189,12 +242,15 @@ public class MockFixtures {
         return object;
     }
 
-    @SafeVarargs
-    private static List<Object> array(Map<String, Object>... objects) {
-        return Arrays.asList((Object[]) objects);
+    private static List<Object> array(Object... objects) {
+        return Arrays.asList(objects);
     }
 
     public static String escapeJSON(String jsonString) {
         return jsonString.replace("\"", "\\\"");
+    }
+
+    public static String unescapeExpected(String completion1) {
+        return completion1.replace("\\n", "\n");
     }
 }

@@ -7,7 +7,7 @@ import ai.freeplay.client.internal.CallSupport;
 import ai.freeplay.client.model.ChatSession;
 import ai.freeplay.client.model.CompletionResponse;
 import ai.freeplay.client.model.PromptTemplate;
-import ai.freeplay.client.model.Session;
+import ai.freeplay.client.model.CompletionSession;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -44,6 +44,22 @@ public class Freeplay {
                 llmParameters);
     }
 
+    public CompletionSession createSession(String projectId, String environment) {
+        String sessionId = callSupport.createSession(projectId, environment);
+        Collection<PromptTemplate> prompts = callSupport.getPrompts(projectId, environment);
+
+        return new CompletionSession(callSupport, sessionId, prompts, environment);
+    }
+
+    public CompletionResponse getCompletion(
+            String projectId,
+            String templateName,
+            Map<String, Object> variables,
+            String environment
+    ) throws FreeplayException {
+        return getCompletion(projectId, templateName, variables, Collections.emptyMap(), environment);
+    }
+
     public CompletionResponse getCompletion(
             String projectId,
             String templateName,
@@ -51,11 +67,11 @@ public class Freeplay {
             Map<String, Object> llmParameters,
             String environment
     ) throws FreeplayException {
-        Session session = callSupport.createSession(projectId, environment);
+        String sessionId = callSupport.createSession(projectId, environment);
         Collection<PromptTemplate> prompts = callSupport.getPrompts(projectId, environment);
         return callSupport.prepareAndMakeCall(
+                sessionId,
                 prompts,
-                session.getSessionId(),
                 templateName,
                 variables,
                 llmParameters,
@@ -92,9 +108,9 @@ public class Freeplay {
             Map<String, Object> llmParameters,
             String environment
     ) throws FreeplayException {
-        Session session = callSupport.createSession(projectId, environment);
+        String sessionId = callSupport.createSession(projectId, environment);
         Collection<PromptTemplate> prompts = callSupport.getPrompts(projectId, environment);
-        ChatSession chatSession = new ChatSession(callSupport, session.getSessionId(), prompts, templateName, environment);
+        ChatSession chatSession = new ChatSession(callSupport, sessionId, prompts, templateName, environment);
         return chatSession.startChat(
                 variables,
                 llmParameters,

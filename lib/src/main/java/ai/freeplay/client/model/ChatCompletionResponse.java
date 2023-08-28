@@ -1,6 +1,5 @@
 package ai.freeplay.client.model;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -11,7 +10,7 @@ public class ChatCompletionResponse {
         this.choices = choices;
     }
 
-    public Optional<IndexedChatMessage> getFirst() {
+    public Optional<IndexedChatMessage> getFirstChoice() {
         if (choices.isEmpty()) return Optional.empty();
         return Optional.of(choices.get(0));
     }

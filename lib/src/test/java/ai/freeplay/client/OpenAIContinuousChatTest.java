@@ -11,7 +11,6 @@ import org.mockito.Mockito;
 
 import java.net.http.HttpClient;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 
 import static ai.freeplay.client.ProviderConfig.OpenAIProviderConfig;
@@ -21,7 +20,7 @@ import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class OpenAIChatCompletionTest {
+public class OpenAIContinuousChatTest {
 
     private final String templateName = "my-chat-start";
 
@@ -42,7 +41,7 @@ public class OpenAIChatCompletionTest {
         String formattedPrompt2Expected = "[{\"content\":\"You are a support agent.\",\"role\":\"system\"},{\"content\":\"How may I help you?\",\"role\":\"assistant\"},{\"content\":\"why isn't my sink working?\",\"role\":\"user\"},{\"content\":\"\\n\\nSorry, I will try to help\",\"role\":\"assistant\"},{\"content\":\"Now in Italian!\",\"role\":\"user\"}]";
 
         mockCreateSession(mockedClient);
-        mockGetPrompts(MODEL_GPT_TURBO_35);
+        mockGetPrompts(mockedClient, MODEL_GPT_TURBO_35, templateName, getChatPromptContent());
         mock2OpenAICalls(completion1, completion2);
 
         try (MockedStatic<HttpClient> httpClientClass = Mockito.mockStatic(HttpClient.class)) {
@@ -95,7 +94,7 @@ public class OpenAIChatCompletionTest {
     @Test
     public void requiresModelParam() throws Exception {
         mockCreateSession(mockedClient);
-        mockGetPrompts(null);
+        mockGetPrompts(mockedClient, null, templateName, getChatPromptContent());   // null model
 
         try (MockedStatic<HttpClient> httpClientClass = Mockito.mockStatic(HttpClient.class)) {
             httpClientClass.when(HttpClient::newHttpClient).thenReturn(mockedClient);
@@ -117,7 +116,7 @@ public class OpenAIChatCompletionTest {
     @Test
     public void disallowsMessagesParam() throws Exception {
         mockCreateSession(mockedClient);
-        mockGetPrompts(MODEL_GPT_TURBO_35);
+        mockGetPrompts(mockedClient, MODEL_GPT_TURBO_35, templateName, getChatPromptContent());
 
         try (MockedStatic<HttpClient> httpClientClass = Mockito.mockStatic(HttpClient.class)) {
             httpClientClass.when(HttpClient::newHttpClient).thenReturn(mockedClient);
@@ -144,7 +143,7 @@ public class OpenAIChatCompletionTest {
     @Test
     public void handlesUnauthorizedCallingOpenAI() throws Exception {
         mockCreateSession(mockedClient);
-        mockGetPrompts(MODEL_GPT_TURBO_35);
+        mockGetPrompts(mockedClient, MODEL_GPT_TURBO_35, templateName, getChatPromptContent());
         mockUnauthorizedOpenAIChatCall(mockedClient);
 
         try (MockedStatic<HttpClient> httpClientClass = Mockito.mockStatic(HttpClient.class)) {
@@ -179,7 +178,7 @@ public class OpenAIChatCompletionTest {
                 ),
                 "openai_chat"
         );
-        mockOpenAICall("\\n\\nSorry, I will try to help");
+        mockOpenAIChatCall(mockedClient, "\\n\\nSorry, I will try to help");
 
         try (MockedStatic<HttpClient> httpClientClass = Mockito.mockStatic(HttpClient.class)) {
             httpClientClass.when(HttpClient::newHttpClient).thenReturn(mockedClient);
@@ -208,21 +207,6 @@ public class OpenAIChatCompletionTest {
         assertEquals("gpt-turbo-3.5", recordedParameters.get("model"));
         assertEquals("33", recordedParameters.get("max_tokens"));
         assertEquals("0.44", recordedParameters.get("temperature"));
-    }
-
-    private void mockGetPrompts(String model) throws Exception {
-        Map<String, Object> llmParameters = new HashMap<>();
-        if (model != null)
-            llmParameters.put("model", model);
-
-        MockFixtures.mockGetPrompts(mockedClient, templateName, getChatPromptContent(), llmParameters, "openai_chat");
-    }
-
-    @SuppressWarnings("SameParameterValue")
-    private void mockOpenAICall(String completion) throws Exception {
-        when(request(mockedClient, "api.openai.com", "POST", "v1/chat/completions"))
-                .thenReturn(
-                        response(200, getOpenAIChatResponse(completion)));
     }
 
     @SuppressWarnings("SameParameterValue")

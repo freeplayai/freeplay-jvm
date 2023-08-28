@@ -53,7 +53,8 @@ public class OpenAIChatFlavor extends OpenAIFlavor implements ChatFlavor {
             ProviderConfig providerConfig,
             Map<String, Object> llmParameters
     ) throws FreeplayException {
-        throw new UnsupportedOperationException("Not yet implemented");
+        ChatCompletionResponse chatResponse = callChatService(formattedMessages, providerConfig, llmParameters);
+        return new CompletionResponse(chatResponse.getContent(), chatResponse.isComplete());
     }
 
     @SuppressWarnings("unchecked")
