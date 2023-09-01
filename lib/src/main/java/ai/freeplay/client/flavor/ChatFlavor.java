@@ -8,7 +8,7 @@ import ai.freeplay.client.model.ChatMessage;
 import java.util.Collection;
 import java.util.Map;
 
-public interface ChatFlavor extends Flavor<Collection<ChatMessage>> {
+public interface ChatFlavor extends Flavor<Collection<ChatMessage>, ChatMessage> {
     ChatCompletionResponse callChatService(
             Collection<ChatMessage> formattedPrompt,
             ProviderConfig providerConfig,

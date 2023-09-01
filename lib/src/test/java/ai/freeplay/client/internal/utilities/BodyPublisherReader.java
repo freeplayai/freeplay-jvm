@@ -31,12 +31,11 @@ public class BodyPublisherReader implements Flow.Subscriber<ByteBuffer> {
 
     @Override
     public void onError(Throwable throwable) {
-        System.out.println();
+        System.out.println("Error in body: " + throwable);
     }
 
     @Override
     public void onComplete() {
-        System.out.println();
     }
 
     public String getBodyString() {

@@ -2,7 +2,7 @@ package ai.freeplay.client.flavor;
 
 import ai.freeplay.client.ProviderConfig;
 import ai.freeplay.client.exceptions.FreeplayException;
-import ai.freeplay.client.internal.HttpUtil;
+import ai.freeplay.client.internal.Http;
 import ai.freeplay.client.internal.JSONUtil;
 import ai.freeplay.client.internal.TemplateUtils;
 import ai.freeplay.client.model.ChatCompletionResponse;
@@ -17,15 +17,21 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
-import static ai.freeplay.client.internal.HttpUtil.parseBody;
-import static ai.freeplay.client.internal.HttpUtil.throwIfError;
+import static ai.freeplay.client.internal.Http.parseBody;
+import static ai.freeplay.client.internal.Http.throwIfError;
 import static java.lang.String.valueOf;
 import static java.util.stream.Collectors.toList;
 
 public class OpenAIChatFlavor extends OpenAIFlavor implements ChatFlavor {
 
     private static final String OPENAI_CHAT_URL = "https://api.openai.com/v1/chat/completions";
+
+    @Override
+    public String getFormatType() {
+        return "openai_chat";
+    }
 
     @SuppressWarnings("unchecked")
     @Override
@@ -54,7 +60,7 @@ public class OpenAIChatFlavor extends OpenAIFlavor implements ChatFlavor {
             Map<String, Object> llmParameters
     ) throws FreeplayException {
         ChatCompletionResponse chatResponse = callChatService(formattedMessages, providerConfig, llmParameters);
-        return new CompletionResponse(chatResponse.getContent(), chatResponse.isComplete());
+        return new CompletionResponse(chatResponse.getContent(), chatResponse.isComplete(), true);
     }
 
     @SuppressWarnings("unchecked")
@@ -71,7 +77,7 @@ public class OpenAIChatFlavor extends OpenAIFlavor implements ChatFlavor {
 
         HttpResponse<String> response;
         try {
-            response = HttpUtil.postJsonWithBearer(OPENAI_CHAT_URL, bodyMap, providerConfig.getApiKey());
+            response = Http.postJsonWithBearer(OPENAI_CHAT_URL, bodyMap, providerConfig.getApiKey());
         } catch (Exception e) {
             throw new FreeplayException("Error calling OpenAI.", e);
         }
@@ -96,8 +102,40 @@ public class OpenAIChatFlavor extends OpenAIFlavor implements ChatFlavor {
     }
 
     @Override
-    public String getFormatType() {
-        return "openai_chat";
+    public Stream<ChatMessage> callServiceStream(
+            Collection<ChatMessage> formattedPrompt,
+            ProviderConfig providerConfig,
+            Map<String, Object> mergedLLMParameters
+    ) {
+        return callOpenAIStream(
+                providerConfig,
+                OPENAI_CHAT_URL,
+                "messages",
+                mergedLLMParameters,
+                formattedPrompt,
+                Http.ResponseHandlers.chatItemCreator());
+    }
+
+    @Override
+    public String getContentFromChunk(ChatMessage chunk) {
+        return chunk.getContent();
+    }
+
+    @Override
+    public boolean isLastChunk(ChatMessage chunk) {
+        if (chunk instanceof IndexedChatMessage) {
+            return ((IndexedChatMessage) chunk).isLast();
+        } else {
+            return true;
+        }
+    }
+
+    @Override
+    public boolean isComplete(ChatMessage chunk) {
+        if (chunk instanceof IndexedChatMessage) {
+            return ((IndexedChatMessage) chunk).isComplete();
+        }
+        return true;
     }
 
     @Override

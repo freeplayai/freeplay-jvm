@@ -33,7 +33,7 @@ public class Freeplay {
             String freeplayAPIKey,
             String baseUrl,
             ProviderConfig providerConfig,
-            Flavor<?> flavor,
+            Flavor<?, ?> flavor,
             Map<String, Object> llmParameters
     ) {
         callSupport = new CallSupport(

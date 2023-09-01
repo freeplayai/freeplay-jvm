@@ -9,13 +9,14 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import static java.lang.String.format;
 
 public class CompletionSession {
     private final CallSupport callSupport;
     private final String sessionId;
-    private final Collection<PromptTemplate> prompts;
+    private final Collection<PromptTemplate> promptTemplates;
     private final String tag;
 
     public CompletionSession(
@@ -26,7 +27,7 @@ public class CompletionSession {
     ) {
         this.callSupport = callSupport;
         this.sessionId = sessionId;
-        this.prompts = prompts;
+        this.promptTemplates = prompts;
         this.tag = environment;
     }
 
@@ -49,16 +50,39 @@ public class CompletionSession {
         return getCompletion(templateName, variables, llmParameters, null, null);
     }
 
-    public <P> CompletionResponse getCompletion(
+    public <P, R> CompletionResponse getCompletion(
             String templateName,
             Map<String, Object> variables,
             Map<String, Object> llmParameters,
             String testRunId,
-            Flavor<P> flavor
+            Flavor<P, R> flavor
     ) {
         return callSupport.prepareAndMakeCall(
-                getSessionId(), prompts,
+                getSessionId(), promptTemplates,
                 templateName,
+                variables,
+                llmParameters,
+                tag,
+                testRunId,
+                flavor
+        );
+    }
+
+    public <P, R> Stream<R> getCompletionStream(
+            String templateName,
+            Map<String, Object> variables,
+            Map<String, Object> llmParameters,
+            String testRunId,
+            Flavor<P, R> flavor
+    ) {
+        PromptTemplate template = callSupport
+                .findPrompt(promptTemplates, templateName)
+                .orElseThrow(() -> new FreeplayException(
+                        "Unable to find prompt template with name " + templateName + " in environment " + tag));
+
+        return callSupport.makeCallStream(
+                getSessionId(),
+                template,
                 variables,
                 llmParameters,
                 tag,
@@ -85,14 +109,14 @@ public class CompletionSession {
     }
 
     @SuppressWarnings("unused")
-    public <P> ChatCompletionResponse getChatCompletion(
+    public <P, R> ChatCompletionResponse getChatCompletion(
             String templateName,
             Map<String, Object> variables,
             Map<String, Object> llmParameters,
             String testRunId,
-            Flavor<P> flavor
+            Flavor<P, R> flavor
     ) {
-        Optional<PromptTemplate> maybePrompt = callSupport.findPrompt(prompts, templateName);
+        Optional<PromptTemplate> maybePrompt = callSupport.findPrompt(promptTemplates, templateName);
         return maybePrompt.map((PromptTemplate prompt) -> {
             ChatFlavor activeFlavor = callSupport.getActiveChatFlavor(flavor, prompt);
             Collection<ChatMessage> formattedPrompt = activeFlavor.formatPrompt(prompt.getContent(), variables);

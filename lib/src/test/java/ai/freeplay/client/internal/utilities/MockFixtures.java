@@ -1,10 +1,14 @@
 package ai.freeplay.client.internal.utilities;
 
 import ai.freeplay.client.internal.JSONUtil;
+import ai.freeplay.client.model.ChatMessage;
+import ai.freeplay.client.model.CompletionResponse;
+import ai.freeplay.client.model.IndexedChatMessage;
 import ai.freeplay.client.model.PromptTemplate;
 
 import java.net.http.HttpClient;
 import java.util.*;
+import java.util.stream.Stream;
 
 import static ai.freeplay.client.internal.utilities.MockMethods.request;
 import static ai.freeplay.client.internal.utilities.MockMethods.response;
@@ -31,6 +35,20 @@ public class MockFixtures {
         when(request(mockedClient, "POST", "projects/[^/]*/sessions"))
                 .thenReturn(
                         response(201, getSessionRequestPayload(UUID.randomUUID().toString())));
+    }
+
+    public static void mockGetPrompts(
+            HttpClient mockedClient,
+            String model,
+            String templateName,
+            String templateContent,
+            String flavor
+    ) throws Exception {
+        Map<String, Object> llmParameters = new HashMap<>();
+        if (model != null)
+            llmParameters.put("model", model);
+
+        mockGetPrompts(mockedClient, templateName, templateContent, llmParameters, flavor);
     }
 
     public static void mockGetPrompts(
@@ -103,6 +121,18 @@ public class MockFixtures {
         when(request(mockedClient, "api.openai.com", "POST", "v1/chat/completions"))
                 .thenReturn(
                         response(200, getOpenAIChatResponse(completion)));
+    }
+
+    public static void mockOpenAITextCallStream(HttpClient mockedClient) throws Exception {
+        when(request(mockedClient, "api.openai.com", "POST", "v1/completions"))
+                .thenReturn(
+                        response(200, getOpenAITextResponseStreamMessages()));
+    }
+
+    public static void mockOpenAIChatCallStream(HttpClient mockedClient) throws Exception {
+        when(request(mockedClient, "api.openai.com", "POST", "v1/chat/completions"))
+                .thenReturn(
+                        response(200, getOpenAIChatResponseStreamMessages()));
     }
 
     public static void mockUnauthorizedCreateSession(HttpClient mockedClient) throws Exception {
@@ -217,6 +247,23 @@ public class MockFixtures {
                 "    \"total_tokens\": 64\n" +
                 "  }\n" +
                 "}\n";
+    }
+
+    public static Stream<CompletionResponse> getOpenAITextResponseStreamMessages() {
+        return Stream.of(
+                new CompletionResponse("Well ", false, false),
+                new CompletionResponse("hello", false, false),
+                new CompletionResponse("", false, true)
+        );
+    }
+
+    public static Stream<? extends ChatMessage> getOpenAIChatResponseStreamMessages() {
+        return Stream.of(
+                new IndexedChatMessage("assistant", "", 0, false, false),
+                new IndexedChatMessage("assistant", "Well ", 0, false, false),
+                new IndexedChatMessage("assistant", "hello", 0, false, false),
+                new IndexedChatMessage("assistant", "", 0, false, true)
+        );
     }
 
     public static String getOpenAIUnauthorizedResponse() {

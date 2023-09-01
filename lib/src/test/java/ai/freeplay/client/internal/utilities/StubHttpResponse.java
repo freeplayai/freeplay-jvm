@@ -8,11 +8,11 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.Optional;
 
-public final class StubHttpResponse implements HttpResponse<String> {
+public final class StubHttpResponse<B> implements HttpResponse<B> {
     private final int statusCode;
-    private final String body;
+    private final B body;
 
-    public StubHttpResponse(int statusCode, String body) {
+    public StubHttpResponse(int statusCode, B body) {
         this.statusCode = statusCode;
         this.body = body;
     }
@@ -28,7 +28,7 @@ public final class StubHttpResponse implements HttpResponse<String> {
     }
 
     @Override
-    public Optional<HttpResponse<String>> previousResponse() {
+    public Optional<HttpResponse<B>> previousResponse() {
         return Optional.empty();
     }
 
@@ -38,7 +38,7 @@ public final class StubHttpResponse implements HttpResponse<String> {
     }
 
     @Override
-    public String body() {
+    public B body() {
         return body;
     }
 

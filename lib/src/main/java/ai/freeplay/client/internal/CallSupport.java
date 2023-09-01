@@ -7,10 +7,15 @@ import ai.freeplay.client.flavor.ChatFlavor;
 import ai.freeplay.client.flavor.Flavor;
 import ai.freeplay.client.flavor.OpenAIChatFlavor;
 import ai.freeplay.client.flavor.OpenAITextFlavor;
-import ai.freeplay.client.model.*;
+import ai.freeplay.client.model.ChatCompletionResponse;
+import ai.freeplay.client.model.ChatMessage;
+import ai.freeplay.client.model.CompletionResponse;
+import ai.freeplay.client.model.PromptTemplate;
 
 import java.net.http.HttpResponse;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Stream;
 
 import static java.lang.String.format;
 import static java.lang.String.valueOf;
@@ -22,7 +27,7 @@ public class CallSupport {
 
     private final String freeplayApiKey;
     private final String baseUrl;
-    private final Flavor<?> clientFlavor;
+    private final Flavor<?, ?> clientFlavor;
     private final Map<String, Object> clientLLMParameters;
     private final ProviderConfig providerConfig;
 
@@ -30,7 +35,7 @@ public class CallSupport {
             String freeplayApiKey,
             String baseUrl,
             ProviderConfig providerConfig,
-            Flavor<?> flavor,
+            Flavor<?, ?> flavor,
             Map<String, Object> llmParameters
     ) {
         this.freeplayApiKey = freeplayApiKey;
@@ -44,10 +49,10 @@ public class CallSupport {
         String finalTag = getFinalTag(tag);
         String url = getUrl("projects/%s/sessions/tag/%s", projectId, finalTag);
 
-        HttpResponse<String> response = HttpUtil.postWithBearer(url, freeplayApiKey);
+        HttpResponse<String> response = Http.postWithBearer(url, freeplayApiKey);
         throwIfError(response, 201);
 
-        Map<String, Object> sessionMap = HttpUtil.parseBody(response);
+        Map<String, Object> sessionMap = Http.parseBody(response);
         return valueOf(sessionMap.get("session_id"));
     }
 
@@ -55,10 +60,10 @@ public class CallSupport {
     public Collection<PromptTemplate> getPrompts(String projectId, String tag) throws FreeplayException {
         String finalTag = getFinalTag(tag);
         String url = getUrl("projects/%s/templates/all/%s", projectId, finalTag);
-        HttpResponse<String> response = HttpUtil.get(url, freeplayApiKey);
+        HttpResponse<String> response = Http.get(url, freeplayApiKey);
         throwIfError(response, 200);
 
-        Map<String, Object> templatesMap = HttpUtil.parseBody(response);
+        Map<String, Object> templatesMap = Http.parseBody(response);
         List<Map<String, Object>> templates = (List<Map<String, Object>>) templatesMap.get("templates");
 
         return templates.stream().map((Object template) -> {
@@ -81,7 +86,7 @@ public class CallSupport {
     }
 
     @SuppressWarnings("unchecked")
-    public <P> CompletionResponse prepareAndMakeCall(
+    public <P, R> CompletionResponse prepareAndMakeCall(
             String sessionId,
             Collection<PromptTemplate> templates,
             String templateName,
@@ -89,7 +94,7 @@ public class CallSupport {
             Map<String, Object> llmParameters,
             String tag,
             String testRunId,
-            Flavor<P> flavor
+            Flavor<P, R> flavor
     ) throws FreeplayException {
         Optional<PromptTemplate> maybePrompt = findPrompt(templates, templateName);
         if (maybePrompt.isEmpty()) {
@@ -99,7 +104,7 @@ public class CallSupport {
         PromptTemplate template = maybePrompt.get();
 
         Map<String, Object> mergedLLMParameters = getMergedParameters(template, llmParameters);
-        Flavor<P> activeFlavor = (Flavor<P>) getActiveFlavor(flavor, template);
+        Flavor<P, R> activeFlavor = (Flavor<P, R>) getActiveFlavor(flavor, template);
 
         P formattedPrompt = activeFlavor.formatPrompt(template.getContent(), variables);
 
@@ -171,6 +176,55 @@ public class CallSupport {
         return response;
     }
 
+    public <P, R> Stream<R> makeCallStream(
+            String sessionId,
+            PromptTemplate template,
+            Map<String, Object> variables,
+            Map<String, Object> llmParameters,
+            String tag,
+            String testRunId,
+            Flavor<P, R> callFlavor
+    ) throws FreeplayException {
+        Map<String, Object> mergedLLMParameters = getMergedParameters(template, llmParameters);
+        @SuppressWarnings("unchecked")
+        Flavor<P, R> activeFlavor = (Flavor<P, R>) getActiveFlavor(callFlavor, template);
+
+        P formattedPrompt = activeFlavor.formatPrompt(template.getContent(), variables);
+
+        long start = System.currentTimeMillis();
+        Stream<R> responseStream = activeFlavor.callServiceStream(formattedPrompt, providerConfig, mergedLLMParameters);
+        long end = System.currentTimeMillis();
+
+        AtomicReference<String> aggregatedContent = new AtomicReference<>("");
+        return responseStream.
+                peek((R chunk) -> {
+                    aggregatedContent.getAndUpdate((String previous) -> previous + activeFlavor.getContentFromChunk(chunk));
+                    if (activeFlavor.isLastChunk(chunk)) {
+                        record(
+                                new PromptInfo(
+                                        template.getPromptTemplateVersionId(),
+                                        template.getPromptTemplateId(),
+                                        activeFlavor.getFormatType(),
+                                        activeFlavor.getProvider(),
+                                        valueOf(mergedLLMParameters.get("model")),
+                                        mergedLLMParameters
+                                ),
+                                new CallInfo(
+                                        sessionId,
+                                        testRunId,
+                                        start,
+                                        end,
+                                        tag,
+                                        variables,
+                                        activeFlavor.serializeForRecord(formattedPrompt),
+                                        aggregatedContent.get(),
+                                        activeFlavor.isComplete(chunk)
+                                )
+                        );
+                    }
+                });
+    }
+
     private void record(
             PromptInfo promptInfo,
             CallInfo callInfo
@@ -194,14 +248,14 @@ public class CallSupport {
         payload.put("llm_parameters", promptInfo.getLLMParameters());
 
         try {
-            HttpUtil.postJsonWithBearer(url, payload, freeplayApiKey);
+            Http.postJsonWithBearer(url, payload, freeplayApiKey);
         } catch (Exception e) {
             LOGGER.log(System.Logger.Level.WARNING, "Unable to record LLM call. Cause: {0}", e.getMessage());
         }
     }
 
-    private Flavor<?> getActiveFlavor(Flavor<?> passedInFlavor, PromptTemplate prompt) {
-        if (passedInFlavor != null) return passedInFlavor;
+    private Flavor<?, ?> getActiveFlavor(Flavor<?, ?> callFlavor, PromptTemplate prompt) {
+        if (callFlavor != null) return callFlavor;
         if (this.clientFlavor != null) return this.clientFlavor;
 
         String flavorName = prompt.getFlavorName();
@@ -215,8 +269,8 @@ public class CallSupport {
         }
     }
 
-    public ChatFlavor getActiveChatFlavor(Flavor<?> flavor, PromptTemplate prompt) {
-        Flavor<?> activeFlavor = getActiveFlavor(flavor, prompt);
+    public ChatFlavor getActiveChatFlavor(Flavor<?, ?> flavor, PromptTemplate prompt) {
+        Flavor<?, ?> activeFlavor = getActiveFlavor(flavor, prompt);
 
         if (!(activeFlavor instanceof ChatFlavor)) {
             throw new FreeplayException("Chat sessions must use an instance of ChatFlavor");
@@ -235,7 +289,7 @@ public class CallSupport {
     private void throwIfError(HttpResponse<String> response, int expectedStatus) throws FreeplayException {
         if (response.statusCode() != expectedStatus) {
             if (response.body() != null && response.body().length() > 0) {
-                Map<String, Object> bodyMap = HttpUtil.parseBody(response);
+                Map<String, Object> bodyMap = Http.parseBody(response);
                 Object message = bodyMap.get("message");
                 throw new FreeplayException(format("Error calling Freeplay [%s]: %s", response.statusCode(), message));
             } else {

@@ -36,7 +36,7 @@ public class MockMethods {
         return mockedClient.send(argThat(requestMatches(method, urlRegex)), any());
     }
 
-    public static HttpResponse<String> request(
+    public static <B> HttpResponse<B> request(
             HttpClient mockedClient,
             String host,
             String method,
@@ -45,8 +45,8 @@ public class MockMethods {
         return mockedClient.send(argThat(requestMatches(host, method, urlRegex)), any());
     }
 
-    public static HttpResponse<String> response(int statusCode, String body) {
-        return new StubHttpResponse(statusCode, body);
+    public static <B> HttpResponse<B> response(int statusCode, B body) {
+        return new StubHttpResponse<>(statusCode, body);
     }
 
     public static Map<String, Object> getCapturedBodyAsMap(HttpClient mockedClient, int totalCalls, int index) throws IOException, InterruptedException {
