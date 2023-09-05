@@ -3,14 +3,27 @@ package ai.freeplay.client.flavor;
 import ai.freeplay.client.ProviderConfig;
 import ai.freeplay.client.exceptions.FreeplayException;
 import ai.freeplay.client.internal.Http;
+import ai.freeplay.client.internal.JSONUtil;
 
 import java.net.http.HttpResponse;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-public class OpenAIFlavor {
+public abstract class OpenAIFlavor<P, R> implements Flavor<P, R> {
+
+    public String getProvider() {
+        return "openai";
+    }
+
+    protected static void validateChoices(List<Map<String, Object>> choices) throws FreeplayException {
+        if (choices.isEmpty()) {
+            throw new FreeplayException("Did not get any 'choices' back from OpenAI.");
+        }
+    }
+
     protected static void validateParameters(Map<String, Object> llmParameters) {
         if (!llmParameters.containsKey("model")) {
             throw new FreeplayException("The 'model' parameter is required when calling OpenAI");
@@ -23,13 +36,12 @@ public class OpenAIFlavor {
         }
     }
 
-    protected static <P, R> Stream<R> callOpenAIStream(
+    protected Stream<String> callOpenAIStream(
             ProviderConfig providerConfig,
             String url,
             String promptFieldName,
             Map<String, Object> mergedLLMParameters,
-            P formattedPrompt,
-            Function<Map<String, Object>, R> itemCreator
+            P formattedPrompt
     ) {
         validateParameters(mergedLLMParameters);
 
@@ -37,13 +49,13 @@ public class OpenAIFlavor {
         bodyMap.put(promptFieldName, formattedPrompt);
         bodyMap.put("stream", true);
 
-        HttpResponse<Stream<R>> response;
+        HttpResponse<Stream<String>> response;
         try {
             response = Http.postJsonWithBearer(
                     url,
                     bodyMap,
                     providerConfig.getApiKey(),
-                    Http.ResponseHandlers.streamHandler(itemCreator)
+                    HttpResponse.BodyHandlers.ofLines()
             );
         } catch (Exception e) {
             throw new FreeplayException("Error calling OpenAI.", e);
@@ -52,7 +64,20 @@ public class OpenAIFlavor {
         return response.body();
     }
 
-    public String getProvider() {
-        return "openai";
+    protected R parseLine(String line, Function<Map<String, Object>, R> itemCreator) {
+        String[] field = line.split(":", 2);
+        if (field.length == 2 && "data".equals(field[0])) {
+            if ("[DONE]".equals(field[1].trim())) {
+                return null;
+            } else {
+                Map<String, Object> objectMap = JSONUtil.parseMap(field[1]);
+                @SuppressWarnings("unchecked")
+                List<Map<String, Object>> choices = (List<Map<String, Object>>) objectMap.get("choices");
+                Map<String, Object> firstChoice = choices.get(0);
+                return itemCreator.apply(firstChoice);
+            }
+        } else {
+            throw new FreeplayException("Got unknown line in the stream: '" + line + "'");
+        }
     }
 }

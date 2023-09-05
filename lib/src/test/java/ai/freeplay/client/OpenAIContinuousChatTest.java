@@ -3,7 +3,8 @@ package ai.freeplay.client;
 import ai.freeplay.client.exceptions.FreeplayException;
 import ai.freeplay.client.internal.utilities.MockFixtures;
 import ai.freeplay.client.model.ChatMessage;
-import ai.freeplay.client.model.ChatSession;
+import ai.freeplay.client.model.ChatStart;
+import ai.freeplay.client.model.IndexedChatMessage;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.MockedStatic;
@@ -51,7 +52,7 @@ public class OpenAIContinuousChatTest {
 
             // Start
             // --------
-            ChatSession chatSession = fpClient.startChat(
+            ChatStart<IndexedChatMessage> chatStart = fpClient.startChat(
                     projectId,
                     templateName,
                     Map.of("question", "why isn't my sink working?"),
@@ -59,8 +60,7 @@ public class OpenAIContinuousChatTest {
             );
 
             // Completion
-            assertTrue(chatSession.getLastMessage().isPresent());
-            assertEquals(completion1Expected, chatSession.getLastMessage().get().getContent());
+            assertEquals(completion1Expected, chatStart.getFirstCompletion().getContent());
 
             // Record call
             Map<String, Object> recordBodyMap = getCapturedBodyAsMap(mockedClient, 4, 3);
@@ -74,11 +74,12 @@ public class OpenAIContinuousChatTest {
 
             // Continue
             // --------
-            chatSession.continueChat(new ChatMessage("user", "Now in Italian!"));
+            chatStart.getSession().continueChat(new ChatMessage("user", "Now in Italian!"));
 
             // Completion
-            assertEquals(6, chatSession.getMessageHistory().size());
-            assertEquals(completion2Expected, chatSession.getLastMessage().get().getContent());
+            assertEquals(6, chatStart.getSession().getMessageHistory().size());
+            //noinspection OptionalGetWithoutIsPresent
+            assertEquals(completion2Expected, chatStart.getSession().getLastMessage().get().getContent());
 
             // Record call
             Map<String, Object> record2BodyMap = getCapturedBodyAsMap(mockedClient, 6, 5);

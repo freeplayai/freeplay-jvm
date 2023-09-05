@@ -18,13 +18,17 @@ public interface Flavor<P, R> {
 
     P formatPrompt(String template, Map<String, Object> variables);
 
-    CompletionResponse callService(P formattedPrompt, ProviderConfig providerConfig, Map<String, Object> llmParameters) throws FreeplayException;
+    CompletionResponse callService(
+            P formattedPrompt,
+            ProviderConfig providerConfig,
+            Map<String, Object> llmParameters
+    ) throws FreeplayException;
 
     Stream<R> callServiceStream(
             P formattedPrompt,
             ProviderConfig providerConfig,
             Map<String, Object> mergedLLMParameters
-    );
+    ) throws FreeplayException;
 
     String serializeForRecord(P formattedPrompt);
 

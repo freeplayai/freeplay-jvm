@@ -4,6 +4,7 @@ import ai.freeplay.client.ProviderConfig;
 import ai.freeplay.client.exceptions.FreeplayException;
 import ai.freeplay.client.internal.Http;
 import ai.freeplay.client.internal.JSONUtil;
+import ai.freeplay.client.internal.StringUtils;
 import ai.freeplay.client.internal.TemplateUtils;
 import ai.freeplay.client.model.ChatCompletionResponse;
 import ai.freeplay.client.model.ChatMessage;
@@ -13,18 +14,18 @@ import com.fasterxml.jackson.jr.ob.JSON;
 
 import java.io.IOException;
 import java.net.http.HttpResponse;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 import static ai.freeplay.client.internal.Http.parseBody;
 import static ai.freeplay.client.internal.Http.throwIfError;
+import static ai.freeplay.client.internal.StringUtils.isBlank;
 import static java.lang.String.valueOf;
 import static java.util.stream.Collectors.toList;
 
-public class OpenAIChatFlavor extends OpenAIFlavor implements ChatFlavor {
+public class OpenAIChatFlavor extends OpenAIFlavor<Collection<ChatMessage>, IndexedChatMessage> implements ChatFlavor {
 
     private static final String OPENAI_CHAT_URL = "https://api.openai.com/v1/chat/completions";
 
@@ -102,40 +103,41 @@ public class OpenAIChatFlavor extends OpenAIFlavor implements ChatFlavor {
     }
 
     @Override
-    public Stream<ChatMessage> callServiceStream(
+    public Stream<IndexedChatMessage> callServiceStream(
             Collection<ChatMessage> formattedPrompt,
             ProviderConfig providerConfig,
             Map<String, Object> mergedLLMParameters
     ) {
-        return callOpenAIStream(
+        Stream<String> messages = callOpenAIStream(
                 providerConfig,
                 OPENAI_CHAT_URL,
                 "messages",
                 mergedLLMParameters,
-                formattedPrompt,
-                Http.ResponseHandlers.chatItemCreator());
+                formattedPrompt);
+
+        AtomicReference<String> role = new AtomicReference<>();
+        Function<Map<String, Object>, IndexedChatMessage> itemCreator =
+                (Map<String, Object> choice) -> createItem(choice, role);
+
+        return messages
+                .filter(StringUtils::isNotBlank)
+                .map((String line) -> parseLine(line, itemCreator))
+                .filter(Objects::nonNull);
     }
 
     @Override
-    public String getContentFromChunk(ChatMessage chunk) {
+    public String getContentFromChunk(IndexedChatMessage chunk) {
         return chunk.getContent();
     }
 
     @Override
-    public boolean isLastChunk(ChatMessage chunk) {
-        if (chunk instanceof IndexedChatMessage) {
-            return ((IndexedChatMessage) chunk).isLast();
-        } else {
-            return true;
-        }
+    public boolean isLastChunk(IndexedChatMessage chunk) {
+        return chunk.isLast();
     }
 
     @Override
-    public boolean isComplete(ChatMessage chunk) {
-        if (chunk instanceof IndexedChatMessage) {
-            return ((IndexedChatMessage) chunk).isComplete();
-        }
-        return true;
+    public boolean isComplete(IndexedChatMessage chunk) {
+        return chunk.isComplete();
     }
 
     @Override
@@ -143,9 +145,19 @@ public class OpenAIChatFlavor extends OpenAIFlavor implements ChatFlavor {
         return JSONUtil.asString(formattedMessages);
     }
 
-    private static void validateChoices(List<Map<String, Object>> choices) throws FreeplayException {
-        if (choices.isEmpty()) {
-            throw new FreeplayException("Did not get any 'choices' back from OpenAI.");
+    private IndexedChatMessage createItem(Map<String, Object> choice, AtomicReference<String> roleReference) {
+        @SuppressWarnings("unchecked")
+        Map<String, Object> delta = (Map<String, Object>) choice.get("delta");
+        if (delta.get("role") != null) {
+            roleReference.set(valueOf(delta.get("role")));
         }
+        boolean isComplete = "stop".equals(choice.get("finish_reason"));
+        Object content = delta.get("content");
+
+        if (isBlank(content) && choice.get("finish_reason") != null) {
+            return new IndexedChatMessage(roleReference.get(), "", 0, isComplete, true);
+        }
+
+        return new IndexedChatMessage(roleReference.get(), valueOf(content), 0, isComplete, false);
     }
 }

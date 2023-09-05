@@ -4,11 +4,12 @@ import ai.freeplay.client.ProviderConfig;
 import ai.freeplay.client.exceptions.FreeplayException;
 import ai.freeplay.client.model.ChatCompletionResponse;
 import ai.freeplay.client.model.ChatMessage;
+import ai.freeplay.client.model.IndexedChatMessage;
 
 import java.util.Collection;
 import java.util.Map;
 
-public interface ChatFlavor extends Flavor<Collection<ChatMessage>, ChatMessage> {
+public interface ChatFlavor extends Flavor<Collection<ChatMessage>, IndexedChatMessage> {
     ChatCompletionResponse callChatService(
             Collection<ChatMessage> formattedPrompt,
             ProviderConfig providerConfig,

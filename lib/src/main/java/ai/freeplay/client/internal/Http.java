@@ -1,9 +1,6 @@
 package ai.freeplay.client.internal;
 
 import ai.freeplay.client.exceptions.FreeplayException;
-import ai.freeplay.client.model.ChatMessage;
-import ai.freeplay.client.model.CompletionResponse;
-import ai.freeplay.client.model.IndexedChatMessage;
 import com.fasterxml.jackson.jr.ob.JSON;
 
 import java.io.IOException;
@@ -14,22 +11,9 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandler;
 import java.net.http.HttpResponse.BodyHandlers;
-import java.net.http.HttpResponse.BodySubscriber;
-import java.net.http.HttpResponse.BodySubscribers;
-import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
-import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.concurrent.CompletionStage;
-import java.util.concurrent.Flow;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Function;
-import java.util.stream.Stream;
 
-import static ai.freeplay.client.internal.StringUtils.isBlank;
 import static java.lang.String.format;
-import static java.lang.String.valueOf;
 
 public class Http {
 
@@ -129,122 +113,4 @@ public class Http {
         }
     }
 
-    public static class ResponseHandlers {
-        public static <R> BodyHandler<Stream<R>> streamHandler(Function<Map<String, Object>, R> itemCreator) {
-            return new StreamBodyHandler<>(itemCreator);
-        }
-
-        @SuppressWarnings("unchecked")
-        public static Function<Map<String, Object>, ChatMessage> chatItemCreator() {
-            final AtomicReference<String> role = new AtomicReference<>();
-            return (Map<String, Object> choice) -> {
-                Map<String, Object> delta = (Map<String, Object>) choice.get("delta");
-                if (delta.get("role") != null) {
-                    role.set(valueOf(delta.get("role")));
-                }
-                boolean isComplete = "stop".equals(choice.get("finish_reason"));
-                Object content = delta.get("content");
-                // This logic is currently hard-coded to OpenAI's behavior
-                if (isBlank(content) && choice.get("finish_reason") != null) {
-                    return new IndexedChatMessage(role.get(), "", 0, isComplete, true);
-                }
-
-                return new IndexedChatMessage(role.get(), valueOf(content), 0, isComplete, false);
-            };
-        }
-
-        public static Function<Map<String, Object>, CompletionResponse> textItemCreator() {
-            return (Map<String, Object> choice) -> {
-                Object text = choice.get("text");
-                boolean isComplete = "stop".equals(choice.get("finish_reason"));
-
-                // This logic is currently hard-coded to OpenAI's behavior
-                if (isBlank(text) && choice.get("finish_reason") != null) {
-                    return new CompletionResponse("", isComplete, true);
-                }
-
-                return new CompletionResponse(valueOf(text), isComplete, false);
-            };
-        }
-
-        public static class StreamBodyHandler<R> implements BodyHandler<Stream<R>> {
-            private final Function<Map<String, Object>, R> itemCreator;
-
-            public StreamBodyHandler(Function<Map<String, Object>, R> itemCreator) {
-                this.itemCreator = itemCreator;
-            }
-
-            @Override
-            public BodySubscriber<Stream<R>> apply(HttpResponse.ResponseInfo responseInfo) {
-                return new ResponseHandlers.StreamBodySubscriber<>(itemCreator);
-            }
-        }
-
-        static class StreamBodySubscriber<R> implements BodySubscriber<Stream<R>> {
-            // Note on how this works: we are composing the built-in lines subscriber that will do the low level stream
-            // reading and breaking it up into lines. We then apply a mapper that parses those lines for the server-sent
-            // events (SSE) for the message chunk.
-            //
-            // The getBody() callback method is what sets up the pipeline. All other methods delegate to the "top"
-            // of the pipeline, which is the linesSubscriber. Our mapper is then automatically called downstream of that.
-
-            private final BodySubscriber<Stream<String>> linesSubscriber = BodySubscribers.ofLines(StandardCharsets.UTF_8);
-            private final Function<Map<String, Object>, R> itemCreator;
-
-            StreamBodySubscriber(Function<Map<String, Object>, R> itemCreator) {
-                this.itemCreator = itemCreator;
-            }
-
-            @Override
-            public CompletionStage<Stream<R>> getBody() {
-                return linesSubscriber.getBody()
-                        .thenApply((Stream<String> lines) ->
-                                lines
-                                        .filter(StreamBodySubscriber::emptyLine)
-                                        .map(this::parseLine)
-                                        .filter(Objects::nonNull));
-            }
-
-            @Override
-            public void onSubscribe(Flow.Subscription subscription) {
-                linesSubscriber.onSubscribe(subscription);
-            }
-
-            @Override
-            public void onNext(List<ByteBuffer> item) {
-                linesSubscriber.onNext(item);
-            }
-
-            @Override
-            public void onError(Throwable throwable) {
-                linesSubscriber.onError(throwable);
-            }
-
-            @Override
-            public void onComplete() {
-                linesSubscriber.onComplete();
-            }
-
-            private static boolean emptyLine(String line) {
-                return line.trim().length() > 0;
-            }
-
-            private R parseLine(String line) {
-                String[] field = line.split(":", 2);
-                if (field.length == 2 && "data".equals(field[0])) {
-                    if ("[DONE]".equals(field[1].trim())) {
-                        return null;
-                    } else {
-                        Map<String, Object> objectMap = JSONUtil.parseMap(field[1]);
-                        @SuppressWarnings("unchecked")
-                        List<Map<String, Object>> choices = (List<Map<String, Object>>) objectMap.get("choices");
-                        Map<String, Object> firstChoice = choices.get(0);
-                        return itemCreator.apply(firstChoice);
-                    }
-                } else {
-                    throw new FreeplayException("Got unknown line in the stream: " + line);
-                }
-            }
-        }
-    }
 }

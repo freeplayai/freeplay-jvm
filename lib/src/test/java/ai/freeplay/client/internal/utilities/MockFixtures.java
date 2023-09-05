@@ -1,9 +1,6 @@
 package ai.freeplay.client.internal.utilities;
 
 import ai.freeplay.client.internal.JSONUtil;
-import ai.freeplay.client.model.ChatMessage;
-import ai.freeplay.client.model.CompletionResponse;
-import ai.freeplay.client.model.IndexedChatMessage;
 import ai.freeplay.client.model.PromptTemplate;
 
 import java.net.http.HttpClient;
@@ -249,20 +246,29 @@ public class MockFixtures {
                 "}\n";
     }
 
-    public static Stream<CompletionResponse> getOpenAITextResponseStreamMessages() {
+    public static Stream<String> getOpenAITextResponseStreamMessages() {
         return Stream.of(
-                new CompletionResponse("Well ", false, false),
-                new CompletionResponse("hello", false, false),
-                new CompletionResponse("", false, true)
+                "data: {\"warning\":\"This model version is deprecated. Migrate before January 4, 2024 to avoid disruption of service. Learn more https://platform.openai.com/docs/deprecations\",\"id\":\"cmpl-7ujDryokBzhNQPDNatuRkMV3R1SU2\",\"object\":\"text_completion\",\"created\":1693754559,\"choices\":[{\"text\":\"Well \",\"index\":0,\"logprobs\":null,\"finish_reason\":null}],\"model\":\"text-davinci-003\"}\n\n",
+                "data: {\"warning\":\"This model version is deprecated. Migrate before January 4, 2024 to avoid disruption of service. Learn more https://platform.openai.com/docs/deprecations\",\"id\":\"cmpl-7ujDryokBzhNQPDNatuRkMV3R1SU2\",\"object\":\"text_completion\",\"created\":1693754559,\"choices\":[{\"text\":\"hello\",\"index\":0,\"logprobs\":null,\"finish_reason\":null}],\"model\":\"text-davinci-003\"}\n\n",
+                "data: {\"warning\":\"This model version is deprecated. Migrate before January 4, 2024 to avoid disruption of service. Learn more https://platform.openai.com/docs/deprecations\",\"id\":\"cmpl-7ujDryokBzhNQPDNatuRkMV3R1SU2\",\"object\":\"text_completion\",\"created\":1693754559,\"choices\":[{\"text\":\"\",\"index\":0,\"logprobs\":null,\"finish_reason\":\"length\"}],\"model\":\"text-davinci-003\"}\n\n"
         );
     }
 
-    public static Stream<? extends ChatMessage> getOpenAIChatResponseStreamMessages() {
+    public static Stream<String> getOpenAIChatResponseStreamMessages() {
         return Stream.of(
-                new IndexedChatMessage("assistant", "", 0, false, false),
-                new IndexedChatMessage("assistant", "Well ", 0, false, false),
-                new IndexedChatMessage("assistant", "hello", 0, false, false),
-                new IndexedChatMessage("assistant", "", 0, false, true)
+                "data: {\"id\": \"chatcmpl-7gy0Jd0fz6KhxaHISoAFvRovZVSkJ\", \"object\": \"chat.completion.chunk\", \"created\": 1690474787, \"model\": \"gpt-3.5-turbo-0613\", \"choices\": [{\"index\": 0, \"delta\": {\"role\": \"assistant\", \"content\": \"\"}, \"finish_reason\": null}]}\n\n",
+                "data: {\"id\": \"chatcmpl-7gy0Jd0fz6KhxaHISoAFvRovZVSkJ\", \"object\": \"chat.completion.chunk\", \"created\": 1690474787, \"model\": \"gpt-3.5-turbo-0613\", \"choices\": [{\"index\": 0, \"delta\": {\"content\": \"Well \"}, \"finish_reason\": null}] }\n\n",
+                "data: {\"id\": \"chatcmpl-7gy0Jd0fz6KhxaHISoAFvRovZVSkJ\", \"object\": \"chat.completion.chunk\", \"created\": 1690474787, \"model\": \"gpt-3.5-turbo-0613\", \"choices\": [{\"index\": 0, \"delta\": {\"content\": \"hello\"}, \"finish_reason\": null}]}\n\n",
+                "data: {\"id\": \"chatcmpl-7gy0Jd0fz6KhxaHISoAFvRovZVSkJ\", \"object\": \"chat.completion.chunk\", \"created\": 1690474787, \"model\": \"gpt-3.5-turbo-0613\", \"choices\": [{\"index\": 0, \"delta\": {\"content\": \"\"}, \"finish_reason\": \"length\"}]}"
+        );
+    }
+
+    public static Stream<String> getOpenAIChatResponseStreamMessages2() {
+        return Stream.of(
+                "data: {\"id\":\"chatcmpl-7v5w9OEPLPFKBkBw9rJQuN2craSCW\",\"object\":\"chat.completion.chunk\",\"created\":1693841873,\"model\":\"gpt-3.5-turbo-0613\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"\"},\"finish_reason\":null}]}\n\n",
+                "data: {\"id\":\"chatcmpl-7v5w9OEPLPFKBkBw9rJQuN2craSCW\",\"object\":\"chat.completion.chunk\",\"created\":1693841873,\"model\":\"gpt-3.5-turbo-0613\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"Bene \"},\"finish_reason\":null}]}\n\n",
+                "data: {\"id\":\"chatcmpl-7v5w9OEPLPFKBkBw9rJQuN2craSCW\",\"object\":\"chat.completion.chunk\",\"created\":1693841873,\"model\":\"gpt-3.5-turbo-0613\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"ciao\"},\"finish_reason\":null}]}\n\n",
+                "data: {\"id\":\"chatcmpl-7v5w9OEPLPFKBkBw9rJQuN2craSCW\",\"object\":\"chat.completion.chunk\",\"created\":1693841873,\"model\":\"gpt-3.5-turbo-0613\",\"choices\":[{\"index\":0,\"delta\":{},\"finish_reason\":\"stop\"}]}\n\n"
         );
     }
 

@@ -38,13 +38,23 @@ public class PromptTemplate {
         return content;
     }
 
-    public String getFlavorName() {return flavorName;}
+    public String getFlavorName() {
+        return flavorName;
+    }
 
-    public String getProjectVersionId() {return projectVersionId;}
+    public String getProjectVersionId() {
+        return projectVersionId;
+    }
 
-    public String getPromptTemplateId() {return promptTemplateId;}
+    public String getPromptTemplateId() {
+        return promptTemplateId;
+    }
 
-    public String getPromptTemplateVersionId() {return promptTemplateVersionId;}
+    public String getPromptTemplateVersionId() {
+        return promptTemplateVersionId;
+    }
 
-    public Map<String, Object> getLLMParameters() {return llmParameters;}
+    public Map<String, Object> getLLMParameters() {
+        return llmParameters;
+    }
 }

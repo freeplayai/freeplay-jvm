@@ -5,6 +5,8 @@ import ai.freeplay.client.flavor.ChatFlavor;
 import ai.freeplay.client.internal.CallSupport;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
 
@@ -30,7 +32,7 @@ public class ChatSession {
                 () -> new FreeplayException("Cannot find template " + templateName + " in environment " + tag + "."));
     }
 
-    public ChatSession startChat(
+    public ChatStart<IndexedChatMessage> startChat(
             Map<String, Object> variables,
             Map<String, Object> llmParameters,
             String environment,
@@ -43,11 +45,16 @@ public class ChatSession {
 
         ChatFlavor activeFlavor = callSupport.getActiveChatFlavor(flavor, targetTemplate);
         Collection<ChatMessage> formattedMessages = activeFlavor.formatPrompt(targetTemplate.getContent(), this.variables);
-        continueChat(formattedMessages, llmParameters);
+        ChatCompletionResponse response = continueChat(formattedMessages, llmParameters);
 
-        return this;
+        return new ChatStart<>(
+                this,
+                response
+                        .getFirstChoice()
+                        .orElseThrow(() -> new FreeplayException("Did not receive a choice within the chat response.")));
     }
 
+    @SuppressWarnings("UnusedReturnValue")
     public ChatCompletionResponse continueChat(ChatMessage newMessage) {
         return continueChat(List.of(newMessage), Collections.emptyMap());
     }
@@ -71,6 +78,53 @@ public class ChatSession {
             messageHistory.add(response.getFirstChoice().get());
         }
         return response;
+    }
+
+    public Stream<IndexedChatMessage> startChatStream(
+            Map<String, Object> variables,
+            Map<String, Object> llmParameters,
+            String environment,
+            String testRunId,
+            ChatFlavor flavor) {
+        this.variables = variables;
+        this.tag = environment;
+        this.testRunId = testRunId;
+
+        ChatFlavor activeFlavor = callSupport.getActiveChatFlavor(flavor, targetTemplate);
+        Collection<ChatMessage> formattedMessages =
+                activeFlavor.formatPrompt(targetTemplate.getContent(), this.variables);
+        return continueChatStream(formattedMessages, llmParameters);
+    }
+
+    public Stream<IndexedChatMessage> continueChatStream(
+            ChatMessage newMessage,
+            Map<String, Object> llmParameters
+    ) {
+        return continueChatStream(List.of(newMessage), llmParameters);
+    }
+
+    public Stream<IndexedChatMessage> continueChatStream(
+            Collection<ChatMessage> newMessages,
+            Map<String, Object> llmParameters
+    ) {
+        messageHistory.addAll(newMessages);
+        List<ChatMessage> cleanMessages = toCleanMessages(messageHistory);
+        Stream<IndexedChatMessage> response = callSupport.makeContinueChatCallStream(
+                sessionId,
+                targetTemplate,
+                cleanMessages,
+                variables,
+                llmParameters,
+                tag,
+                testRunId);
+
+        AtomicReference<String> aggregatedContent = new AtomicReference<>("");
+        return response.peek((IndexedChatMessage message) -> {
+            aggregatedContent.getAndUpdate((String previous) -> previous + message.getContent());
+            if (message.isLast()) {
+                messageHistory.add(new ChatMessage(message.getRole(), aggregatedContent.get()));
+            }
+        });
     }
 
     public List<ChatMessage> getMessageHistory() {

@@ -7,10 +7,7 @@ import ai.freeplay.client.flavor.ChatFlavor;
 import ai.freeplay.client.flavor.Flavor;
 import ai.freeplay.client.flavor.OpenAIChatFlavor;
 import ai.freeplay.client.flavor.OpenAITextFlavor;
-import ai.freeplay.client.model.ChatCompletionResponse;
-import ai.freeplay.client.model.ChatMessage;
-import ai.freeplay.client.model.CompletionResponse;
-import ai.freeplay.client.model.PromptTemplate;
+import ai.freeplay.client.model.*;
 
 import java.net.http.HttpResponse;
 import java.util.*;
@@ -149,7 +146,8 @@ public class CallSupport {
         ChatFlavor activeFlavor = getActiveChatFlavor(clientFlavor, template);
 
         long start = System.currentTimeMillis();
-        ChatCompletionResponse response = activeFlavor.callChatService(formattedMessages, providerConfig, mergedLLMParameters);
+        ChatCompletionResponse response = activeFlavor.callChatService(
+                formattedMessages, providerConfig, mergedLLMParameters);
         long end = System.currentTimeMillis();
 
         record(
@@ -176,6 +174,35 @@ public class CallSupport {
         return response;
     }
 
+    public Stream<IndexedChatMessage> makeContinueChatCallStream(
+            String sessionId,
+            PromptTemplate template,
+            Collection<ChatMessage> formattedMessages,
+            Map<String, Object> variables,
+            Map<String, Object> llmParameters,
+            String tag,
+            String testRunId
+    ) throws FreeplayException {
+        Map<String, Object> mergedLLMParameters = getMergedParameters(template, llmParameters);
+        ChatFlavor activeFlavor = getActiveChatFlavor(clientFlavor, template);
+
+        long start = System.currentTimeMillis();
+        Stream<IndexedChatMessage> responseStream = activeFlavor.callServiceStream(
+                formattedMessages, providerConfig, mergedLLMParameters);
+
+        return handleStream(
+                sessionId,
+                template,
+                variables,
+                tag,
+                testRunId,
+                mergedLLMParameters,
+                activeFlavor,
+                formattedMessages,
+                start,
+                responseStream);
+    }
+
     public <P, R> Stream<R> makeCallStream(
             String sessionId,
             PromptTemplate template,
@@ -193,13 +220,47 @@ public class CallSupport {
 
         long start = System.currentTimeMillis();
         Stream<R> responseStream = activeFlavor.callServiceStream(formattedPrompt, providerConfig, mergedLLMParameters);
-        long end = System.currentTimeMillis();
 
+        return handleStream(
+                sessionId,
+                template,
+                variables,
+                tag,
+                testRunId,
+                mergedLLMParameters,
+                activeFlavor,
+                formattedPrompt,
+                start,
+                responseStream);
+    }
+
+    public ChatFlavor getActiveChatFlavor(Flavor<?, ?> flavor, PromptTemplate prompt) {
+        Flavor<?, ?> activeFlavor = getActiveFlavor(flavor, prompt);
+
+        if (!(activeFlavor instanceof ChatFlavor)) {
+            throw new FreeplayException("Chat sessions must use an instance of ChatFlavor");
+        }
+        return (ChatFlavor) activeFlavor;
+    }
+
+    private <P, R> Stream<R> handleStream(
+            String sessionId,
+            PromptTemplate template,
+            Map<String, Object> variables,
+            String tag,
+            String testRunId,
+            Map<String, Object> mergedLLMParameters,
+            Flavor<P, R> activeFlavor,
+            P formattedPrompt,
+            long start,
+            Stream<R> responseStream
+    ) {
         AtomicReference<String> aggregatedContent = new AtomicReference<>("");
         return responseStream.
                 peek((R chunk) -> {
                     aggregatedContent.getAndUpdate((String previous) -> previous + activeFlavor.getContentFromChunk(chunk));
                     if (activeFlavor.isLastChunk(chunk)) {
+                        long end = System.currentTimeMillis();
                         record(
                                 new PromptInfo(
                                         template.getPromptTemplateVersionId(),
@@ -269,16 +330,10 @@ public class CallSupport {
         }
     }
 
-    public ChatFlavor getActiveChatFlavor(Flavor<?, ?> flavor, PromptTemplate prompt) {
-        Flavor<?, ?> activeFlavor = getActiveFlavor(flavor, prompt);
-
-        if (!(activeFlavor instanceof ChatFlavor)) {
-            throw new FreeplayException("Chat sessions must use an instance of ChatFlavor");
-        }
-        return (ChatFlavor) activeFlavor;
-    }
-
-    private Map<String, Object> getMergedParameters(PromptTemplate promptTemplate, Map<String, Object> callLLMParameters) {
+    private Map<String, Object> getMergedParameters(
+            PromptTemplate promptTemplate,
+            Map<String, Object> callLLMParameters
+    ) {
         Map<String, Object> merged = new HashMap<>(16);
         merged.putAll(promptTemplate.getLLMParameters());
         merged.putAll(clientLLMParameters);
