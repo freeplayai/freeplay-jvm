@@ -2,7 +2,9 @@ package ai.freeplay.example.java;
 
 import ai.freeplay.client.Freeplay;
 import ai.freeplay.client.ProviderConfig.OpenAIProviderConfig;
-import ai.freeplay.client.model.*;
+import ai.freeplay.client.model.ChatMessage;
+import ai.freeplay.client.model.ChatStart;
+import ai.freeplay.client.model.IndexedChatMessage;
 
 import java.util.Collections;
 import java.util.Map;
@@ -24,7 +26,6 @@ public class ContinuousChatStreamCompletion {
         Map<String, Object> llmParameters = Collections.emptyMap();
         ChatStart<Stream<IndexedChatMessage>> chatStart = fpClient.startChatStream(
                 projectId,
-                null,
                 "my-chat-start",
                 Map.of("question", "why isn't my sink working?"),
                 llmParameters,
