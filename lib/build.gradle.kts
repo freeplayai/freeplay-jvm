@@ -4,7 +4,7 @@ plugins {
     signing
 }
 
-version = "0.0.1"
+version = "0.2.6"
 group = "ai.freeplay"
 
 repositories {
@@ -47,7 +47,7 @@ publishing {
 
             pom {
                 name.set("Freeplay Java SDK")
-                description.set("Freeplay Java SDK used to interact with the Freeplay API")
+                description.set("Foreplay Java SDK used to interact with the Freeplay API")
                 url.set("https://freeplay.ai")
                 licenses {
                     license {
