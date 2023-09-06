@@ -120,9 +120,9 @@ public class CallSupport {
 
         P formattedPrompt = activeFlavor.formatPrompt(template.getContent(), variables);
 
-        long start = System.currentTimeMillis();
+        long start = System.currentTimeMillis() / 1000;
         CompletionResponse response = activeFlavor.callService(formattedPrompt, providerConfig, mergedLLMParameters);
-        long end = System.currentTimeMillis();
+        long end = System.currentTimeMillis() / 1000;
 
         record(
                 new PromptInfo(
@@ -160,10 +160,10 @@ public class CallSupport {
         Map<String, Object> mergedLLMParameters = getMergedParameters(template, llmParameters);
         ChatFlavor activeFlavor = getActiveChatFlavor(clientFlavor, template);
 
-        long start = System.currentTimeMillis();
+        long start = System.currentTimeMillis() / 1000;
         ChatCompletionResponse response = activeFlavor.callChatService(
                 formattedMessages, providerConfig, mergedLLMParameters);
-        long end = System.currentTimeMillis();
+        long end = System.currentTimeMillis() / 1000;
 
         record(
                 new PromptInfo(
@@ -201,7 +201,7 @@ public class CallSupport {
         Map<String, Object> mergedLLMParameters = getMergedParameters(template, llmParameters);
         ChatFlavor activeFlavor = getActiveChatFlavor(clientFlavor, template);
 
-        long start = System.currentTimeMillis();
+        long start = System.currentTimeMillis() / 1000;
         Stream<IndexedChatMessage> responseStream = activeFlavor.callServiceStream(
                 formattedMessages, providerConfig, mergedLLMParameters);
 
@@ -233,7 +233,7 @@ public class CallSupport {
 
         P formattedPrompt = activeFlavor.formatPrompt(template.getContent(), variables);
 
-        long start = System.currentTimeMillis();
+        long start = System.currentTimeMillis() / 1000;
         Stream<R> responseStream = activeFlavor.callServiceStream(formattedPrompt, providerConfig, mergedLLMParameters);
 
         return handleStream(
@@ -275,7 +275,7 @@ public class CallSupport {
                 peek((R chunk) -> {
                     aggregatedContent.getAndUpdate((String previous) -> previous + activeFlavor.getContentFromChunk(chunk));
                     if (activeFlavor.isLastChunk(chunk)) {
-                        long end = System.currentTimeMillis();
+                        long end = System.currentTimeMillis() / 1000;
                         record(
                                 new PromptInfo(
                                         template.getPromptTemplateVersionId(),
