@@ -108,6 +108,13 @@ public class MockFixtures {
                 .thenReturn(response(200, JSONUtil.asString(payload)));
     }
 
+    public static void mockCreateTestRun(HttpClient mockedClient) throws Exception {
+        when(request(mockedClient, "POST", "projects/[^/]*/test-runs"))
+                .thenReturn(
+                        response(201, getTestRunResponsePayload(UUID.randomUUID().toString())));
+    }
+
+
     public static void mockOpenAITextCall(HttpClient mockedClient, String completion) throws Exception {
         when(request(mockedClient, "api.openai.com", "POST", "v1/completions"))
                 .thenReturn(
@@ -156,6 +163,17 @@ public class MockFixtures {
         return JSONUtil.asString(
                 object(
                         "session_id", sessionId
+                ));
+    }
+
+    public static String getTestRunResponsePayload(String testRunId) {
+        return JSONUtil.asString(
+                object(
+                        "test_run_id", testRunId,
+                        "inputs", array(
+                                object("question", "Why isn't my sink working?"),
+                                object("question", "Why isn't my internet working?")
+                        )
                 ));
     }
 

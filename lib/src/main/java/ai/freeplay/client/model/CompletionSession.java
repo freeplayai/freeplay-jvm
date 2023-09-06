@@ -18,6 +18,7 @@ public class CompletionSession {
     private final String sessionId;
     private final Collection<PromptTemplate> promptTemplates;
     private final String tag;
+    private final String testRunId;
 
     public CompletionSession(
             CallSupport callSupport,
@@ -25,10 +26,21 @@ public class CompletionSession {
             Collection<PromptTemplate> prompts,
             String environment
     ) {
+        this(callSupport, sessionId, prompts, environment, null);
+    }
+
+    public CompletionSession(
+            CallSupport callSupport,
+            String sessionId,
+            Collection<PromptTemplate> prompts,
+            String environment,
+            String testRunId
+    ) {
         this.callSupport = callSupport;
         this.sessionId = sessionId;
         this.promptTemplates = prompts;
         this.tag = environment;
+        this.testRunId = testRunId;
     }
 
     public String getSessionId() {
@@ -39,7 +51,7 @@ public class CompletionSession {
             String templateName,
             Map<String, Object> variables
     ) {
-        return getCompletion(templateName, variables, Collections.emptyMap(), null, null);
+        return getCompletion(templateName, variables, Collections.emptyMap(), null);
     }
 
     public CompletionResponse getCompletion(
@@ -47,14 +59,13 @@ public class CompletionSession {
             Map<String, Object> variables,
             Map<String, Object> llmParameters
     ) {
-        return getCompletion(templateName, variables, llmParameters, null, null);
+        return getCompletion(templateName, variables, llmParameters, null);
     }
 
     public <P, R> CompletionResponse getCompletion(
             String templateName,
             Map<String, Object> variables,
             Map<String, Object> llmParameters,
-            String testRunId,
             Flavor<P, R> flavor
     ) {
         return callSupport.prepareAndMakeCall(

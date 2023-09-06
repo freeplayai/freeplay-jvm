@@ -82,6 +82,21 @@ public class CallSupport {
                 .findFirst();
     }
 
+    public TestRun createTestRun(String projectId, String environment, String testListName) {
+        String url = getUrl("projects/%s/test-runs", projectId);
+        HttpResponse<String> response = Http.postJsonWithBearer(
+                url,
+                Map.of("playlist_name", testListName),
+                freeplayApiKey
+        );
+        Map<String, Object> objectMap = Http.parseBody(response);
+
+        String testRunId = valueOf(objectMap.get("test_run_id"));
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> inputs = (List<Map<String, Object>>) objectMap.get("inputs");
+        return new TestRun(this, projectId, environment, testRunId, inputs);
+    }
+
     @SuppressWarnings("unchecked")
     public <P, R> CompletionResponse prepareAndMakeCall(
             String sessionId,

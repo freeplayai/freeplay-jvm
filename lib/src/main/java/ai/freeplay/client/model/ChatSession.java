@@ -18,14 +18,15 @@ public class ChatSession {
 
     private Map<String, Object> variables;
     private String tag;
-    private String testRunId = null;
+    private final String testRunId = null;
 
     public ChatSession(
             CallSupport callSupport,
             String sessionId,
             Collection<PromptTemplate> prompts,
             String templateName,
-            String tag) throws FreeplayException {
+            String tag
+    ) throws FreeplayException {
         this.callSupport = callSupport;
         this.sessionId = sessionId;
         this.targetTemplate = callSupport.findPrompt(prompts, templateName).orElseThrow(
@@ -36,12 +37,10 @@ public class ChatSession {
             Map<String, Object> variables,
             Map<String, Object> llmParameters,
             String environment,
-            String testRunId,
             ChatFlavor flavor
     ) {
         this.variables = variables;
         this.tag = environment;
-        this.testRunId = testRunId;
 
         ChatFlavor activeFlavor = callSupport.getActiveChatFlavor(flavor, targetTemplate);
         Collection<ChatMessage> formattedMessages = activeFlavor.formatPrompt(targetTemplate.getContent(), this.variables);
@@ -84,11 +83,9 @@ public class ChatSession {
             Map<String, Object> variables,
             Map<String, Object> llmParameters,
             String environment,
-            String testRunId,
             ChatFlavor flavor) {
         this.variables = variables;
         this.tag = environment;
-        this.testRunId = testRunId;
 
         ChatFlavor activeFlavor = callSupport.getActiveChatFlavor(flavor, targetTemplate);
         Collection<ChatMessage> formattedMessages =

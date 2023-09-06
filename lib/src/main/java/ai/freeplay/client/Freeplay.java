@@ -113,7 +113,6 @@ public class Freeplay {
                 variables,
                 llmParameters,
                 environment,
-                null,   // testRunId
                 flavor
         );
     }
@@ -145,8 +144,11 @@ public class Freeplay {
                         variables,
                         llmParameters,
                         environment,
-                        null,   // testRunId
                         flavor
                 ));
+    }
+
+    public TestRun createTestRun(String projectId, String environment, String testListName) {
+        return callSupport.createTestRun(projectId, environment, testListName);
     }
 }
