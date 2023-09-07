@@ -9,7 +9,7 @@ import java.util.Map;
 
 import static java.lang.String.format;
 
-public class ChatCompletion {
+public class OpenAIChatCompletion {
 
     public static void main(String[] args) {
         String openaiApiKey = System.getenv("OPENAI_API_KEY");

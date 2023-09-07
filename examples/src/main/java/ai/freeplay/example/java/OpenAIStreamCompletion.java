@@ -12,7 +12,7 @@ import java.util.stream.Stream;
 
 import static java.lang.String.format;
 
-public class StreamCompletion {
+public class OpenAIStreamCompletion {
 
     public static void main(String[] args) {
         String openaiApiKey = System.getenv("OPENAI_API_KEY");

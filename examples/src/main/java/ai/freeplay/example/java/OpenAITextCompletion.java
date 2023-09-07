@@ -8,7 +8,7 @@ import java.util.Map;
 
 import static java.lang.String.format;
 
-public class TextCompletion {
+public class OpenAITextCompletion {
 
     public static void main(String[] args) {
         String openaiApiKey = System.getenv("OPENAI_API_KEY");

@@ -58,12 +58,22 @@ public class MockMethods {
         ArgumentCaptor<HttpRequest> recordRequestArg = ArgumentCaptor.forClass(HttpRequest.class);
         verify(mockedClient, times(totalCalls)).send(recordRequestArg.capture(), any());
 
-        List<HttpRequest> bodyPublishers = recordRequestArg.getAllValues();
-        assertEquals(totalCalls, bodyPublishers.size());
+        List<HttpRequest> requests = recordRequestArg.getAllValues();
+        assertEquals(totalCalls, requests.size());
 
-        Optional<HttpRequest.BodyPublisher> recordBodyPublisher = bodyPublishers.get(index).bodyPublisher();
+        Optional<HttpRequest.BodyPublisher> recordBodyPublisher = requests.get(index).bodyPublisher();
         assertTrue(recordBodyPublisher.isPresent());
 
         return stringFromBodyPublisher(recordBodyPublisher.get());
+    }
+
+    public static HttpRequest getCapturedRequest(HttpClient mockedClient, int totalCalls, int index) throws IOException, InterruptedException {
+        ArgumentCaptor<HttpRequest> recordRequestArg = ArgumentCaptor.forClass(HttpRequest.class);
+        verify(mockedClient, times(totalCalls)).send(recordRequestArg.capture(), any());
+
+        List<HttpRequest> requests = recordRequestArg.getAllValues();
+        assertEquals(totalCalls, requests.size());
+
+        return requests.get(index);
     }
 }

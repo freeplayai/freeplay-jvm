@@ -21,7 +21,7 @@ public interface Flavor<P, R> {
     CompletionResponse callService(
             P formattedPrompt,
             ProviderConfig providerConfig,
-            Map<String, Object> llmParameters
+            Map<String, Object> mergedLLMParameters
     ) throws FreeplayException;
 
     Stream<R> callServiceStream(

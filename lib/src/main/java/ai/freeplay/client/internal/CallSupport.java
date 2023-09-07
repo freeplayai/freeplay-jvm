@@ -3,10 +3,7 @@ package ai.freeplay.client.internal;
 import ai.freeplay.client.Freeplay;
 import ai.freeplay.client.ProviderConfig;
 import ai.freeplay.client.exceptions.FreeplayException;
-import ai.freeplay.client.flavor.ChatFlavor;
-import ai.freeplay.client.flavor.Flavor;
-import ai.freeplay.client.flavor.OpenAIChatFlavor;
-import ai.freeplay.client.flavor.OpenAITextFlavor;
+import ai.freeplay.client.flavor.*;
 import ai.freeplay.client.model.*;
 
 import java.net.http.HttpResponse;
@@ -336,6 +333,8 @@ public class CallSupport {
 
         String flavorName = prompt.getFlavorName();
         switch (flavorName) {
+            case "anthropic_text":
+                return new AnthropicFlavor();
             case "openai_text":
                 return new OpenAITextFlavor();
             case "openai_chat":

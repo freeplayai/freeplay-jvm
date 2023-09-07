@@ -11,7 +11,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandler;
 import java.net.http.HttpResponse.BodyHandlers;
-import java.util.Map;
+import java.util.*;
 
 import static java.lang.String.format;
 
@@ -44,7 +44,41 @@ public class Http {
             String url,
             String body,
             String apiKey,
-            BodyHandler<R> responseBodyHandler
+            BodyHandler<R> responseBodyHandler,
+            String... headers
+    ) throws FreeplayException {
+        List<String> allHeadersArray = new ArrayList<>(headers.length + 3);
+        Collections.addAll(allHeadersArray, headers);
+        allHeadersArray.add("Authorization");
+        allHeadersArray.add(format("Bearer %s", apiKey));
+        String[] allHeaders = allHeadersArray.toArray(new String[]{});
+
+        return postJson(url, body, responseBodyHandler, allHeaders);
+    }
+
+    public static HttpResponse<String> postJson(
+            String url,
+            Map<String, Object> body,
+            String... headers
+    ) throws FreeplayException {
+        return postJson(url, body, BodyHandlers.ofString(), headers);
+    }
+
+    public static <R> HttpResponse<R> postJson(
+            String url,
+            Map<String, Object> body,
+            BodyHandler<R> responseBodyHandler,
+            String... headers
+    ) throws FreeplayException {
+        String jsonString = JSONUtil.asString(body);
+        return postJson(url, jsonString, responseBodyHandler, headers);
+    }
+
+    public static <R> HttpResponse<R> postJson(
+            String url,
+            String body,
+            BodyHandler<R> responseBodyHandler,
+            String... headers
     ) throws FreeplayException {
         HttpRequest.BodyPublisher bodyPublisher = body != null ?
                 HttpRequest.BodyPublishers.ofString(body) :
@@ -54,13 +88,10 @@ public class Http {
             request = HttpRequest
                     .newBuilder(new URI(url))
                     .header("Content-Type", "application/json")
+                    .headers(headers)
                     .POST(bodyPublisher);
         } catch (URISyntaxException e) {
             throw new FreeplayException("Error in URL during POST request. ", e);
-        }
-
-        if (apiKey != null) {
-            request.header("Authorization", format("Bearer %s", apiKey));
         }
 
         try {

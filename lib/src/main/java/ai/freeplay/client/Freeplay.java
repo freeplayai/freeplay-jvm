@@ -65,6 +65,17 @@ public class Freeplay {
             Map<String, Object> llmParameters,
             String environment
     ) throws FreeplayException {
+        return getCompletion(projectId, templateName, variables, llmParameters, environment, null);
+    }
+
+    public CompletionResponse getCompletion(
+            String projectId,
+            String templateName,
+            Map<String, Object> variables,
+            Map<String, Object> llmParameters,
+            String environment,
+            Flavor<?, ?> flavor
+    ) throws FreeplayException {
         String sessionId = callSupport.createSession(projectId, environment);
         Collection<PromptTemplate> prompts = callSupport.getPrompts(projectId, environment);
         return callSupport.prepareAndMakeCall(
@@ -75,7 +86,7 @@ public class Freeplay {
                 llmParameters,
                 environment,
                 null,   // testRunId
-                null    // flavor
+                flavor
         );
     }
 
