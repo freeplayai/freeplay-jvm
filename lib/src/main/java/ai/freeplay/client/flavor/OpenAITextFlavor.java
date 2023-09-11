@@ -36,11 +36,11 @@ public class OpenAITextFlavor extends OpenAIFlavor<String, CompletionResponse> {
     public CompletionResponse callService(
             String formattedPrompt,
             ProviderConfig providerConfig,
-            Map<String, Object> llmParameters
+            Map<String, Object> mergedLLMParameters
     ) throws FreeplayException {
-        validateParameters(llmParameters);
+        validateParameters(mergedLLMParameters);
 
-        Map<String, Object> bodyMap = new HashMap<>(llmParameters);
+        Map<String, Object> bodyMap = new HashMap<>(mergedLLMParameters);
         bodyMap.put("prompt", formattedPrompt);
 
         HttpResponse<String> response;

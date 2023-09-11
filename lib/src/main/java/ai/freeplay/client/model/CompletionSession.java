@@ -81,6 +81,21 @@ public class CompletionSession {
 
     public <P, R> Stream<R> getCompletionStream(
             String templateName,
+            Map<String, Object> variables
+    ) {
+        return getCompletionStream(templateName, variables, Collections.emptyMap(), null, null);
+    }
+
+    public <P, R> Stream<R> getCompletionStream(
+            String templateName,
+            Map<String, Object> variables,
+            Map<String, Object> llmParameters
+    ) {
+        return getCompletionStream(templateName, variables, llmParameters, null, null);
+    }
+
+    public <P, R> Stream<R> getCompletionStream(
+            String templateName,
             Map<String, Object> variables,
             Map<String, Object> llmParameters,
             String testRunId,

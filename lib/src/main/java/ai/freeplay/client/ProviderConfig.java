@@ -15,4 +15,16 @@ public interface ProviderConfig {
             return apiKey;
         }
     }
+
+    class AnthropicProviderConfig implements ProviderConfig {
+        private final String apiKey;
+
+        public AnthropicProviderConfig(String apiKey) {
+            this.apiKey = apiKey;
+        }
+
+        public String getApiKey() {
+            return apiKey;
+        }
+    }
 }

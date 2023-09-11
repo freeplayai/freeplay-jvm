@@ -58,9 +58,9 @@ public class OpenAIChatFlavor extends OpenAIFlavor<Collection<ChatMessage>, Inde
     public CompletionResponse callService(
             Collection<ChatMessage> formattedMessages,
             ProviderConfig providerConfig,
-            Map<String, Object> llmParameters
+            Map<String, Object> mergedLLMParameters
     ) throws FreeplayException {
-        ChatCompletionResponse chatResponse = callChatService(formattedMessages, providerConfig, llmParameters);
+        ChatCompletionResponse chatResponse = callChatService(formattedMessages, providerConfig, mergedLLMParameters);
         return new CompletionResponse(chatResponse.getContent(), chatResponse.isComplete(), true);
     }
 
