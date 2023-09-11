@@ -5,8 +5,8 @@ import java.util.Map;
 public class CallInfo {
     private final String sessionId;
     private final String testRunId;
-    private final float startTime;
-    private final float endTime;
+    private final double startTime;
+    private final double endTime;
     private final String tag;
     private final Map<String, Object> inputs;
     private final String promptContent;
@@ -16,8 +16,8 @@ public class CallInfo {
     public CallInfo(
             String sessionId,
             String testRunId,
-            float startTime,
-            float endTime,
+            double startTime,
+            double endTime,
             String tag,
             Map<String, Object> inputs,
             String promptContent,
@@ -42,11 +42,11 @@ public class CallInfo {
         return testRunId;
     }
 
-    public float getStartTime() {
+    public double getStartTime() {
         return startTime;
     }
 
-    public float getEndTime() {
+    public double getEndTime() {
         return endTime;
     }
 

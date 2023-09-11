@@ -117,9 +117,9 @@ public class CallSupport {
 
         P formattedPrompt = activeFlavor.formatPrompt(template.getContent(), variables);
 
-        long start = System.currentTimeMillis() / 1000;
+        double start = System.nanoTime() / 1e9;
         CompletionResponse response = activeFlavor.callService(formattedPrompt, providerConfig, mergedLLMParameters);
-        long end = System.currentTimeMillis() / 1000;
+        double end = System.nanoTime() / 1e9;
 
         record(
                 new PromptInfo(
@@ -157,10 +157,10 @@ public class CallSupport {
         Map<String, Object> mergedLLMParameters = getMergedParameters(template, llmParameters);
         ChatFlavor activeFlavor = getActiveChatFlavor(clientFlavor, template);
 
-        long start = System.currentTimeMillis() / 1000;
+        double start = System.nanoTime() / 1e9;
         ChatCompletionResponse response = activeFlavor.callChatService(
                 formattedMessages, providerConfig, mergedLLMParameters);
-        long end = System.currentTimeMillis() / 1000;
+        double end = System.nanoTime() / 1e9;
 
         record(
                 new PromptInfo(
@@ -198,7 +198,7 @@ public class CallSupport {
         Map<String, Object> mergedLLMParameters = getMergedParameters(template, llmParameters);
         ChatFlavor activeFlavor = getActiveChatFlavor(clientFlavor, template);
 
-        long start = System.currentTimeMillis() / 1000;
+        double start = System.nanoTime() / 1e9;
         Stream<IndexedChatMessage> responseStream = activeFlavor.callServiceStream(
                 formattedMessages, providerConfig, mergedLLMParameters);
 
@@ -230,7 +230,7 @@ public class CallSupport {
 
         P formattedPrompt = activeFlavor.formatPrompt(template.getContent(), variables);
 
-        long start = System.currentTimeMillis() / 1000;
+        double start = System.nanoTime() / 1e9;
         Stream<R> responseStream = activeFlavor.callServiceStream(formattedPrompt, providerConfig, mergedLLMParameters);
 
         return handleStream(
@@ -264,7 +264,7 @@ public class CallSupport {
             Map<String, Object> mergedLLMParameters,
             Flavor<P, R> activeFlavor,
             P formattedPrompt,
-            long start,
+            double start,
             Stream<R> responseStream
     ) {
         AtomicReference<String> aggregatedContent = new AtomicReference<>("");
@@ -272,7 +272,7 @@ public class CallSupport {
                 peek((R chunk) -> {
                     aggregatedContent.getAndUpdate((String previous) -> previous + activeFlavor.getContentFromChunk(chunk));
                     if (activeFlavor.isLastChunk(chunk)) {
-                        long end = System.currentTimeMillis() / 1000;
+                        double end = System.nanoTime() / 1e9;
                         record(
                                 new PromptInfo(
                                         template.getPromptTemplateVersionId(),
