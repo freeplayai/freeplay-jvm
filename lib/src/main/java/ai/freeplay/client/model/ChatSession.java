@@ -72,7 +72,8 @@ public class ChatSession {
                 variables,
                 llmParameters,
                 tag,
-                testRunId);
+                testRunId,
+                null);
         if (response.getFirstChoice().isPresent()) {
             messageHistory.add(response.getFirstChoice().get());
         }

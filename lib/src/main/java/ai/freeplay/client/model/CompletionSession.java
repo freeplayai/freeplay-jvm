@@ -1,17 +1,13 @@
 package ai.freeplay.client.model;
 
 import ai.freeplay.client.exceptions.FreeplayException;
-import ai.freeplay.client.flavor.ChatFlavor;
 import ai.freeplay.client.flavor.Flavor;
 import ai.freeplay.client.internal.CallSupport;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Stream;
-
-import static java.lang.String.format;
 
 public class CompletionSession {
     private final CallSupport callSupport;
@@ -51,7 +47,7 @@ public class CompletionSession {
             String templateName,
             Map<String, Object> variables
     ) {
-        return getCompletion(templateName, variables, Collections.emptyMap(), null);
+        return getCompletion(templateName, variables, Collections.emptyMap(), null, null);
     }
 
     public CompletionResponse getCompletion(
@@ -59,7 +55,16 @@ public class CompletionSession {
             Map<String, Object> variables,
             Map<String, Object> llmParameters
     ) {
-        return getCompletion(templateName, variables, llmParameters, null);
+        return getCompletion(templateName, variables, llmParameters, null, null);
+    }
+
+    public <P, R> CompletionResponse getCompletion(
+            String templateName,
+            Map<String, Object> variables,
+            Map<String, Object> llmParameters,
+            PromptProcessor<P> promptProcessor
+    ) {
+        return getCompletion(templateName, variables, llmParameters, null, promptProcessor);
     }
 
     public <P, R> CompletionResponse getCompletion(
@@ -68,6 +73,16 @@ public class CompletionSession {
             Map<String, Object> llmParameters,
             Flavor<P, R> flavor
     ) {
+        return getCompletion(templateName, variables, llmParameters, flavor, null);
+    }
+
+    public <P, R> CompletionResponse getCompletion(
+            String templateName,
+            Map<String, Object> variables,
+            Map<String, Object> llmParameters,
+            Flavor<P, R> flavor,
+            PromptProcessor<P> promptProcessor
+    ) {
         return callSupport.prepareAndMakeCall(
                 getSessionId(), promptTemplates,
                 templateName,
@@ -75,7 +90,8 @@ public class CompletionSession {
                 llmParameters,
                 tag,
                 testRunId,
-                flavor
+                flavor,
+                promptProcessor
         );
     }
 
@@ -122,7 +138,7 @@ public class CompletionSession {
             String templateName,
             Map<String, Object> variables
     ) {
-        return getChatCompletion(templateName, variables, Collections.emptyMap(), null, null);
+        return getChatCompletion(templateName, variables, Collections.emptyMap(), null, null, null);
     }
 
     @SuppressWarnings("unused")
@@ -131,32 +147,35 @@ public class CompletionSession {
             Map<String, Object> variables,
             Map<String, Object> llmParameters
     ) {
-        return getChatCompletion(templateName, variables, llmParameters, null, null);
+        return getChatCompletion(templateName, variables, llmParameters, null, null, null);
     }
 
-    @SuppressWarnings("unused")
-    public <P, R> ChatCompletionResponse getChatCompletion(
+    public ChatCompletionResponse getChatCompletion(
+            String templateName,
+            Map<String, Object> variables,
+            Map<String, Object> llmParameters,
+            ChatPromptProcessor promptProcessor
+    ) {
+        return getChatCompletion(templateName, variables, llmParameters, null, null, promptProcessor);
+    }
+
+    public ChatCompletionResponse getChatCompletion(
             String templateName,
             Map<String, Object> variables,
             Map<String, Object> llmParameters,
             String testRunId,
-            Flavor<P, R> flavor
+            Flavor<ChatMessage, IndexedChatMessage> flavor,
+            ChatPromptProcessor promptProcessor
     ) {
-        Optional<PromptTemplate> maybePrompt = callSupport.findPrompt(promptTemplates, templateName);
-        return maybePrompt.map((PromptTemplate prompt) -> {
-            ChatFlavor activeFlavor = callSupport.getActiveChatFlavor(flavor, prompt);
-            Collection<ChatMessage> formattedPrompt = activeFlavor.formatPrompt(prompt.getContent(), variables);
-            return callSupport.makeContinueChatCall(
-                    getSessionId(),
-                    prompt,
-                    formattedPrompt,
-                    variables,
-                    llmParameters,
-                    tag,
-                    testRunId
-            );
-        }).orElseThrow(() ->
-                new FreeplayException(format("Prompt template %s not found in environment %s.", templateName, tag))
-        );
+        return callSupport.makeContinueChatCall(
+                sessionId,
+                promptTemplates,
+                templateName,
+                variables,
+                llmParameters,
+                tag,
+                testRunId,
+                flavor,
+                promptProcessor);
     }
 }
