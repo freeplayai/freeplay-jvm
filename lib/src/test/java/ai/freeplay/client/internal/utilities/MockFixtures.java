@@ -389,4 +389,10 @@ public class MockFixtures {
     public static String unescapeExpected(String completion1) {
         return completion1.replace("\\n", "\n");
     }
+
+    @SuppressWarnings("unchecked")
+    public static List<Object> asList(Object openAiRequestBody) {
+        return (List<Object>) openAiRequestBody;
+    }
+
 }

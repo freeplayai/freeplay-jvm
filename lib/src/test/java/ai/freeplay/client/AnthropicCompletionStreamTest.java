@@ -18,6 +18,7 @@ import java.util.stream.Stream;
 
 import static ai.freeplay.client.internal.utilities.MockFixtures.*;
 import static ai.freeplay.client.internal.utilities.MockMethods.getCapturedBodyAsMap;
+import static ai.freeplay.client.internal.utilities.PromptProcessors.testTextProcessor;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 
@@ -66,6 +67,49 @@ public class AnthropicCompletionStreamTest {
             Map<String, Object> recordBodyMap = getCapturedBodyAsMap(mockedClient, 4, 3);
             assertEquals("Answer this question: why isn't my sink working?", recordBodyMap.get("prompt_content"));
             assertEquals(" Oh dear, really", recordBodyMap.get("return_content"));
+        }
+    }
+
+    @Test
+    public void textCompletionHandlesProcessor() throws Exception {
+        String templateName = "my-prompt";
+        String textPromptContent = "Answer this question: {{question}}";
+
+        mockCreateSession(mockedClient);
+        mockGetPrompts(mockedClient, templateName, textPromptContent, Collections.emptyMap(), "anthropic_text");
+        mockAnthropicTextCallStream(mockedClient);
+
+        try (MockedStatic<HttpClient> httpClientClass = Mockito.mockStatic(HttpClient.class)) {
+            httpClientClass.when(HttpClient::newHttpClient).thenReturn(mockedClient);
+
+            Freeplay fpClient = new Freeplay(MockFixtures.freeplayApiKey, baseUrl, new AnthropicProviderConfig(anthropicApiKey));
+            CompletionSession session = fpClient.createSession(projectId, "latest");
+            Stream<CompletionResponse> responseStream = session.getCompletionStream(
+                    "my-prompt",
+                    Map.of("question", "why isn't my sink working?"),
+                    Map.of(
+                            "model", MODEL_CLAUDE_2,
+                            "max_tokens_to_sample", 64
+                    ),
+                    null,
+                    testTextProcessor
+            );
+
+            @SuppressWarnings("unused")
+            List<CompletionResponse> chunks = responseStream.collect(Collectors.toList());
+
+            // Modified OpenAI call
+            Map<String, Object> openAiRequestBody = getCapturedBodyAsMap(mockedClient, 4, 2);
+            assertEquals(
+                    "\n\nHuman: PREPENDED_TEXT Answer this question: why isn't my sink working? \n\nAssistant:",
+                    openAiRequestBody.get("prompt"));
+
+            // Record call
+            Map<String, Object> recordBodyMap = getCapturedBodyAsMap(mockedClient, 4, 3);
+            assertEquals(
+                    "PREPENDED_TEXT Answer this question: why isn't my sink working?",
+                    recordBodyMap.get("prompt_content"));
+
         }
     }
 }

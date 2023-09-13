@@ -30,9 +30,7 @@ public class OpenAIStreamCompletion {
         Stream<ChatMessage> completionStream = session.getCompletionStream(
                 "my-chat-start",
                 Map.of("question", "why isn't my sink working?"),
-                llmParameters,
-                null,
-                null
+                llmParameters
         );
         completionStream.forEach((ChatMessage chunk) -> {
             System.out.printf("Message [%s]: %s%n", chunk.getRole(), chunk.getContent());
@@ -41,9 +39,7 @@ public class OpenAIStreamCompletion {
         Stream<CompletionResponse> textStream = session.getCompletionStream(
                 "my-prompt",
                 Map.of("question", "why isn't my sink working?"),
-                llmParameters,
-                null,
-                null
+                llmParameters
         );
         textStream.forEach((CompletionResponse chunk) -> {
             System.out.printf("Message [TEXT]: %s%n", chunk.getContent());

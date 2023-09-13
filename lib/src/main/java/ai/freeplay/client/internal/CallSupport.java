@@ -5,6 +5,8 @@ import ai.freeplay.client.ProviderConfig;
 import ai.freeplay.client.exceptions.FreeplayException;
 import ai.freeplay.client.flavor.*;
 import ai.freeplay.client.model.*;
+import ai.freeplay.client.processor.ChatPromptProcessor;
+import ai.freeplay.client.processor.PromptProcessor;
 
 import java.net.http.HttpResponse;
 import java.util.*;
@@ -103,7 +105,8 @@ public class CallSupport {
             Map<String, Object> llmParameters,
             String tag,
             String testRunId,
-            Flavor<P, R> flavor
+            Flavor<P, R> flavor,
+            PromptProcessor<P> promptProcessor
     ) throws FreeplayException {
         Optional<PromptTemplate> maybePrompt = findPrompt(templates, templateName);
         if (maybePrompt.isEmpty()) {
@@ -116,9 +119,12 @@ public class CallSupport {
         Flavor<P, R> activeFlavor = (Flavor<P, R>) getActiveFlavor(flavor, template);
 
         P formattedPrompt = activeFlavor.formatPrompt(template.getContent(), variables);
+        P modifiedPrompt = promptProcessor != null ?
+                promptProcessor.apply(formattedPrompt) :
+                formattedPrompt;
 
         double start = System.nanoTime() / 1e9;
-        CompletionResponse response = activeFlavor.callService(formattedPrompt, providerConfig, mergedLLMParameters);
+        CompletionResponse response = activeFlavor.callService(modifiedPrompt, providerConfig, mergedLLMParameters);
         double end = System.nanoTime() / 1e9;
 
         record(
@@ -137,12 +143,77 @@ public class CallSupport {
                         end,
                         tag,
                         variables,
-                        activeFlavor.serializeForRecord(formattedPrompt),
+                        activeFlavor.serializeForRecord(modifiedPrompt),
                         response.getContent(),
                         response.isComplete()
                 )
         );
         return response;
+    }
+
+    public <P, R> Stream<R> makeCallStream(
+            String sessionId,
+            PromptTemplate template,
+            Map<String, Object> variables,
+            Map<String, Object> llmParameters,
+            String tag,
+            String testRunId,
+            Flavor<P, R> callFlavor,
+            PromptProcessor<P> promptProcessor
+    ) throws FreeplayException {
+        Map<String, Object> mergedLLMParameters = getMergedParameters(template, llmParameters);
+        @SuppressWarnings("unchecked")
+        Flavor<P, R> activeFlavor = (Flavor<P, R>) getActiveFlavor(callFlavor, template);
+
+        P formattedPrompt = activeFlavor.formatPrompt(template.getContent(), variables);
+        P modifiedPrompt = promptProcessor != null ?
+                promptProcessor.apply(formattedPrompt) :
+                formattedPrompt;
+
+        double start = System.nanoTime() / 1e9;
+        Stream<R> responseStream = activeFlavor.callServiceStream(modifiedPrompt, providerConfig, mergedLLMParameters);
+
+        return handleStream(
+                sessionId,
+                template,
+                variables,
+                tag,
+                testRunId,
+                mergedLLMParameters,
+                activeFlavor,
+                modifiedPrompt,
+                start,
+                responseStream);
+    }
+
+    public ChatCompletionResponse makeContinueChatCall(
+            String sessionId,
+            Collection<PromptTemplate> templates,
+            String templateName,
+            Map<String, Object> variables,
+            Map<String, Object> llmParameters,
+            String tag,
+            String testRunId,
+            Flavor<ChatMessage, IndexedChatMessage> flavor,
+            ChatPromptProcessor promptProcessor
+    ) throws FreeplayException {
+        Optional<PromptTemplate> maybePrompt = findPrompt(templates, templateName);
+        return maybePrompt.map((PromptTemplate prompt) -> {
+            ChatFlavor activeFlavor = getActiveChatFlavor(flavor, prompt);
+            Collection<ChatMessage> formattedPrompt = activeFlavor.formatPrompt(prompt.getContent(), variables);
+            return makeContinueChatCall(
+                    sessionId,
+                    prompt,
+                    formattedPrompt,
+                    variables,
+                    llmParameters,
+                    tag,
+                    testRunId,
+                    promptProcessor
+            );
+        }).orElseThrow(() ->
+                new FreeplayException(format("Prompt template %s not found in environment %s.", templateName, tag))
+        );
     }
 
     public ChatCompletionResponse makeContinueChatCall(
@@ -152,14 +223,19 @@ public class CallSupport {
             Map<String, Object> variables,
             Map<String, Object> llmParameters,
             String tag,
-            String testRunId
+            String testRunId,
+            ChatPromptProcessor promptProcessor
     ) throws FreeplayException {
         Map<String, Object> mergedLLMParameters = getMergedParameters(template, llmParameters);
         ChatFlavor activeFlavor = getActiveChatFlavor(clientFlavor, template);
 
+        Collection<ChatMessage> finalMessages = promptProcessor != null ?
+                promptProcessor.apply(formattedMessages) :
+                formattedMessages;
+
         double start = System.nanoTime() / 1e9;
         ChatCompletionResponse response = activeFlavor.callChatService(
-                formattedMessages, providerConfig, mergedLLMParameters);
+                finalMessages, providerConfig, mergedLLMParameters);
         double end = System.nanoTime() / 1e9;
 
         record(
@@ -178,7 +254,7 @@ public class CallSupport {
                         end,
                         tag,
                         variables,
-                        activeFlavor.serializeForRecord(formattedMessages),
+                        activeFlavor.serializeForRecord(finalMessages),
                         response.getContent(),
                         response.isComplete()
                 )
@@ -211,37 +287,6 @@ public class CallSupport {
                 mergedLLMParameters,
                 activeFlavor,
                 formattedMessages,
-                start,
-                responseStream);
-    }
-
-    public <P, R> Stream<R> makeCallStream(
-            String sessionId,
-            PromptTemplate template,
-            Map<String, Object> variables,
-            Map<String, Object> llmParameters,
-            String tag,
-            String testRunId,
-            Flavor<P, R> callFlavor
-    ) throws FreeplayException {
-        Map<String, Object> mergedLLMParameters = getMergedParameters(template, llmParameters);
-        @SuppressWarnings("unchecked")
-        Flavor<P, R> activeFlavor = (Flavor<P, R>) getActiveFlavor(callFlavor, template);
-
-        P formattedPrompt = activeFlavor.formatPrompt(template.getContent(), variables);
-
-        double start = System.nanoTime() / 1e9;
-        Stream<R> responseStream = activeFlavor.callServiceStream(formattedPrompt, providerConfig, mergedLLMParameters);
-
-        return handleStream(
-                sessionId,
-                template,
-                variables,
-                tag,
-                testRunId,
-                mergedLLMParameters,
-                activeFlavor,
-                formattedPrompt,
                 start,
                 responseStream);
     }

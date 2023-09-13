@@ -18,6 +18,8 @@ import java.util.stream.Stream;
 import static ai.freeplay.client.ProviderConfig.OpenAIProviderConfig;
 import static ai.freeplay.client.internal.utilities.MockFixtures.*;
 import static ai.freeplay.client.internal.utilities.MockMethods.getCapturedBodyAsMap;
+import static ai.freeplay.client.internal.utilities.PromptProcessors.testChatProcessor;
+import static ai.freeplay.client.internal.utilities.PromptProcessors.testTextProcessor;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 
@@ -31,6 +33,7 @@ public class OpenAICompletionStreamTest {
 
     private final String chatCompletion1Expected = "Well hello";
     private final String formattedChatPromptExpected = "[{\"content\":\"You are a support agent.\",\"role\":\"system\"},{\"content\":\"How may I help you?\",\"role\":\"assistant\"},{\"content\":\"why isn't my sink working?\",\"role\":\"user\"}]";
+    private final String chatPromptWithInsertedMessage = "[{\"content\":\"You are a support agent.\",\"role\":\"system\"},{\"content\":\"Inserted Message\",\"role\":\"user\"},{\"content\":\"How may I help you?\",\"role\":\"assistant\"},{\"content\":\"why isn't my sink working?\",\"role\":\"user\"}]";
 
     private HttpClient mockedClient;
 
@@ -53,9 +56,7 @@ public class OpenAICompletionStreamTest {
             Stream<CompletionResponse> responseStream = session.getCompletionStream(
                     templateName,
                     Map.of("question", "why isn't my sink working?"),
-                    Collections.emptyMap(),
-                    null,
-                    null
+                    Collections.emptyMap()
             );
             List<CompletionResponse> chunks = responseStream.collect(Collectors.toList());
 
@@ -86,9 +87,7 @@ public class OpenAICompletionStreamTest {
             Stream<IndexedChatMessage> responseStream = session.getCompletionStream(
                     templateName,
                     Map.of("question", "why isn't my sink working?"),
-                    Collections.emptyMap(),
-                    null,
-                    null
+                    Collections.emptyMap()
             );
             List<IndexedChatMessage> chunks = responseStream.collect(Collectors.toList());
 
@@ -104,6 +103,77 @@ public class OpenAICompletionStreamTest {
             Map<String, Object> recordBodyMap = getCapturedBodyAsMap(mockedClient, 4, 3);
             assertEquals(formattedChatPromptExpected, recordBodyMap.get("prompt_content"));
             assertEquals(chatCompletion1Expected, recordBodyMap.get("return_content"));
+        }
+    }
+
+    @Test
+    public void textStreamHandlesProcessor() throws Exception {
+        mockCreateSession(mockedClient);
+        mockGetPrompts(mockedClient, MODEL_TEXT_DAVINCI_003, templateName, textPromptContent, "openai_text");
+        mockOpenAITextCallStream(mockedClient);
+
+        try (MockedStatic<HttpClient> httpClientClass = Mockito.mockStatic(HttpClient.class)) {
+            httpClientClass.when(HttpClient::newHttpClient).thenReturn(mockedClient);
+
+            Freeplay fpClient = new Freeplay(freeplayApiKey, baseUrl, new OpenAIProviderConfig(openaiApiKey));
+            CompletionSession session = fpClient.createSession(projectId, "latest");
+            Stream<CompletionResponse> responseStream = session.getCompletionStream(
+                    templateName,
+                    Map.of("question", "why isn't my sink working?"),
+                    Collections.emptyMap(),
+                    null,
+                    testTextProcessor
+            );
+
+            @SuppressWarnings("unused")
+            List<CompletionResponse> chunks = responseStream.collect(Collectors.toList());
+
+            // Modified OpenAI call
+            Map<String, Object> openAiRequestBody = getCapturedBodyAsMap(mockedClient, 4, 2);
+            assertEquals(
+                    "PREPENDED_TEXT Answer this question: why isn't my sink working?",
+                    openAiRequestBody.get("prompt"));
+
+            // Record call
+            Map<String, Object> recordBodyMap = getCapturedBodyAsMap(mockedClient, 4, 3);
+            assertEquals(
+                    "PREPENDED_TEXT Answer this question: why isn't my sink working?",
+                    recordBodyMap.get("prompt_content"));
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    public void chatStreamHandlesProcessor() throws Exception {
+        mockCreateSession(mockedClient);
+        mockGetPrompts(mockedClient, MODEL_GPT_TURBO_35, templateName, getChatPromptContent());
+        mockOpenAIChatCallStream(mockedClient);
+
+        try (MockedStatic<HttpClient> httpClientClass = Mockito.mockStatic(HttpClient.class)) {
+            httpClientClass.when(HttpClient::newHttpClient).thenReturn(mockedClient);
+
+            Freeplay fpClient = new Freeplay(freeplayApiKey, baseUrl, new OpenAIProviderConfig(openaiApiKey));
+            CompletionSession session = fpClient.createSession(projectId, "latest");
+            Stream<IndexedChatMessage> responseStream = session.getCompletionStream(
+                    templateName,
+                    Map.of("question", "why isn't my sink working?"),
+                    Collections.emptyMap(),
+                    null,
+                    testChatProcessor
+            );
+
+            @SuppressWarnings("unused")
+            List<IndexedChatMessage> chunks = responseStream.collect(Collectors.toList());
+
+            Map<String, Object> openAiRequestBody = getCapturedBodyAsMap(mockedClient, 4, 2);
+            assertEquals(4, asList(openAiRequestBody.get("messages")).size());
+            Map<String, Object> inserted = (Map<String, Object>) asList(openAiRequestBody.get("messages")).get(1);
+            assertEquals("user", inserted.get("role"));
+            assertEquals("Inserted Message", inserted.get("content"));
+
+            // Record call
+            Map<String, Object> recordBodyMap = getCapturedBodyAsMap(mockedClient, 4, 3);
+            assertEquals(chatPromptWithInsertedMessage, recordBodyMap.get("prompt_content"));
         }
     }
 }
