@@ -1,4 +1,4 @@
-package ai.freeplay.client.model;
+package ai.freeplay.client.processor;
 
 import java.util.function.UnaryOperator;
 

@@ -5,6 +5,8 @@ import ai.freeplay.client.ProviderConfig;
 import ai.freeplay.client.exceptions.FreeplayException;
 import ai.freeplay.client.flavor.*;
 import ai.freeplay.client.model.*;
+import ai.freeplay.client.processor.ChatPromptProcessor;
+import ai.freeplay.client.processor.PromptProcessor;
 
 import java.net.http.HttpResponse;
 import java.util.*;
@@ -104,7 +106,7 @@ public class CallSupport {
             String tag,
             String testRunId,
             Flavor<P, R> flavor,
-            PromptProcessor<P> promptModifier
+            PromptProcessor<P> promptProcessor
     ) throws FreeplayException {
         Optional<PromptTemplate> maybePrompt = findPrompt(templates, templateName);
         if (maybePrompt.isEmpty()) {
@@ -117,8 +119,8 @@ public class CallSupport {
         Flavor<P, R> activeFlavor = (Flavor<P, R>) getActiveFlavor(flavor, template);
 
         P formattedPrompt = activeFlavor.formatPrompt(template.getContent(), variables);
-        P modifiedPrompt = promptModifier != null ?
-                promptModifier.apply(formattedPrompt) :
+        P modifiedPrompt = promptProcessor != null ?
+                promptProcessor.apply(formattedPrompt) :
                 formattedPrompt;
 
         double start = System.nanoTime() / 1e9;
@@ -147,6 +149,41 @@ public class CallSupport {
                 )
         );
         return response;
+    }
+
+    public <P, R> Stream<R> makeCallStream(
+            String sessionId,
+            PromptTemplate template,
+            Map<String, Object> variables,
+            Map<String, Object> llmParameters,
+            String tag,
+            String testRunId,
+            Flavor<P, R> callFlavor,
+            PromptProcessor<P> promptProcessor
+    ) throws FreeplayException {
+        Map<String, Object> mergedLLMParameters = getMergedParameters(template, llmParameters);
+        @SuppressWarnings("unchecked")
+        Flavor<P, R> activeFlavor = (Flavor<P, R>) getActiveFlavor(callFlavor, template);
+
+        P formattedPrompt = activeFlavor.formatPrompt(template.getContent(), variables);
+        P modifiedPrompt = promptProcessor != null ?
+                promptProcessor.apply(formattedPrompt) :
+                formattedPrompt;
+
+        double start = System.nanoTime() / 1e9;
+        Stream<R> responseStream = activeFlavor.callServiceStream(modifiedPrompt, providerConfig, mergedLLMParameters);
+
+        return handleStream(
+                sessionId,
+                template,
+                variables,
+                tag,
+                testRunId,
+                mergedLLMParameters,
+                activeFlavor,
+                modifiedPrompt,
+                start,
+                responseStream);
     }
 
     public ChatCompletionResponse makeContinueChatCall(
@@ -250,37 +287,6 @@ public class CallSupport {
                 mergedLLMParameters,
                 activeFlavor,
                 formattedMessages,
-                start,
-                responseStream);
-    }
-
-    public <P, R> Stream<R> makeCallStream(
-            String sessionId,
-            PromptTemplate template,
-            Map<String, Object> variables,
-            Map<String, Object> llmParameters,
-            String tag,
-            String testRunId,
-            Flavor<P, R> callFlavor
-    ) throws FreeplayException {
-        Map<String, Object> mergedLLMParameters = getMergedParameters(template, llmParameters);
-        @SuppressWarnings("unchecked")
-        Flavor<P, R> activeFlavor = (Flavor<P, R>) getActiveFlavor(callFlavor, template);
-
-        P formattedPrompt = activeFlavor.formatPrompt(template.getContent(), variables);
-
-        double start = System.nanoTime() / 1e9;
-        Stream<R> responseStream = activeFlavor.callServiceStream(formattedPrompt, providerConfig, mergedLLMParameters);
-
-        return handleStream(
-                sessionId,
-                template,
-                variables,
-                tag,
-                testRunId,
-                mergedLLMParameters,
-                activeFlavor,
-                formattedPrompt,
                 start,
                 responseStream);
     }

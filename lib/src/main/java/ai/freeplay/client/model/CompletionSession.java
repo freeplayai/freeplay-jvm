@@ -3,12 +3,15 @@ package ai.freeplay.client.model;
 import ai.freeplay.client.exceptions.FreeplayException;
 import ai.freeplay.client.flavor.Flavor;
 import ai.freeplay.client.internal.CallSupport;
+import ai.freeplay.client.processor.ChatPromptProcessor;
+import ai.freeplay.client.processor.PromptProcessor;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.stream.Stream;
 
+@SuppressWarnings({"unused", "UnusedReturnValue"})
 public class CompletionSession {
     private final CallSupport callSupport;
     private final String sessionId;
@@ -99,7 +102,7 @@ public class CompletionSession {
             String templateName,
             Map<String, Object> variables
     ) {
-        return getCompletionStream(templateName, variables, Collections.emptyMap(), null, null);
+        return getCompletionStream(templateName, variables, Collections.emptyMap(), null, null, null);
     }
 
     public <P, R> Stream<R> getCompletionStream(
@@ -107,7 +110,7 @@ public class CompletionSession {
             Map<String, Object> variables,
             Map<String, Object> llmParameters
     ) {
-        return getCompletionStream(templateName, variables, llmParameters, null, null);
+        return getCompletionStream(templateName, variables, llmParameters, null, null, null);
     }
 
     public <P, R> Stream<R> getCompletionStream(
@@ -116,6 +119,41 @@ public class CompletionSession {
             Map<String, Object> llmParameters,
             String testRunId,
             Flavor<P, R> flavor
+    ) {
+        return getCompletionStream(
+                templateName,
+                variables,
+                llmParameters,
+                testRunId,
+                flavor,
+                null
+        );
+    }
+
+    public <P, R> Stream<R> getCompletionStream(
+            String templateName,
+            Map<String, Object> variables,
+            Map<String, Object> llmParameters,
+            String testRunId,
+            PromptProcessor<P> promptProcessor
+    ) {
+        return getCompletionStream(
+                templateName,
+                variables,
+                llmParameters,
+                testRunId,
+                null,
+                promptProcessor
+        );
+    }
+
+    public <P, R> Stream<R> getCompletionStream(
+            String templateName,
+            Map<String, Object> variables,
+            Map<String, Object> llmParameters,
+            String testRunId,
+            Flavor<P, R> flavor,
+            PromptProcessor<P> promptProcessor
     ) {
         PromptTemplate template = callSupport
                 .findPrompt(promptTemplates, templateName)
@@ -129,7 +167,8 @@ public class CompletionSession {
                 llmParameters,
                 tag,
                 testRunId,
-                flavor
+                flavor,
+                promptProcessor
         );
     }
 

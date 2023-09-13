@@ -3,6 +3,8 @@ package ai.freeplay.example.java;
 import ai.freeplay.client.Freeplay;
 import ai.freeplay.client.ProviderConfig.OpenAIProviderConfig;
 import ai.freeplay.client.model.*;
+import ai.freeplay.client.processor.ChatPromptProcessor;
+import ai.freeplay.client.processor.TextPromptProcessor;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -49,7 +51,7 @@ public class OpenAIModifiedChatCompletion {
 
     private static final ChatPromptProcessor CHAT_PROMPT_PROCESSOR = (Collection<ChatMessage> messages) -> {
         List<ChatMessage> newMessages = new ArrayList<>(messages);
-        newMessages.add(1, new ChatMessage("system", "Talk very nicely and don't make anything up."));
+        newMessages.add(1, new ChatMessage("user", "Please help me as best you can without making anything up."));
 
         totalCharCount.getAndAdd(
                 newMessages.stream()
@@ -60,7 +62,7 @@ public class OpenAIModifiedChatCompletion {
     };
 
     private static final TextPromptProcessor TEXT_PROMPT_PROCESSOR = (String message) -> {
-        String newMessage = "Don't ever be rude" + message;
+        String newMessage = "Answer nicely without making anything up. " + message;
         totalCharCount.getAndAdd(newMessage.length());
         return newMessage;
     };

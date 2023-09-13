@@ -54,15 +54,23 @@ public class ChatSession {
     }
 
     @SuppressWarnings("UnusedReturnValue")
-    public ChatCompletionResponse continueChat(ChatMessage newMessage) {
+    public ChatCompletionResponse continueChat(
+            ChatMessage newMessage
+    ) {
         return continueChat(List.of(newMessage), Collections.emptyMap());
     }
 
-    public ChatCompletionResponse continueChat(ChatMessage newMessage, Map<String, Object> llmParameters) {
+    public ChatCompletionResponse continueChat(
+            ChatMessage newMessage,
+            Map<String, Object> llmParameters
+    ) {
         return continueChat(List.of(newMessage), llmParameters);
     }
 
-    public ChatCompletionResponse continueChat(Collection<ChatMessage> newMessages, Map<String, Object> llmParameters) {
+    public ChatCompletionResponse continueChat(
+            Collection<ChatMessage> newMessages,
+            Map<String, Object> llmParameters
+    ) {
         messageHistory.addAll(newMessages);
         List<ChatMessage> cleanMessages = toCleanMessages(messageHistory);
         ChatCompletionResponse response = callSupport.makeContinueChatCall(
@@ -84,7 +92,8 @@ public class ChatSession {
             Map<String, Object> variables,
             Map<String, Object> llmParameters,
             String environment,
-            ChatFlavor flavor) {
+            ChatFlavor flavor
+    ) {
         this.variables = variables;
         this.tag = environment;
 
