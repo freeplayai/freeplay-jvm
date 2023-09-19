@@ -3,6 +3,7 @@ package ai.freeplay.client.flavor;
 import ai.freeplay.client.ProviderConfig;
 import ai.freeplay.client.exceptions.FreeplayException;
 import ai.freeplay.client.model.CompletionResponse;
+import ai.freeplay.client.model.Provider;
 
 import java.util.Map;
 import java.util.stream.Stream;
@@ -14,7 +15,11 @@ import java.util.stream.Stream;
 public interface Flavor<P, R> {
     String getFormatType();
 
-    String getProvider();
+    default String getProvider() {
+        return getProviderEnum().getName();
+    }
+
+    Provider getProviderEnum();
 
     P formatPrompt(String template, Map<String, Object> variables);
 

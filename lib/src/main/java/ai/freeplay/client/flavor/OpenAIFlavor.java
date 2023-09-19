@@ -4,6 +4,7 @@ import ai.freeplay.client.ProviderConfig;
 import ai.freeplay.client.exceptions.FreeplayException;
 import ai.freeplay.client.internal.Http;
 import ai.freeplay.client.internal.JSONUtil;
+import ai.freeplay.client.model.Provider;
 
 import java.net.http.HttpResponse;
 import java.util.HashMap;
@@ -14,8 +15,9 @@ import java.util.stream.Stream;
 
 public abstract class OpenAIFlavor<P, R> implements Flavor<P, R> {
 
-    public String getProvider() {
-        return "openai";
+    @Override
+    public Provider getProviderEnum() {
+        return Provider.OpenAI;
     }
 
     protected static void validateChoices(List<Map<String, Object>> choices) throws FreeplayException {

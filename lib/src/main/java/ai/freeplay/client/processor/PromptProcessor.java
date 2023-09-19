@@ -1,6 +1,6 @@
 package ai.freeplay.client.processor;
 
-import java.util.function.UnaryOperator;
+import java.util.function.BiFunction;
 
-public interface PromptProcessor<P> extends UnaryOperator<P> {
+public interface PromptProcessor<P> extends BiFunction<P, LLMCallInfo, P> {
 }

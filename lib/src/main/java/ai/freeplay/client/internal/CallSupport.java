@@ -6,6 +6,7 @@ import ai.freeplay.client.exceptions.FreeplayException;
 import ai.freeplay.client.flavor.*;
 import ai.freeplay.client.model.*;
 import ai.freeplay.client.processor.ChatPromptProcessor;
+import ai.freeplay.client.processor.LLMCallInfo;
 import ai.freeplay.client.processor.PromptProcessor;
 
 import java.net.http.HttpResponse;
@@ -120,7 +121,9 @@ public class CallSupport {
 
         P formattedPrompt = activeFlavor.formatPrompt(template.getContent(), variables);
         P modifiedPrompt = promptProcessor != null ?
-                promptProcessor.apply(formattedPrompt) :
+                promptProcessor.apply(
+                        formattedPrompt,
+                        new LLMCallInfo(activeFlavor.getProviderEnum(), mergedLLMParameters)) :
                 formattedPrompt;
 
         double start = System.nanoTime() / 1e9;
@@ -167,7 +170,9 @@ public class CallSupport {
 
         P formattedPrompt = activeFlavor.formatPrompt(template.getContent(), variables);
         P modifiedPrompt = promptProcessor != null ?
-                promptProcessor.apply(formattedPrompt) :
+                promptProcessor.apply(
+                        formattedPrompt,
+                        new LLMCallInfo(activeFlavor.getProviderEnum(), mergedLLMParameters)) :
                 formattedPrompt;
 
         double start = System.nanoTime() / 1e9;
@@ -230,7 +235,9 @@ public class CallSupport {
         ChatFlavor activeFlavor = getActiveChatFlavor(clientFlavor, template);
 
         Collection<ChatMessage> finalMessages = promptProcessor != null ?
-                promptProcessor.apply(formattedMessages) :
+                promptProcessor.apply(
+                        formattedMessages,
+                        new LLMCallInfo(activeFlavor.getProviderEnum(), mergedLLMParameters)) :
                 formattedMessages;
 
         double start = System.nanoTime() / 1e9;

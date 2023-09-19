@@ -18,7 +18,7 @@ public class MockFixtures {
     public static final String baseUrl = "http://localhost:8080/api";
 
     public static final String MODEL_TEXT_DAVINCI_003 = "text-davinci-003";
-    public static final String MODEL_GPT_TURBO_35 = "gpt-turbo-3.5";
+    public static final String MODEL_GPT_TURBO_35 = "gpt-3.5-turbo";
     public static final String MODEL_CLAUDE_2 = "claude-2";
 
     public static final String freeplayApiKey = "<freeplay-api-key>";

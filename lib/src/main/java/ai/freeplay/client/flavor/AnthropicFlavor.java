@@ -7,6 +7,7 @@ import ai.freeplay.client.internal.JSONUtil;
 import ai.freeplay.client.internal.StringUtils;
 import ai.freeplay.client.internal.TemplateUtils;
 import ai.freeplay.client.model.CompletionResponse;
+import ai.freeplay.client.model.Provider;
 
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
@@ -34,8 +35,8 @@ public class AnthropicFlavor implements Flavor<String, CompletionResponse> {
     }
 
     @Override
-    public String getProvider() {
-        return "anthropic";
+    public Provider getProviderEnum() {
+        return Provider.Anthropic;
     }
 
     @Override

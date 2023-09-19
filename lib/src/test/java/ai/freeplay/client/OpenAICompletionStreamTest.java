@@ -1,25 +1,24 @@
 package ai.freeplay.client;
 
+import ai.freeplay.client.model.ChatMessage;
 import ai.freeplay.client.model.CompletionResponse;
 import ai.freeplay.client.model.CompletionSession;
 import ai.freeplay.client.model.IndexedChatMessage;
+import ai.freeplay.client.processor.LLMCallInfo;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
 import java.net.http.HttpClient;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static ai.freeplay.client.ProviderConfig.OpenAIProviderConfig;
 import static ai.freeplay.client.internal.utilities.MockFixtures.*;
 import static ai.freeplay.client.internal.utilities.MockMethods.getCapturedBodyAsMap;
-import static ai.freeplay.client.internal.utilities.PromptProcessors.testChatProcessor;
-import static ai.freeplay.client.internal.utilities.PromptProcessors.testTextProcessor;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 
@@ -116,13 +115,20 @@ public class OpenAICompletionStreamTest {
             httpClientClass.when(HttpClient::newHttpClient).thenReturn(mockedClient);
 
             Freeplay fpClient = new Freeplay(freeplayApiKey, baseUrl, new OpenAIProviderConfig(openaiApiKey));
+
+            AtomicReference<LLMCallInfo> llmCallInfo = new AtomicReference<>();
+
             CompletionSession session = fpClient.createSession(projectId, "latest");
             Stream<CompletionResponse> responseStream = session.getCompletionStream(
                     templateName,
                     Map.of("question", "why isn't my sink working?"),
                     Collections.emptyMap(),
                     null,
-                    testTextProcessor
+                    (String prompt, LLMCallInfo info) -> {
+                        llmCallInfo.set(info);
+                        return "PREPENDED_TEXT " + prompt;
+                    }
+
             );
 
             @SuppressWarnings("unused")
@@ -133,6 +139,7 @@ public class OpenAICompletionStreamTest {
             assertEquals(
                     "PREPENDED_TEXT Answer this question: why isn't my sink working?",
                     openAiRequestBody.get("prompt"));
+            assertEquals("text-davinci-003", llmCallInfo.get().getLLMParameters().get("model"));
 
             // Record call
             Map<String, Object> recordBodyMap = getCapturedBodyAsMap(mockedClient, 4, 3);
@@ -153,13 +160,21 @@ public class OpenAICompletionStreamTest {
             httpClientClass.when(HttpClient::newHttpClient).thenReturn(mockedClient);
 
             Freeplay fpClient = new Freeplay(freeplayApiKey, baseUrl, new OpenAIProviderConfig(openaiApiKey));
+
+            AtomicReference<LLMCallInfo> llmCallInfo = new AtomicReference<>();
+
             CompletionSession session = fpClient.createSession(projectId, "latest");
             Stream<IndexedChatMessage> responseStream = session.getCompletionStream(
                     templateName,
                     Map.of("question", "why isn't my sink working?"),
                     Collections.emptyMap(),
                     null,
-                    testChatProcessor
+                    (Collection<ChatMessage> messages, LLMCallInfo info) -> {
+                        llmCallInfo.set(info);
+                        List<ChatMessage> newMessages = new ArrayList<>(messages);
+                        newMessages.add(1, new ChatMessage("user", "Inserted Message"));
+                        return newMessages;
+                    }
             );
 
             @SuppressWarnings("unused")
@@ -170,6 +185,7 @@ public class OpenAICompletionStreamTest {
             Map<String, Object> inserted = (Map<String, Object>) asList(openAiRequestBody.get("messages")).get(1);
             assertEquals("user", inserted.get("role"));
             assertEquals("Inserted Message", inserted.get("content"));
+            assertEquals("gpt-3.5-turbo", llmCallInfo.get().getLLMParameters().get("model"));
 
             // Record call
             Map<String, Object> recordBodyMap = getCapturedBodyAsMap(mockedClient, 4, 3);

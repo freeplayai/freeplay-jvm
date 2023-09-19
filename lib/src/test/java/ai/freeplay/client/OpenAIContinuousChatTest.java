@@ -173,7 +173,7 @@ public class OpenAIContinuousChatTest {
                 templateName,
                 getChatPromptContent(),
                 Map.of(
-                        "model", "gpt-turbo-3.5",
+                        "model", "gpt-3.5-turbo",
                         "max_tokens", "11",
                         "temperature", "0.22"
                 ),
@@ -199,13 +199,13 @@ public class OpenAIContinuousChatTest {
         }
 
         Map<String, Object> openaiBody = getCapturedBodyAsMap(mockedClient, 4, 2);
-        assertEquals("gpt-turbo-3.5", openaiBody.get("model"));
+        assertEquals("gpt-3.5-turbo", openaiBody.get("model"));
         assertEquals("33", openaiBody.get("max_tokens"));
         assertEquals("0.44", openaiBody.get("temperature"));
 
         Map<String, Object> recordBody = getCapturedBodyAsMap(mockedClient, 4, 3);
         Map<String, Object> recordedParameters = (Map<String, Object>) recordBody.get("llm_parameters");
-        assertEquals("gpt-turbo-3.5", recordedParameters.get("model"));
+        assertEquals("gpt-3.5-turbo", recordedParameters.get("model"));
         assertEquals("33", recordedParameters.get("max_tokens"));
         assertEquals("0.44", recordedParameters.get("temperature"));
     }

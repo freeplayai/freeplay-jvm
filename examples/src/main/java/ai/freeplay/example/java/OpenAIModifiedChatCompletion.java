@@ -2,8 +2,12 @@ package ai.freeplay.example.java;
 
 import ai.freeplay.client.Freeplay;
 import ai.freeplay.client.ProviderConfig.OpenAIProviderConfig;
-import ai.freeplay.client.model.*;
+import ai.freeplay.client.model.ChatCompletionResponse;
+import ai.freeplay.client.model.ChatMessage;
+import ai.freeplay.client.model.CompletionResponse;
+import ai.freeplay.client.model.CompletionSession;
 import ai.freeplay.client.processor.ChatPromptProcessor;
+import ai.freeplay.client.processor.LLMCallInfo;
 import ai.freeplay.client.processor.TextPromptProcessor;
 
 import java.util.*;
@@ -49,7 +53,11 @@ public class OpenAIModifiedChatCompletion {
         System.out.printf("We sent a total of %s characters to the LLMs.%n", totalCharCount.get());
     }
 
-    private static final ChatPromptProcessor CHAT_PROMPT_PROCESSOR = (Collection<ChatMessage> messages) -> {
+    private static final ChatPromptProcessor CHAT_PROMPT_PROCESSOR = (Collection<ChatMessage> messages, LLMCallInfo info) -> {
+        System.out.printf("Calling '%s' with model '%s'%n",
+                info.getProvider().getFriendlyName(),
+                info.getLLMParameters().get("model"));
+
         List<ChatMessage> newMessages = new ArrayList<>(messages);
         newMessages.add(1, new ChatMessage("user", "Please help me as best you can without making anything up."));
 
@@ -61,7 +69,10 @@ public class OpenAIModifiedChatCompletion {
         return newMessages;
     };
 
-    private static final TextPromptProcessor TEXT_PROMPT_PROCESSOR = (String message) -> {
+    private static final TextPromptProcessor TEXT_PROMPT_PROCESSOR = (String message, LLMCallInfo info) -> {
+        System.out.printf("Calling '%s' with model '%s'%n",
+                info.getProvider().getFriendlyName(),
+                info.getLLMParameters().get("model"));
         String newMessage = "Answer nicely without making anything up. " + message;
         totalCharCount.getAndAdd(newMessage.length());
         return newMessage;
