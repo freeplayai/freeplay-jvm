@@ -17,7 +17,7 @@ public class Freeplay {
     private final CallSupport callSupport;
 
     public Freeplay(String freeplayAPIKey, String baseUrl, ProviderConfig providerConfig) {
-        this(freeplayAPIKey, baseUrl, providerConfig, null, null);
+        this(freeplayAPIKey, baseUrl, providerConfig, null, new HttpConfig());
     }
 
     public Freeplay(
@@ -26,7 +26,17 @@ public class Freeplay {
             ProviderConfig providerConfig,
             Map<String, Object> llmParameters
     ) {
-        this(freeplayAPIKey, baseUrl, providerConfig, null, llmParameters);
+        this(freeplayAPIKey, baseUrl, providerConfig, null, llmParameters, new HttpConfig());
+    }
+
+    public Freeplay(
+            String freeplayAPIKey,
+            String baseUrl,
+            ProviderConfig providerConfig,
+            Map<String, Object> llmParameters,
+            HttpConfig httpConfig
+    ) {
+        this(freeplayAPIKey, baseUrl, providerConfig, null, llmParameters, httpConfig);
     }
 
     public Freeplay(
@@ -34,14 +44,16 @@ public class Freeplay {
             String baseUrl,
             ProviderConfig providerConfig,
             Flavor<?, ?> flavor,
-            Map<String, Object> llmParameters
+            Map<String, Object> llmParameters,
+            HttpConfig httpConfig
     ) {
         callSupport = new CallSupport(
                 freeplayAPIKey,
                 baseUrl,
                 providerConfig,
                 flavor,
-                llmParameters);
+                llmParameters,
+                httpConfig);
     }
 
     public CompletionSession createSession(String projectId, String environment) {

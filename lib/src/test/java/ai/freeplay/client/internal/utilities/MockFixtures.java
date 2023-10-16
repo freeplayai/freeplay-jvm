@@ -31,10 +31,14 @@ public class MockFixtures {
     public static final String promptTemplateVersionId = UUID.randomUUID().toString();
 
     // Freeplay
-    public static void mockCreateSession(HttpClient mockedClient) throws Exception {
-        when(request(mockedClient, "POST", "projects/[^/]*/sessions"))
-                .thenReturn(
-                        response(201, getSessionRequestPayload(UUID.randomUUID().toString())));
+    public static void mockCreateSession(HttpClient mockedClient) throws RuntimeException {
+        try {
+            when(request(mockedClient, "POST", "projects/[^/]*/sessions"))
+                    .thenReturn(
+                            response(201, getSessionRequestPayload(UUID.randomUUID().toString())));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public static void mockGetPrompts(
@@ -43,12 +47,16 @@ public class MockFixtures {
             String templateName,
             String templateContent,
             String flavor
-    ) throws Exception {
+    ) throws RuntimeException {
         Map<String, Object> llmParameters = new HashMap<>();
         if (model != null)
             llmParameters.put("model", model);
 
-        mockGetPrompts(mockedClient, templateName, templateContent, llmParameters, flavor);
+        try {
+            mockGetPrompts(mockedClient, templateName, templateContent, llmParameters, flavor);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public static void mockGetPrompts(
@@ -56,12 +64,16 @@ public class MockFixtures {
             String model,
             String templateName,
             String templateContent
-    ) throws Exception {
+    ) throws RuntimeException {
         Map<String, Object> llmParameters = new HashMap<>();
         if (model != null)
             llmParameters.put("model", model);
 
-        mockGetPrompts(mockedClient, templateName, templateContent, llmParameters, "openai_chat");
+        try {
+            mockGetPrompts(mockedClient, templateName, templateContent, llmParameters, "openai_chat");
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public static void mockGetPrompts(
@@ -70,25 +82,29 @@ public class MockFixtures {
             String content,
             Map<String, Object> llmParameters,
             String flavor
-    ) throws Exception {
-        when(request(mockedClient, "GET", "projects/[^/]*/templates"))
-                .thenReturn(
-                        response(
-                                200,
-                                getPromptsPayload(
-                                        flavor,
-                                        projectVersionId,
-                                        promptTemplateId,
-                                        promptTemplateVersionId,
-                                        templateName,
-                                        content,
-                                        llmParameters)));
+    ) throws RuntimeException {
+        try {
+            when(request(mockedClient, "GET", "projects/[^/]*/templates"))
+                    .thenReturn(
+                            response(
+                                    200,
+                                    getPromptsPayload(
+                                            flavor,
+                                            projectVersionId,
+                                            promptTemplateId,
+                                            promptTemplateVersionId,
+                                            templateName,
+                                            content,
+                                            llmParameters)));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public static void mockGet2Prompts(
             HttpClient mockedClient,
             PromptTemplate... templates
-    ) throws Exception {
+    ) throws RuntimeException {
 
         List<Map<String, Object>> templateObjects = stream(templates).map((PromptTemplate template) ->
                 object(
@@ -107,77 +123,129 @@ public class MockFixtures {
                 )
         );
 
-        when(request(mockedClient, "GET", "projects/[^/]*/templates"))
-                .thenReturn(response(200, JSONUtil.asString(payload)));
+        try {
+            when(request(mockedClient, "GET", "projects/[^/]*/templates"))
+                    .thenReturn(response(200, JSONUtil.asString(payload)));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    public static void mockCreateTestRun(HttpClient mockedClient) throws Exception {
-        when(request(mockedClient, "POST", "projects/[^/]*/test-runs"))
-                .thenReturn(
-                        response(201, getTestRunResponsePayload(UUID.randomUUID().toString())));
+    public static void mockCreateTestRun(HttpClient mockedClient) throws RuntimeException {
+        try {
+            when(request(mockedClient, "POST", "projects/[^/]*/test-runs"))
+                    .thenReturn(
+                            response(201, getTestRunResponsePayload(UUID.randomUUID().toString())));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    public static void mockUnauthorizedCreateSession(HttpClient mockedClient) throws Exception {
-        when(request(mockedClient, "POST", "projects/[^/]*/sessions"))
-                .thenReturn(response(401, ""));
+    public static void mockUnauthorizedCreateSession(HttpClient mockedClient) throws RuntimeException {
+        try {
+            when(request(mockedClient, "POST", "projects/[^/]*/sessions"))
+                    .thenReturn(response(401, ""));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    public static void mockUnauthorizedGetPrompts(HttpClient mockedClient) throws Exception {
-        when(request(mockedClient, "GET", "projects/[^/]*/templates"))
-                .thenReturn(response(401, ""));
+    public static void mockUnauthorizedGetPrompts(HttpClient mockedClient) throws RuntimeException {
+        try {
+            when(request(mockedClient, "GET", "projects/[^/]*/templates"))
+                    .thenReturn(response(401, ""));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     // OpenAI
-    public static void mockOpenAITextCall(HttpClient mockedClient, String completion) throws Exception {
-        when(request(mockedClient, "api.openai.com", "POST", "v1/completions"))
-                .thenReturn(
-                        response(200, getOpenAITextResponse(MODEL_TEXT_DAVINCI_003, completion)));
+    public static void mockOpenAITextCall(HttpClient mockedClient, String completion) throws RuntimeException {
+        try {
+            when(request(mockedClient, "api.openai.com", "POST", "v1/completions"))
+                    .thenReturn(
+                            response(200, getOpenAITextResponse(MODEL_TEXT_DAVINCI_003, completion)));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    public static void mockOpenAIChatCall(HttpClient mockedClient, String completion) throws Exception {
-        when(request(mockedClient, "api.openai.com", "POST", "v1/chat/completions"))
-                .thenReturn(
-                        response(200, getOpenAIChatResponse(completion)));
+    public static void mockOpenAIChatCall(HttpClient mockedClient, String completion) throws RuntimeException {
+        try {
+            when(request(mockedClient, "api.openai.com", "POST", "v1/chat/completions"))
+                    .thenReturn(
+                            response(200, getOpenAIChatResponse(completion)));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    public static void mockOpenAITextCallStream(HttpClient mockedClient) throws Exception {
-        when(request(mockedClient, "api.openai.com", "POST", "v1/completions"))
-                .thenReturn(
-                        response(200, getOpenAITextResponseStreamMessages()));
+    public static void mockOpenAITextCallStream(HttpClient mockedClient) throws RuntimeException {
+        try {
+            when(request(mockedClient, "api.openai.com", "POST", "v1/completions"))
+                    .thenReturn(
+                            response(200, getOpenAITextResponseStreamMessages()));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    public static void mockOpenAIChatCallStream(HttpClient mockedClient) throws Exception {
-        when(request(mockedClient, "api.openai.com", "POST", "v1/chat/completions"))
-                .thenReturn(
-                        response(200, getOpenAIChatResponseStreamMessages()));
+    public static void mockOpenAIChatCallStream(HttpClient mockedClient) throws RuntimeException {
+        try {
+            when(request(mockedClient, "api.openai.com", "POST", "v1/chat/completions"))
+                    .thenReturn(
+                            response(200, getOpenAIChatResponseStreamMessages()));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    public static void mockUnauthorizedOpenAITextCall(HttpClient mockedClient) throws Exception {
-        when(request(mockedClient, "api.openai.com", "POST", "v1/completions"))
-                .thenReturn(response(401, getOpenAIUnauthorizedResponse()));
+    public static void mockUnauthorizedOpenAITextCall(HttpClient mockedClient) throws RuntimeException {
+        try {
+            when(request(mockedClient, "api.openai.com", "POST", "v1/completions"))
+                    .thenReturn(response(401, getOpenAIUnauthorizedResponse()));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    public static void mockUnauthorizedOpenAIChatCall(HttpClient mockedClient) throws Exception {
-        when(request(mockedClient, "api.openai.com", "POST", "v1/chat/completions"))
-                .thenReturn(response(401, getOpenAIUnauthorizedResponse()));
+    public static void mockUnauthorizedOpenAIChatCall(HttpClient mockedClient) throws RuntimeException {
+        try {
+            when(request(mockedClient, "api.openai.com", "POST", "v1/chat/completions"))
+                    .thenReturn(response(401, getOpenAIUnauthorizedResponse()));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     // Anthropic
-    public static void mockAnthropicTextCall(HttpClient mockedClient, String completion) throws Exception {
-        when(request(mockedClient, "api.anthropic.com", "POST", "v1/complete"))
-                .thenReturn(
-                        response(200, getAnthropicTextResponse(MODEL_TEXT_DAVINCI_003, completion)));
+    public static void mockAnthropicTextCall(HttpClient mockedClient, String completion) throws RuntimeException {
+        try {
+            when(request(mockedClient, "api.anthropic.com", "POST", "v1/complete"))
+                    .thenReturn(
+                            response(200, getAnthropicTextResponse(MODEL_TEXT_DAVINCI_003, completion)));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    public static void mockAnthropicTextCallStream(HttpClient mockedClient) throws Exception {
-        when(request(mockedClient, "api.anthropic.com", "POST", "v1/complete"))
-                .thenReturn(
-                        response(200, getAnthropicTextResponseStreamMessages()));
+    public static void mockAnthropicTextCallStream(HttpClient mockedClient) throws RuntimeException {
+        try {
+            when(request(mockedClient, "api.anthropic.com", "POST", "v1/complete"))
+                    .thenReturn(
+                            response(200, getAnthropicTextResponseStreamMessages()));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    public static void mockUnauthorizedAntropicTextCall(HttpClient mockedClient) throws Exception {
-        when(request(mockedClient, "api.anthropic.com", "POST", "v1/complete"))
-                .thenReturn(response(401, getAnthropicUnauthorizedResponse()));
+    public static void mockUnauthorizedAnthropicTextCall(HttpClient mockedClient) throws RuntimeException {
+        try {
+            when(request(mockedClient, "api.anthropic.com", "POST", "v1/complete"))
+                    .thenReturn(response(401, getAnthropicUnauthorizedResponse()));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
 

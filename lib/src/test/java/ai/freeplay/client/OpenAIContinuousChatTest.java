@@ -5,10 +5,7 @@ import ai.freeplay.client.internal.utilities.MockFixtures;
 import ai.freeplay.client.model.ChatMessage;
 import ai.freeplay.client.model.ChatStart;
 import ai.freeplay.client.model.IndexedChatMessage;
-import org.junit.Before;
 import org.junit.Test;
-import org.mockito.MockedStatic;
-import org.mockito.Mockito;
 
 import java.net.http.HttpClient;
 import java.util.Collections;
@@ -18,22 +15,14 @@ import static ai.freeplay.client.ProviderConfig.OpenAIProviderConfig;
 import static ai.freeplay.client.internal.utilities.MockFixtures.*;
 import static ai.freeplay.client.internal.utilities.MockMethods.*;
 import static org.junit.Assert.*;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class OpenAIContinuousChatTest {
+public class OpenAIContinuousChatTest extends HttpClientTestBase {
 
     private final String templateName = "my-chat-start";
 
-    private HttpClient mockedClient;
-
-    @Before
-    public void beforeEach() {
-        mockedClient = mock(HttpClient.class);
-    }
-
     @Test
-    public void chatStartsAndContinues() throws Exception {
+    public void chatStartsAndContinues() {
         String completion1 = "\\n\\nSorry, I will try to help";
         String completion2 = "\\n\\nMa dai, hai anche provato a controllare se l'acqua è aperta? Magari è per quello";
         String completion1Expected = "\n\nSorry, I will try to help";
@@ -41,12 +30,10 @@ public class OpenAIContinuousChatTest {
         String formattedPromptExpected = "[{\"content\":\"You are a support agent.\",\"role\":\"system\"},{\"content\":\"How may I help you?\",\"role\":\"assistant\"},{\"content\":\"why isn't my sink working?\",\"role\":\"user\"}]";
         String formattedPrompt2Expected = "[{\"content\":\"You are a support agent.\",\"role\":\"system\"},{\"content\":\"How may I help you?\",\"role\":\"assistant\"},{\"content\":\"why isn't my sink working?\",\"role\":\"user\"},{\"content\":\"\\n\\nSorry, I will try to help\",\"role\":\"assistant\"},{\"content\":\"Now in Italian!\",\"role\":\"user\"}]";
 
-        mockCreateSession(mockedClient);
-        mockGetPrompts(mockedClient, MODEL_GPT_TURBO_35, templateName, getChatPromptContent());
-        mock2OpenAICalls(completion1, completion2);
-
-        try (MockedStatic<HttpClient> httpClientClass = Mockito.mockStatic(HttpClient.class)) {
-            httpClientClass.when(HttpClient::newHttpClient).thenReturn(mockedClient);
+        withMockedClient((HttpClient mockedClient) -> {
+            mockCreateSession(mockedClient);
+            mockGetPrompts(mockedClient, MODEL_GPT_TURBO_35, templateName, getChatPromptContent());
+            mock2OpenAICalls(mockedClient, completion1, completion2);
 
             Freeplay fpClient = new Freeplay(freeplayApiKey, baseUrl, new OpenAIProviderConfig(openaiApiKey));
 
@@ -89,100 +76,99 @@ public class OpenAIContinuousChatTest {
             assertEquals(completion2Expected, record2BodyMap.get("return_content"));
             assertEquals(MODEL_GPT_TURBO_35, record2BodyMap.get("model"));
             assertNull(record2BodyMap.get("test_run_id"));
-        }
+        });
     }
 
     @Test
-    public void requiresModelParam() throws Exception {
-        mockCreateSession(mockedClient);
-        mockGetPrompts(mockedClient, null, templateName, getChatPromptContent());   // null model
+    public void requiresModelParam() {
+        withMockedClient((HttpClient mockedClient) -> {
+            mockCreateSession(mockedClient);
+            mockGetPrompts(mockedClient, null, templateName, getChatPromptContent());   // null model
 
-        try (MockedStatic<HttpClient> httpClientClass = Mockito.mockStatic(HttpClient.class)) {
-            httpClientClass.when(HttpClient::newHttpClient).thenReturn(mockedClient);
-
-            Freeplay fpClient = new Freeplay(freeplayApiKey, baseUrl, new OpenAIProviderConfig(openaiApiKey));
-            fpClient.startChat(
-                    projectId,
-                    templateName,
-                    Map.of("question", "why isn't my sink working?"),
-                    Collections.emptyMap(),
-                    "latest"
-            );
-            fail("Should have gotten an exception requiring the model parameter");
-        } catch (FreeplayException fpe) {
-            assertEquals("The 'model' parameter is required when calling OpenAI", fpe.getMessage());
-        }
+            try {
+                Freeplay fpClient = new Freeplay(freeplayApiKey, baseUrl, new OpenAIProviderConfig(openaiApiKey));
+                fpClient.startChat(
+                        projectId,
+                        templateName,
+                        Map.of("question", "why isn't my sink working?"),
+                        Collections.emptyMap(),
+                        "latest"
+                );
+                fail("Should have gotten an exception requiring the model parameter");
+            } catch (FreeplayException fpe) {
+                assertEquals("The 'model' parameter is required when calling OpenAI", fpe.getMessage());
+            }
+        });
     }
 
     @Test
-    public void disallowsMessagesParam() throws Exception {
-        mockCreateSession(mockedClient);
-        mockGetPrompts(mockedClient, MODEL_GPT_TURBO_35, templateName, getChatPromptContent());
+    public void disallowsMessagesParam() {
+        withMockedClient((HttpClient mockedClient) -> {
+            mockCreateSession(mockedClient);
+            mockGetPrompts(mockedClient, MODEL_GPT_TURBO_35, templateName, getChatPromptContent());
 
-        try (MockedStatic<HttpClient> httpClientClass = Mockito.mockStatic(HttpClient.class)) {
-            httpClientClass.when(HttpClient::newHttpClient).thenReturn(mockedClient);
-
-            Freeplay fpClient = new Freeplay(freeplayApiKey, baseUrl, new OpenAIProviderConfig(openaiApiKey));
-            fpClient.startChat(
-                    projectId,
-                    templateName,
-                    Map.of("question", "why isn't my sink working?"),
-                    Map.of(
-                            "model", MODEL_TEXT_DAVINCI_003,
-                            "messages", Map.of("this is", "not allowed")
-                    ),
-                    "latest"
-            );
-            fail("Should have gotten an exception disallowing the prompt parameter");
-        } catch (FreeplayException fpe) {
-            assertEquals(
-                    "The 'messages' parameter cannot be specified. It is populated automatically.",
-                    fpe.getMessage());
-        }
+            try {
+                Freeplay fpClient = new Freeplay(freeplayApiKey, baseUrl, new OpenAIProviderConfig(openaiApiKey));
+                fpClient.startChat(
+                        projectId,
+                        templateName,
+                        Map.of("question", "why isn't my sink working?"),
+                        Map.of(
+                                "model", MODEL_TEXT_DAVINCI_003,
+                                "messages", Map.of("this is", "not allowed")
+                        ),
+                        "latest"
+                );
+                fail("Should have gotten an exception disallowing the prompt parameter");
+            } catch (FreeplayException fpe) {
+                assertEquals(
+                        "The 'messages' parameter cannot be specified. It is populated automatically.",
+                        fpe.getMessage());
+            }
+        });
     }
 
     @Test
-    public void handlesUnauthorizedCallingOpenAI() throws Exception {
-        mockCreateSession(mockedClient);
-        mockGetPrompts(mockedClient, MODEL_GPT_TURBO_35, templateName, getChatPromptContent());
-        mockUnauthorizedOpenAIChatCall(mockedClient);
+    public void handlesUnauthorizedCallingOpenAI() {
+        withMockedClient((HttpClient mockedClient) -> {
+            mockCreateSession(mockedClient);
+            mockGetPrompts(mockedClient, MODEL_GPT_TURBO_35, templateName, getChatPromptContent());
+            mockUnauthorizedOpenAIChatCall(mockedClient);
 
-        try (MockedStatic<HttpClient> httpClientClass = Mockito.mockStatic(HttpClient.class)) {
-            httpClientClass.when(HttpClient::newHttpClient).thenReturn(mockedClient);
-
-            Freeplay fpClient = new Freeplay(freeplayApiKey, baseUrl, new OpenAIProviderConfig(openaiApiKey));
-            fpClient.startChat(
-                    projectId,
-                    templateName,
-                    Map.of("question", "why isn't my sink working?"),
-                    Map.of("model", MODEL_TEXT_DAVINCI_003),
-                    "latest"
-            );
-            fail("Should have gotten an exception for a 401");
-        } catch (FreeplayException fpe) {
-            assertEquals("Error making call [401]", fpe.getMessage());
-        }
+            try {
+                Freeplay fpClient = new Freeplay(freeplayApiKey, baseUrl, new OpenAIProviderConfig(openaiApiKey));
+                fpClient.startChat(
+                        projectId,
+                        templateName,
+                        Map.of("question", "why isn't my sink working?"),
+                        Map.of("model", MODEL_TEXT_DAVINCI_003),
+                        "latest"
+                );
+                fail("Should have gotten an exception for a 401");
+            } catch (FreeplayException fpe) {
+                assertEquals("Error making call [401]", fpe.getMessage());
+            }
+        });
     }
 
     @Test
     @SuppressWarnings("unchecked")
-    public void handlesLLMParameterMergePrecedence() throws Exception {
-        mockCreateSession(mockedClient);
-        MockFixtures.mockGetPrompts(
-                mockedClient,
-                templateName,
-                getChatPromptContent(),
-                Map.of(
-                        "model", "gpt-3.5-turbo",
-                        "max_tokens", "11",
-                        "temperature", "0.22"
-                ),
-                "openai_chat"
-        );
-        mockOpenAIChatCall(mockedClient, "\\n\\nSorry, I will try to help");
+    public void handlesLLMParameterMergePrecedence() {
+        withMockedClient((HttpClient mockedClient) -> {
+            mockCreateSession(mockedClient);
+            MockFixtures.mockGetPrompts(
+                    mockedClient,
+                    templateName,
+                    getChatPromptContent(),
+                    Map.of(
+                            "model", "gpt-3.5-turbo",
+                            "max_tokens", "11",
+                            "temperature", "0.22"
+                    ),
+                    "openai_chat"
+            );
+            mockOpenAIChatCall(mockedClient, "\\n\\nSorry, I will try to help");
 
-        try (MockedStatic<HttpClient> httpClientClass = Mockito.mockStatic(HttpClient.class)) {
-            httpClientClass.when(HttpClient::newHttpClient).thenReturn(mockedClient);
 
             Map<String, Object> clientParams = Map.of("max_tokens", "33");
             Map<String, Object> callParams = Map.of("temperature", "0.44");
@@ -196,24 +182,28 @@ public class OpenAIContinuousChatTest {
                     callParams,
                     "latest"
             );
-        }
 
-        Map<String, Object> openaiBody = getCapturedBodyAsMap(mockedClient, 4, 2);
-        assertEquals("gpt-3.5-turbo", openaiBody.get("model"));
-        assertEquals("33", openaiBody.get("max_tokens"));
-        assertEquals("0.44", openaiBody.get("temperature"));
+            Map<String, Object> openaiBody = getCapturedBodyAsMap(mockedClient, 4, 2);
+            assertEquals("gpt-3.5-turbo", openaiBody.get("model"));
+            assertEquals("33", openaiBody.get("max_tokens"));
+            assertEquals("0.44", openaiBody.get("temperature"));
 
-        Map<String, Object> recordBody = getCapturedBodyAsMap(mockedClient, 4, 3);
-        Map<String, Object> recordedParameters = (Map<String, Object>) recordBody.get("llm_parameters");
-        assertEquals("gpt-3.5-turbo", recordedParameters.get("model"));
-        assertEquals("33", recordedParameters.get("max_tokens"));
-        assertEquals("0.44", recordedParameters.get("temperature"));
+            Map<String, Object> recordBody = getCapturedBodyAsMap(mockedClient, 4, 3);
+            Map<String, Object> recordedParameters = (Map<String, Object>) recordBody.get("llm_parameters");
+            assertEquals("gpt-3.5-turbo", recordedParameters.get("model"));
+            assertEquals("33", recordedParameters.get("max_tokens"));
+            assertEquals("0.44", recordedParameters.get("temperature"));
+        });
     }
 
     @SuppressWarnings("SameParameterValue")
-    private void mock2OpenAICalls(String completion1, String completion2) throws Exception {
-        when(request(mockedClient, "api.openai.com", "POST", "v1/chat/completions"))
-                .thenReturn(response(200, getOpenAIChatResponse(completion1)))
-                .thenReturn(response(200, getOpenAIChatResponse(completion2)));
+    private void mock2OpenAICalls(HttpClient mockedClient, String completion1, String completion2) throws RuntimeException {
+        try {
+            when(request(mockedClient, "api.openai.com", "POST", "v1/chat/completions"))
+                    .thenReturn(response(200, getOpenAIChatResponse(completion1)))
+                    .thenReturn(response(200, getOpenAIChatResponse(completion2)));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }

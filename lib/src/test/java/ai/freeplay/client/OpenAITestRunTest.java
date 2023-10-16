@@ -4,10 +4,7 @@ import ai.freeplay.client.internal.utilities.MockFixtures;
 import ai.freeplay.client.model.CompletionResponse;
 import ai.freeplay.client.model.CompletionSession;
 import ai.freeplay.client.model.TestRun;
-import org.junit.Before;
 import org.junit.Test;
-import org.mockito.MockedStatic;
-import org.mockito.Mockito;
 
 import java.net.http.HttpClient;
 import java.util.Map;
@@ -16,23 +13,13 @@ import static ai.freeplay.client.ProviderConfig.OpenAIProviderConfig;
 import static ai.freeplay.client.internal.utilities.MockFixtures.*;
 import static ai.freeplay.client.internal.utilities.MockMethods.getCapturedBodyAsMap;
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.mock;
 
-public class OpenAITestRunTest {
-
-    private HttpClient mockedClient;
-
-    @Before
-    public void beforeEach() {
-        mockedClient = mock(HttpClient.class);
-    }
+public class OpenAITestRunTest extends HttpClientTestBase {
 
     @Test
-    public void testRunCreated() throws Exception {
-        mockCreateTestRun(mockedClient);
-
-        try (MockedStatic<HttpClient> httpClientClass = Mockito.mockStatic(HttpClient.class)) {
-            httpClientClass.when(HttpClient::newHttpClient).thenReturn(mockedClient);
+    public void testRunCreated() {
+        withMockedClient((HttpClient mockedClient) -> {
+            mockCreateTestRun(mockedClient);
 
             String environment = "prod";
             String testListName = "core-tests";
@@ -49,21 +36,18 @@ public class OpenAITestRunTest {
             assertEquals(environment, testRun.getEnvironment());
             assertEquals("Why isn't my sink working?", testRun.getInputs().get(0).get("question"));
             assertEquals("Why isn't my internet working?", testRun.getInputs().get(1).get("question"));
-        }
+        });
     }
 
     @Test
-    public void recordsTestRunId() throws Exception {
+    public void recordsTestRunId() {
         String templateName = "my-prompt";
         String chatCompletion1 = "\\n\\nSorry, I will try to help";
-
-        mockCreateSession(mockedClient);
-        mockCreateTestRun(mockedClient);
-        mockGetPrompts(mockedClient, MODEL_GPT_TURBO_35, templateName, getChatPromptContent());
-        mockOpenAIChatCall(mockedClient, chatCompletion1);
-
-        try (MockedStatic<HttpClient> httpClientClass = Mockito.mockStatic(HttpClient.class)) {
-            httpClientClass.when(HttpClient::newHttpClient).thenReturn(mockedClient);
+        withMockedClient((HttpClient mockedClient) -> {
+            mockCreateSession(mockedClient);
+            mockCreateTestRun(mockedClient);
+            mockGetPrompts(mockedClient, MODEL_GPT_TURBO_35, templateName, getChatPromptContent());
+            mockOpenAIChatCall(mockedClient, chatCompletion1);
 
             String environment = "prod";
             String testListName = "core-tests";
@@ -82,6 +66,6 @@ public class OpenAITestRunTest {
             Map<String, Object> recordBodyMap = getCapturedBodyAsMap(mockedClient, 5, 4);
             assertEquals(promptTemplateVersionId, recordBodyMap.get("project_version_id"));
             assertEquals(testRun.getTestRunId(), recordBodyMap.get("test_run_id"));
-        }
+        });
     }
 }

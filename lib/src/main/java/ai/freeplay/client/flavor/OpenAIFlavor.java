@@ -1,5 +1,6 @@
 package ai.freeplay.client.flavor;
 
+import ai.freeplay.client.HttpConfig;
 import ai.freeplay.client.ProviderConfig;
 import ai.freeplay.client.exceptions.FreeplayException;
 import ai.freeplay.client.internal.Http;
@@ -43,7 +44,8 @@ public abstract class OpenAIFlavor<P, R> implements Flavor<P, R> {
             String url,
             String promptFieldName,
             Map<String, Object> mergedLLMParameters,
-            P formattedPrompt
+            P formattedPrompt,
+            HttpConfig httpConfig
     ) {
         validateParameters(mergedLLMParameters);
 
@@ -57,7 +59,8 @@ public abstract class OpenAIFlavor<P, R> implements Flavor<P, R> {
                     url,
                     bodyMap,
                     providerConfig.getApiKey(),
-                    HttpResponse.BodyHandlers.ofLines()
+                    HttpResponse.BodyHandlers.ofLines(),
+                    httpConfig
             );
         } catch (Exception e) {
             throw new FreeplayException("Error calling OpenAI.", e);

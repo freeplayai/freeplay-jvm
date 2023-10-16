@@ -1,5 +1,6 @@
 package ai.freeplay.client.flavor;
 
+import ai.freeplay.client.HttpConfig;
 import ai.freeplay.client.ProviderConfig;
 import ai.freeplay.client.exceptions.FreeplayException;
 import ai.freeplay.client.model.CompletionResponse;
@@ -26,13 +27,15 @@ public interface Flavor<P, R> {
     CompletionResponse callService(
             P formattedPrompt,
             ProviderConfig providerConfig,
-            Map<String, Object> mergedLLMParameters
+            Map<String, Object> mergedLLMParameters,
+            HttpConfig httpConfig
     ) throws FreeplayException;
 
     Stream<R> callServiceStream(
             P formattedPrompt,
             ProviderConfig providerConfig,
-            Map<String, Object> mergedLLMParameters
+            Map<String, Object> mergedLLMParameters,
+            HttpConfig httpConfig
     ) throws FreeplayException;
 
     String serializeForRecord(P formattedPrompt);

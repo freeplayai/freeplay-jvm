@@ -1,5 +1,6 @@
 package ai.freeplay.client.flavor;
 
+import ai.freeplay.client.HttpConfig;
 import ai.freeplay.client.ProviderConfig;
 import ai.freeplay.client.exceptions.FreeplayException;
 import ai.freeplay.client.internal.Http;
@@ -51,7 +52,8 @@ public class AnthropicFlavor implements Flavor<String, CompletionResponse> {
     public CompletionResponse callService(
             String formattedPrompt,
             ProviderConfig providerConfig,
-            Map<String, Object> mergedLLMParameters
+            Map<String, Object> mergedLLMParameters,
+            HttpConfig httpConfig
     ) throws FreeplayException {
         validateParameters(mergedLLMParameters);
         Map<String, Object> bodyMap = getRequestBody(formattedPrompt, mergedLLMParameters);
@@ -61,6 +63,7 @@ public class AnthropicFlavor implements Flavor<String, CompletionResponse> {
             response = Http.postJson(
                     ANTHROPIC_COMPLETIONS_URL,
                     bodyMap,
+                    httpConfig,
                     "accept", "application/json",
                     "anthropic-version", ANTHROPIC_VERSION,
                     "x-api-key", providerConfig.getApiKey()
@@ -80,7 +83,8 @@ public class AnthropicFlavor implements Flavor<String, CompletionResponse> {
     public Stream<CompletionResponse> callServiceStream(
             String formattedPrompt,
             ProviderConfig providerConfig,
-            Map<String, Object> mergedLLMParameters
+            Map<String, Object> mergedLLMParameters,
+            HttpConfig httpConfig
     ) {
         validateParameters(mergedLLMParameters);
         Map<String, Object> bodyMap = getRequestBody(formattedPrompt, mergedLLMParameters);
@@ -92,6 +96,7 @@ public class AnthropicFlavor implements Flavor<String, CompletionResponse> {
                     ANTHROPIC_COMPLETIONS_URL,
                     bodyMap,
                     BodyHandlers.ofLines(),
+                    httpConfig,
                     "accept", "application/json",
                     "anthropic-version", ANTHROPIC_VERSION,
                     "x-api-key", providerConfig.getApiKey()

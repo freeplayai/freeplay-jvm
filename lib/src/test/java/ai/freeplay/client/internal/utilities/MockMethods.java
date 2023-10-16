@@ -49,14 +49,21 @@ public class MockMethods {
         return new StubHttpResponse<>(statusCode, body);
     }
 
-    public static Map<String, Object> getCapturedBodyAsMap(HttpClient mockedClient, int totalCalls, int index) throws IOException, InterruptedException {
-        String body = getCapturedBody(mockedClient, totalCalls, index);
-        return JSON.std.mapFrom(body);
+    public static Map<String, Object> getCapturedBodyAsMap(HttpClient mockedClient, int totalCalls, int index) throws RuntimeException {
+        try {
+            return JSON.std.mapFrom(getCapturedBody(mockedClient, totalCalls, index));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    public static String getCapturedBody(HttpClient mockedClient, int totalCalls, int index) throws IOException, InterruptedException {
+    public static String getCapturedBody(HttpClient mockedClient, int totalCalls, int index) throws RuntimeException {
         ArgumentCaptor<HttpRequest> recordRequestArg = ArgumentCaptor.forClass(HttpRequest.class);
-        verify(mockedClient, times(totalCalls)).send(recordRequestArg.capture(), any());
+        try {
+            verify(mockedClient, times(totalCalls)).send(recordRequestArg.capture(), any());
+        } catch (IOException | InterruptedException e) {
+            throw new RuntimeException(e);
+        }
 
         List<HttpRequest> requests = recordRequestArg.getAllValues();
         assertEquals(totalCalls, requests.size());
@@ -67,9 +74,13 @@ public class MockMethods {
         return stringFromBodyPublisher(recordBodyPublisher.get());
     }
 
-    public static HttpRequest getCapturedRequest(HttpClient mockedClient, int totalCalls, int index) throws IOException, InterruptedException {
+    public static HttpRequest getCapturedRequest(HttpClient mockedClient, int totalCalls, int index) throws RuntimeException {
         ArgumentCaptor<HttpRequest> recordRequestArg = ArgumentCaptor.forClass(HttpRequest.class);
-        verify(mockedClient, times(totalCalls)).send(recordRequestArg.capture(), any());
+        try {
+            verify(mockedClient, times(totalCalls)).send(recordRequestArg.capture(), any());
+        } catch (IOException | InterruptedException e) {
+            throw new RuntimeException(e);
+        }
 
         List<HttpRequest> requests = recordRequestArg.getAllValues();
         assertEquals(totalCalls, requests.size());

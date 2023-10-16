@@ -1,5 +1,6 @@
 package ai.freeplay.client.flavor;
 
+import ai.freeplay.client.HttpConfig;
 import ai.freeplay.client.ProviderConfig;
 import ai.freeplay.client.exceptions.FreeplayException;
 import ai.freeplay.client.internal.Http;
@@ -58,9 +59,10 @@ public class OpenAIChatFlavor extends OpenAIFlavor<Collection<ChatMessage>, Inde
     public CompletionResponse callService(
             Collection<ChatMessage> formattedMessages,
             ProviderConfig providerConfig,
-            Map<String, Object> mergedLLMParameters
+            Map<String, Object> mergedLLMParameters,
+            HttpConfig httpConfig
     ) throws FreeplayException {
-        ChatCompletionResponse chatResponse = callChatService(formattedMessages, providerConfig, mergedLLMParameters);
+        ChatCompletionResponse chatResponse = callChatService(formattedMessages, providerConfig, mergedLLMParameters, httpConfig);
         return new CompletionResponse(chatResponse.getContent(), chatResponse.isComplete(), true);
     }
 
@@ -69,7 +71,8 @@ public class OpenAIChatFlavor extends OpenAIFlavor<Collection<ChatMessage>, Inde
     public ChatCompletionResponse callChatService(
             Collection<ChatMessage> formattedMessages,
             ProviderConfig providerConfig,
-            Map<String, Object> llmParameters
+            Map<String, Object> llmParameters,
+            HttpConfig httpConfig
     ) throws FreeplayException {
         validateParameters(llmParameters);
 
@@ -78,7 +81,7 @@ public class OpenAIChatFlavor extends OpenAIFlavor<Collection<ChatMessage>, Inde
 
         HttpResponse<String> response;
         try {
-            response = Http.postJsonWithBearer(OPENAI_CHAT_URL, bodyMap, providerConfig.getApiKey());
+            response = Http.postJsonWithBearer(OPENAI_CHAT_URL, bodyMap, providerConfig.getApiKey(), httpConfig);
         } catch (Exception e) {
             throw new FreeplayException("Error calling OpenAI.", e);
         }
@@ -106,14 +109,16 @@ public class OpenAIChatFlavor extends OpenAIFlavor<Collection<ChatMessage>, Inde
     public Stream<IndexedChatMessage> callServiceStream(
             Collection<ChatMessage> formattedPrompt,
             ProviderConfig providerConfig,
-            Map<String, Object> mergedLLMParameters
+            Map<String, Object> mergedLLMParameters,
+            HttpConfig httpConfig
     ) {
         Stream<String> messages = callOpenAIStream(
                 providerConfig,
                 OPENAI_CHAT_URL,
                 "messages",
                 mergedLLMParameters,
-                formattedPrompt);
+                formattedPrompt,
+                httpConfig);
 
         AtomicReference<String> role = new AtomicReference<>();
         Function<Map<String, Object>, IndexedChatMessage> itemCreator =

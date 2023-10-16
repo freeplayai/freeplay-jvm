@@ -1,9 +1,14 @@
 package ai.freeplay.example.java;
 
 import ai.freeplay.client.Freeplay;
+import ai.freeplay.client.HttpConfig;
 import ai.freeplay.client.ProviderConfig.OpenAIProviderConfig;
-import ai.freeplay.client.model.*;
+import ai.freeplay.client.model.ChatCompletionResponse;
+import ai.freeplay.client.model.ChatMessage;
+import ai.freeplay.client.model.CompletionResponse;
+import ai.freeplay.client.model.CompletionSession;
 
+import java.time.Duration;
 import java.util.Collections;
 import java.util.Map;
 
@@ -19,7 +24,13 @@ public class OpenAIChatCompletion {
 
         String baseUrl = format("https://%s.freeplay.ai/api", customerDomain);
 
-        Freeplay fpClient = new Freeplay(freeplayApiKey, baseUrl, new OpenAIProviderConfig(openaiApiKey));
+        Freeplay fpClient = new Freeplay(
+                freeplayApiKey,
+                baseUrl,
+                new OpenAIProviderConfig(openaiApiKey),
+                Collections.emptyMap(),
+                new HttpConfig(Duration.ofMillis(10_000))
+        );
         Map<String, Object> llmParameters = Collections.emptyMap();
 
         CompletionSession session = fpClient.createSession(projectId, "prod");
@@ -37,9 +48,7 @@ public class OpenAIChatCompletion {
                 llmParameters
         );
 
-        chatResponse.getFirstChoice().ifPresent((ChatMessage message) -> {
-            System.out.printf("Chat Completion text [%s]: %s%n", message.getRole(), chatResponse.getContent());
-        });
-
+        chatResponse.getFirstChoice().ifPresent((ChatMessage message) ->
+                System.out.printf("Chat Completion text [%s]: %s%n", message.getRole(), chatResponse.getContent()));
     }
 }

@@ -4,10 +4,7 @@ import ai.freeplay.client.ProviderConfig.AnthropicProviderConfig;
 import ai.freeplay.client.exceptions.FreeplayException;
 import ai.freeplay.client.internal.utilities.MockFixtures;
 import ai.freeplay.client.model.CompletionResponse;
-import org.junit.Before;
 import org.junit.Test;
-import org.mockito.MockedStatic;
-import org.mockito.Mockito;
 
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -22,32 +19,22 @@ import static ai.freeplay.client.internal.utilities.MockMethods.getCapturedReque
 import static ai.freeplay.client.internal.utilities.PromptProcessors.testTextProcessor;
 import static java.lang.String.format;
 import static org.junit.Assert.*;
-import static org.mockito.Mockito.mock;
 
-public class AnthropicCompletionTest {
+public class AnthropicCompletionTest extends HttpClientTestBase {
 
     private final String templateName = "my-prompt";
 
     private final String textPromptContent = "Answer this question: {{question}}";
     private final String textCompletion = " I apologize that your sink isn't working. Can I help you";
 
-    private HttpClient mockedClient;
-
-    @Before
-    public void beforeEach() {
-        mockedClient = mock(HttpClient.class);
-    }
-
     @Test
-    public void textCompletionReturnsValue() throws Exception {
-        mockCreateSession(mockedClient);
-        mockGetPrompts(mockedClient, templateName, textPromptContent, Collections.emptyMap(), "anthropic_text");
-        mockAnthropicTextCall(mockedClient, textCompletion);
+    public void textCompletionReturnsValue() {
+        withMockedClient((HttpClient mockedClient) -> {
+            mockCreateSession(mockedClient);
+            mockGetPrompts(mockedClient, templateName, textPromptContent, Collections.emptyMap(), "anthropic_text");
+            mockAnthropicTextCall(mockedClient, textCompletion);
 
-        CompletionResponse completion;
-
-        try (MockedStatic<HttpClient> httpClientClass = Mockito.mockStatic(HttpClient.class)) {
-            httpClientClass.when(HttpClient::newHttpClient).thenReturn(mockedClient);
+            CompletionResponse completion;
 
             Freeplay fpClient = new Freeplay(MockFixtures.freeplayApiKey, baseUrl, new AnthropicProviderConfig(anthropicApiKey));
             completion = fpClient.getCompletion(
@@ -71,17 +58,15 @@ public class AnthropicCompletionTest {
             assertEquals("Answer this question: why isn't my sink working?", recordBodyMap.get("prompt_content"));
             assertEquals(" I apologize that your sink isn't working. Can I help you", recordBodyMap.get("return_content"));
             assertNull(recordBodyMap.get("test_run_id"));
-        }
+        });
     }
 
     @Test
-    public void textCompletionHandlesProcessor() throws Exception {
-        mockCreateSession(mockedClient);
-        mockGetPrompts(mockedClient, templateName, textPromptContent, Collections.emptyMap(), "anthropic_text");
-        mockAnthropicTextCall(mockedClient, textCompletion);
-
-        try (MockedStatic<HttpClient> httpClientClass = Mockito.mockStatic(HttpClient.class)) {
-            httpClientClass.when(HttpClient::newHttpClient).thenReturn(mockedClient);
+    public void textCompletionHandlesProcessor() {
+        withMockedClient((HttpClient mockedClient) -> {
+            mockCreateSession(mockedClient);
+            mockGetPrompts(mockedClient, templateName, textPromptContent, Collections.emptyMap(), "anthropic_text");
+            mockAnthropicTextCall(mockedClient, textCompletion);
 
             Freeplay fpClient = new Freeplay(MockFixtures.freeplayApiKey, baseUrl, new AnthropicProviderConfig(anthropicApiKey));
             fpClient.getCompletion(
@@ -107,24 +92,22 @@ public class AnthropicCompletionTest {
             assertEquals(
                     "PREPENDED_TEXT Answer this question: why isn't my sink working?",
                     recordBodyMap.get("prompt_content"));
-        }
+        });
     }
 
     @Test
-    public void requiresRequiredParams() throws Exception {
-        mockCreateSession(mockedClient);
-        mockGetPrompts(mockedClient, templateName, textPromptContent, Collections.emptyMap(), "anthropic_text");
-        mockAnthropicTextCall(mockedClient, textCompletion);
+    public void requiresRequiredParams() {
+        withMockedClient((HttpClient mockedClient) -> {
+            mockCreateSession(mockedClient);
+            mockGetPrompts(mockedClient, templateName, textPromptContent, Collections.emptyMap(), "anthropic_text");
+            mockAnthropicTextCall(mockedClient, textCompletion);
 
-        Stream<String> requiredParameters = Stream.of("model", "max_tokens_to_sample");
+            Stream<String> requiredParameters = Stream.of("model", "max_tokens_to_sample");
 
-        Map<String, Object> llmParameters = Map.of(
-                "model", MODEL_CLAUDE_2,
-                "max_tokens_to_sample", 64
-        );
-
-        try (MockedStatic<HttpClient> httpClientClass = Mockito.mockStatic(HttpClient.class)) {
-            httpClientClass.when(HttpClient::newHttpClient).thenReturn(mockedClient);
+            Map<String, Object> llmParameters = Map.of(
+                    "model", MODEL_CLAUDE_2,
+                    "max_tokens_to_sample", 64
+            );
 
             requiredParameters.forEach((String param) -> {
                 Map<String, Object> requestLLMParameters = new HashMap<>(llmParameters);
@@ -145,17 +128,15 @@ public class AnthropicCompletionTest {
                     assertEquals(format("The '%s' parameter is required when calling Anthropic.", param), fpe.getMessage());
                 }
             });
-        }
+        });
     }
 
     @Test
-    public void disallowsPromptParam() throws Exception {
-        mockCreateSession(mockedClient);
-        mockGetPrompts(mockedClient, templateName, textPromptContent, Collections.emptyMap(), "anthropic_text");
-        mockAnthropicTextCall(mockedClient, textCompletion);
-
-        try (MockedStatic<HttpClient> httpClientClass = Mockito.mockStatic(HttpClient.class)) {
-            httpClientClass.when(HttpClient::newHttpClient).thenReturn(mockedClient);
+    public void disallowsPromptParam() {
+        withMockedClient((HttpClient mockedClient) -> {
+            mockCreateSession(mockedClient);
+            mockGetPrompts(mockedClient, templateName, textPromptContent, Collections.emptyMap(), "anthropic_text");
+            mockAnthropicTextCall(mockedClient, textCompletion);
 
             try {
                 Freeplay fpClient = new Freeplay(MockFixtures.freeplayApiKey, baseUrl, new AnthropicProviderConfig(anthropicApiKey));
@@ -174,18 +155,16 @@ public class AnthropicCompletionTest {
             } catch (FreeplayException fpe) {
                 assertEquals("The 'prompt' parameter cannot be specified. It is populated automatically.", fpe.getMessage());
             }
-        }
+        });
     }
 
     @SuppressWarnings("OptionalGetWithoutIsPresent")
     @Test
-    public void sendsRequiredHeaders() throws Exception {
-        mockCreateSession(mockedClient);
-        mockGetPrompts(mockedClient, templateName, textPromptContent, Collections.emptyMap(), "anthropic_text");
-        mockAnthropicTextCall(mockedClient, textCompletion);
-
-        try (MockedStatic<HttpClient> httpClientClass = Mockito.mockStatic(HttpClient.class)) {
-            httpClientClass.when(HttpClient::newHttpClient).thenReturn(mockedClient);
+    public void sendsRequiredHeaders() {
+        withMockedClient((HttpClient mockedClient) -> {
+            mockCreateSession(mockedClient);
+            mockGetPrompts(mockedClient, templateName, textPromptContent, Collections.emptyMap(), "anthropic_text");
+            mockAnthropicTextCall(mockedClient, textCompletion);
 
             Freeplay fpClient = new Freeplay(
                     MockFixtures.freeplayApiKey,
@@ -209,36 +188,36 @@ public class AnthropicCompletionTest {
             assertEquals("application/json", anthropicRequest.headers().firstValue("content-type").get());
             assertEquals("2023-06-01", anthropicRequest.headers().firstValue("anthropic-version").get());
             assertEquals(anthropicApiKey, anthropicRequest.headers().firstValue("x-api-key").get());
-        }
+        });
     }
 
     @Test
-    public void handlesUnauthorizedCallingAnthropic() throws Exception {
-        mockCreateSession(mockedClient);
-        mockGetPrompts(mockedClient, templateName, textPromptContent, Collections.emptyMap(), "anthropic_text");
-        mockUnauthorizedAntropicTextCall(mockedClient);
+    public void handlesUnauthorizedCallingAnthropic() {
+        withMockedClient((HttpClient mockedClient) -> {
+            mockCreateSession(mockedClient);
+            mockGetPrompts(mockedClient, templateName, textPromptContent, Collections.emptyMap(), "anthropic_text");
+            mockUnauthorizedAnthropicTextCall(mockedClient);
 
-        try (MockedStatic<HttpClient> httpClientClass = Mockito.mockStatic(HttpClient.class)) {
-            httpClientClass.when(HttpClient::newHttpClient).thenReturn(mockedClient);
+            try {
+                Freeplay fpClient = new Freeplay(
+                        MockFixtures.freeplayApiKey,
+                        baseUrl,
+                        new AnthropicProviderConfig("not-real-key"));
 
-            Freeplay fpClient = new Freeplay(
-                    MockFixtures.freeplayApiKey,
-                    baseUrl,
-                    new AnthropicProviderConfig("not-real-key"));
-
-            fpClient.getCompletion(
-                    projectId,
-                    "my-prompt",
-                    Map.of("question", "why isn't my sink working?"),
-                    Map.of(
-                            "model", MODEL_CLAUDE_2,
-                            "max_tokens_to_sample", 64
-                    ),
-                    "latest"
-            );
-            fail("Should have gotten an exception for a 401");
-        } catch (FreeplayException fpe) {
-            assertEquals("Error making call [401]", fpe.getMessage());
-        }
+                fpClient.getCompletion(
+                        projectId,
+                        "my-prompt",
+                        Map.of("question", "why isn't my sink working?"),
+                        Map.of(
+                                "model", MODEL_CLAUDE_2,
+                                "max_tokens_to_sample", 64
+                        ),
+                        "latest"
+                );
+                fail("Should have gotten an exception for a 401");
+            } catch (FreeplayException fpe) {
+                assertEquals("Error making call [401]", fpe.getMessage());
+            }
+        });
     }
 }

@@ -1,6 +1,7 @@
 package ai.freeplay.client.internal;
 
 import ai.freeplay.client.Freeplay;
+import ai.freeplay.client.HttpConfig;
 import ai.freeplay.client.ProviderConfig;
 import ai.freeplay.client.exceptions.FreeplayException;
 import ai.freeplay.client.flavor.*;
@@ -27,26 +28,29 @@ public class CallSupport {
     private final Flavor<?, ?> clientFlavor;
     private final Map<String, Object> clientLLMParameters;
     private final ProviderConfig providerConfig;
+    private final HttpConfig httpConfig;
 
     public CallSupport(
             String freeplayApiKey,
             String baseUrl,
             ProviderConfig providerConfig,
             Flavor<?, ?> flavor,
-            Map<String, Object> llmParameters
+            Map<String, Object> llmParameters,
+            HttpConfig httpConfig
     ) {
         this.freeplayApiKey = freeplayApiKey;
         this.baseUrl = baseUrl;
         this.providerConfig = providerConfig;
         this.clientFlavor = flavor;
         this.clientLLMParameters = llmParameters != null ? llmParameters : Collections.emptyMap();
+        this.httpConfig = httpConfig;
     }
 
     public String createSession(String projectId, String tag) throws FreeplayException {
         String finalTag = getFinalTag(tag);
         String url = getUrl("projects/%s/sessions/tag/%s", projectId, finalTag);
 
-        HttpResponse<String> response = Http.postWithBearer(url, freeplayApiKey);
+        HttpResponse<String> response = Http.postWithBearer(url, freeplayApiKey, httpConfig);
         throwIfError(response, 201);
 
         Map<String, Object> sessionMap = Http.parseBody(response);
@@ -57,7 +61,7 @@ public class CallSupport {
     public Collection<PromptTemplate> getPrompts(String projectId, String tag) throws FreeplayException {
         String finalTag = getFinalTag(tag);
         String url = getUrl("projects/%s/templates/all/%s", projectId, finalTag);
-        HttpResponse<String> response = Http.get(url, freeplayApiKey);
+        HttpResponse<String> response = Http.get(url, freeplayApiKey, httpConfig);
         throwIfError(response, 200);
 
         Map<String, Object> templatesMap = Http.parseBody(response);
@@ -87,7 +91,8 @@ public class CallSupport {
         HttpResponse<String> response = Http.postJsonWithBearer(
                 url,
                 Map.of("playlist_name", testListName),
-                freeplayApiKey
+                freeplayApiKey,
+                httpConfig
         );
         Map<String, Object> objectMap = Http.parseBody(response);
 
@@ -127,7 +132,11 @@ public class CallSupport {
                 formattedPrompt;
 
         double start = System.nanoTime() / 1e9;
-        CompletionResponse response = activeFlavor.callService(modifiedPrompt, providerConfig, mergedLLMParameters);
+        CompletionResponse response = activeFlavor.callService(
+                modifiedPrompt,
+                providerConfig,
+                mergedLLMParameters,
+                httpConfig);
         double end = System.nanoTime() / 1e9;
 
         record(
@@ -176,7 +185,11 @@ public class CallSupport {
                 formattedPrompt;
 
         double start = System.nanoTime() / 1e9;
-        Stream<R> responseStream = activeFlavor.callServiceStream(modifiedPrompt, providerConfig, mergedLLMParameters);
+        Stream<R> responseStream = activeFlavor.callServiceStream(
+                modifiedPrompt,
+                providerConfig,
+                mergedLLMParameters,
+                httpConfig);
 
         return handleStream(
                 sessionId,
@@ -242,7 +255,7 @@ public class CallSupport {
 
         double start = System.nanoTime() / 1e9;
         ChatCompletionResponse response = activeFlavor.callChatService(
-                finalMessages, providerConfig, mergedLLMParameters);
+                finalMessages, providerConfig, mergedLLMParameters, httpConfig);
         double end = System.nanoTime() / 1e9;
 
         record(
@@ -283,7 +296,7 @@ public class CallSupport {
 
         double start = System.nanoTime() / 1e9;
         Stream<IndexedChatMessage> responseStream = activeFlavor.callServiceStream(
-                formattedMessages, providerConfig, mergedLLMParameters);
+                formattedMessages, providerConfig, mergedLLMParameters, httpConfig);
 
         return handleStream(
                 sessionId,
