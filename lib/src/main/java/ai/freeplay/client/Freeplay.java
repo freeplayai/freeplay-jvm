@@ -16,10 +16,56 @@ import java.util.stream.Stream;
 public class Freeplay {
     private final CallSupport callSupport;
 
-    public Freeplay(String freeplayAPIKey, String baseUrl, ProviderConfig providerConfig) {
-        this(freeplayAPIKey, baseUrl, providerConfig, null, new HttpConfig());
+    public Freeplay(String freeplayAPIKey, String baseUrl, ProviderConfigs providerConfigs) {
+        this(freeplayAPIKey, baseUrl, providerConfigs, null, new HttpConfig());
     }
 
+    public Freeplay(
+            String freeplayAPIKey,
+            String baseUrl,
+            ProviderConfigs providerConfigs,
+            Map<String, Object> llmParameters
+    ) {
+        this(freeplayAPIKey, baseUrl, providerConfigs, null, llmParameters, new HttpConfig());
+    }
+
+    public Freeplay(
+            String freeplayAPIKey,
+            String baseUrl,
+            ProviderConfigs providerConfigs,
+            Map<String, Object> llmParameters,
+            HttpConfig httpConfig
+    ) {
+        this(freeplayAPIKey, baseUrl, providerConfigs, null, llmParameters, httpConfig);
+    }
+
+    public Freeplay(
+            String freeplayAPIKey,
+            String baseUrl,
+            ProviderConfigs providerConfigs,
+            Flavor<?, ?> flavor,
+            Map<String, Object> llmParameters,
+            HttpConfig httpConfig
+    ) {
+        callSupport = new CallSupport(
+                freeplayAPIKey,
+                baseUrl,
+                providerConfigs,
+                flavor,
+                llmParameters,
+                httpConfig);
+    }
+
+    // ====================================================
+    // Backward compatible constructors
+    // ====================================================
+
+    @Deprecated
+    public Freeplay(String freeplayAPIKey, String baseUrl, ProviderConfig providerConfig) {
+        this(freeplayAPIKey, baseUrl, providerConfig, null, null, new HttpConfig());
+    }
+
+    @Deprecated
     public Freeplay(
             String freeplayAPIKey,
             String baseUrl,
@@ -29,6 +75,7 @@ public class Freeplay {
         this(freeplayAPIKey, baseUrl, providerConfig, null, llmParameters, new HttpConfig());
     }
 
+    @Deprecated
     public Freeplay(
             String freeplayAPIKey,
             String baseUrl,
@@ -39,6 +86,7 @@ public class Freeplay {
         this(freeplayAPIKey, baseUrl, providerConfig, null, llmParameters, httpConfig);
     }
 
+    @Deprecated
     public Freeplay(
             String freeplayAPIKey,
             String baseUrl,
@@ -47,13 +95,13 @@ public class Freeplay {
             Map<String, Object> llmParameters,
             HttpConfig httpConfig
     ) {
-        callSupport = new CallSupport(
-                freeplayAPIKey,
+        this(freeplayAPIKey,
                 baseUrl,
-                providerConfig,
+                ProviderConfigs.fromGenericConfig(providerConfig),
                 flavor,
                 llmParameters,
-                httpConfig);
+                httpConfig
+        );
     }
 
     public CompletionSession createSession(String projectId, String environment) {

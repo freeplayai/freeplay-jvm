@@ -2,7 +2,7 @@ package ai.freeplay.client.internal;
 
 import ai.freeplay.client.Freeplay;
 import ai.freeplay.client.HttpConfig;
-import ai.freeplay.client.ProviderConfig;
+import ai.freeplay.client.ProviderConfigs;
 import ai.freeplay.client.exceptions.FreeplayException;
 import ai.freeplay.client.flavor.*;
 import ai.freeplay.client.model.*;
@@ -27,13 +27,13 @@ public class CallSupport {
     private final String baseUrl;
     private final Flavor<?, ?> clientFlavor;
     private final Map<String, Object> clientLLMParameters;
-    private final ProviderConfig providerConfig;
+    private final ProviderConfigs providerConfig;
     private final HttpConfig httpConfig;
 
     public CallSupport(
             String freeplayApiKey,
             String baseUrl,
-            ProviderConfig providerConfig,
+            ProviderConfigs providerConfig,
             Flavor<?, ?> flavor,
             Map<String, Object> llmParameters,
             HttpConfig httpConfig

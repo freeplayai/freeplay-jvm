@@ -1,7 +1,8 @@
 package ai.freeplay.client.flavor;
 
 import ai.freeplay.client.HttpConfig;
-import ai.freeplay.client.ProviderConfig;
+import ai.freeplay.client.ProviderConfig.OpenAIProviderConfig;
+import ai.freeplay.client.ProviderConfigs;
 import ai.freeplay.client.exceptions.FreeplayException;
 import ai.freeplay.client.internal.Http;
 import ai.freeplay.client.internal.JSONUtil;
@@ -40,7 +41,7 @@ public abstract class OpenAIFlavor<P, R> implements Flavor<P, R> {
     }
 
     protected Stream<String> callOpenAIStream(
-            ProviderConfig providerConfig,
+            ProviderConfigs providerConfig,
             String url,
             String promptFieldName,
             Map<String, Object> mergedLLMParameters,
@@ -48,6 +49,7 @@ public abstract class OpenAIFlavor<P, R> implements Flavor<P, R> {
             HttpConfig httpConfig
     ) {
         validateParameters(mergedLLMParameters);
+        OpenAIProviderConfig openAIProviderConfig = validateConfig(providerConfig);
 
         Map<String, Object> bodyMap = new HashMap<>(mergedLLMParameters);
         bodyMap.put(promptFieldName, formattedPrompt);
@@ -58,7 +60,7 @@ public abstract class OpenAIFlavor<P, R> implements Flavor<P, R> {
             response = Http.postJsonWithBearer(
                     url,
                     bodyMap,
-                    providerConfig.getApiKey(),
+                    openAIProviderConfig.getApiKey(),
                     HttpResponse.BodyHandlers.ofLines(),
                     httpConfig
             );
@@ -83,6 +85,15 @@ public abstract class OpenAIFlavor<P, R> implements Flavor<P, R> {
             }
         } else {
             throw new FreeplayException("Got unknown line in the stream: '" + line + "'");
+        }
+    }
+
+    protected OpenAIProviderConfig validateConfig(ProviderConfigs providerConfig) {
+        if (providerConfig.getOpenAIConfig() != null) {
+            return providerConfig.getOpenAIConfig();
+        } else {
+            throw new FreeplayException("The OpenAI provider is not configured on the ProviderConfig. " +
+                    "Set up this provider config to call OpenAI endpoints.");
         }
     }
 }

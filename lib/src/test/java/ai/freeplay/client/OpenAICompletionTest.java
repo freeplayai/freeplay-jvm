@@ -1,5 +1,7 @@
 package ai.freeplay.client;
 
+import ai.freeplay.client.ProviderConfig.AnthropicProviderConfig;
+import ai.freeplay.client.ProviderConfig.OpenAIProviderConfig;
 import ai.freeplay.client.exceptions.FreeplayException;
 import ai.freeplay.client.internal.utilities.MockFixtures;
 import ai.freeplay.client.model.*;
@@ -10,7 +12,6 @@ import java.net.http.HttpClient;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static ai.freeplay.client.ProviderConfig.OpenAIProviderConfig;
 import static ai.freeplay.client.internal.utilities.MockFixtures.*;
 import static ai.freeplay.client.internal.utilities.MockMethods.getCapturedBodyAsMap;
 import static ai.freeplay.client.internal.utilities.PromptProcessors.testChatProcessor;
@@ -28,6 +29,8 @@ public class OpenAICompletionTest extends HttpClientTestBase {
     private final String formattedChatPromptExpected = "[{\"content\":\"You are a support agent.\",\"role\":\"system\"},{\"content\":\"How may I help you?\",\"role\":\"assistant\"},{\"content\":\"why isn't my sink working?\",\"role\":\"user\"}]";
     private final String chatPromptWithInsertedMessage = "[{\"content\":\"You are a support agent.\",\"role\":\"system\"},{\"content\":\"Inserted Message\",\"role\":\"user\"},{\"content\":\"How may I help you?\",\"role\":\"assistant\"},{\"content\":\"why isn't my sink working?\",\"role\":\"user\"}]";
 
+    private final ProviderConfigs providerConfigs = new ProviderConfigs(new OpenAIProviderConfig(openaiApiKey));
+
     @Test
     public void textCompletionReturnsValue() {
         withMockedClient((HttpClient mockedClient) -> {
@@ -35,8 +38,7 @@ public class OpenAICompletionTest extends HttpClientTestBase {
             mockGetPrompts(mockedClient, templateName, textPromptContent, Collections.emptyMap(), "openai_text");
             mockOpenAITextCall(mockedClient, textCompletion);
 
-
-            Freeplay fpClient = new Freeplay(MockFixtures.freeplayApiKey, baseUrl, new OpenAIProviderConfig(openaiApiKey));
+            Freeplay fpClient = new Freeplay(MockFixtures.freeplayApiKey, baseUrl, providerConfigs);
             CompletionResponse completion = fpClient.getCompletion(
                     projectId,
                     "my-prompt",
@@ -68,7 +70,7 @@ public class OpenAICompletionTest extends HttpClientTestBase {
             mockGetPrompts(mockedClient, MODEL_GPT_TURBO_35, templateName, getChatPromptContent());
             mockOpenAIChatCall(mockedClient, chatCompletion1);
 
-            Freeplay fpClient = new Freeplay(freeplayApiKey, baseUrl, new OpenAIProviderConfig(openaiApiKey));
+            Freeplay fpClient = new Freeplay(freeplayApiKey, baseUrl, providerConfigs);
 
             CompletionResponse completionResponse = fpClient.getCompletion(
                     projectId,
@@ -94,7 +96,7 @@ public class OpenAICompletionTest extends HttpClientTestBase {
             mockGetPrompts(mockedClient, MODEL_GPT_TURBO_35, templateName, getChatPromptContent());
             mockOpenAIChatCall(mockedClient, chatCompletion1);
 
-            Freeplay fpClient = new Freeplay(freeplayApiKey, baseUrl, new OpenAIProviderConfig(openaiApiKey));
+            Freeplay fpClient = new Freeplay(freeplayApiKey, baseUrl, providerConfigs);
 
             CompletionSession session = fpClient.createSession(projectId, "latest");
             ChatCompletionResponse completionResponse = session.getChatCompletion(
@@ -145,7 +147,7 @@ public class OpenAICompletionTest extends HttpClientTestBase {
             mockOpenAIChatCall(mockedClient, completion1);
             mockOpenAITextCall(mockedClient, completion2);
 
-            Freeplay fpClient = new Freeplay(freeplayApiKey, baseUrl, new OpenAIProviderConfig(openaiApiKey));
+            Freeplay fpClient = new Freeplay(freeplayApiKey, baseUrl, providerConfigs);
             CompletionSession session = fpClient.createSession(projectId, "latest");
             ChatCompletionResponse response1 = session.getChatCompletion(
                     templateName,
@@ -181,7 +183,7 @@ public class OpenAICompletionTest extends HttpClientTestBase {
 
             try {
 
-                Freeplay fpClient = new Freeplay(freeplayApiKey, baseUrl, new OpenAIProviderConfig(openaiApiKey));
+                Freeplay fpClient = new Freeplay(freeplayApiKey, baseUrl, providerConfigs);
                 fpClient.getCompletion(
                         projectId,
                         "my-prompt",
@@ -203,7 +205,7 @@ public class OpenAICompletionTest extends HttpClientTestBase {
             mockGetPrompts(mockedClient, templateName, textPromptContent, Collections.emptyMap(), "openai_text");
 
             try {
-                Freeplay fpClient = new Freeplay(freeplayApiKey, baseUrl, new OpenAIProviderConfig(openaiApiKey));
+                Freeplay fpClient = new Freeplay(freeplayApiKey, baseUrl, providerConfigs);
                 fpClient.getCompletion(
                         projectId,
                         "my-prompt",
@@ -230,7 +232,7 @@ public class OpenAICompletionTest extends HttpClientTestBase {
             mockGetPrompts(mockedClient, templateName, textPromptContent, Collections.emptyMap(), "openai_text");
             mockOpenAITextCall(mockedClient, textCompletion);
 
-            Freeplay fpClient = new Freeplay(MockFixtures.freeplayApiKey, baseUrl, new OpenAIProviderConfig(openaiApiKey));
+            Freeplay fpClient = new Freeplay(MockFixtures.freeplayApiKey, baseUrl, providerConfigs);
 
             AtomicReference<LLMCallInfo> llmCallInfo = new AtomicReference<>();
 
@@ -270,7 +272,7 @@ public class OpenAICompletionTest extends HttpClientTestBase {
             mockGetPrompts(mockedClient, MODEL_GPT_TURBO_35, templateName, getChatPromptContent());
             mockOpenAIChatCall(mockedClient, chatCompletion1);
 
-            Freeplay fpClient = new Freeplay(freeplayApiKey, baseUrl, new OpenAIProviderConfig(openaiApiKey));
+            Freeplay fpClient = new Freeplay(freeplayApiKey, baseUrl, providerConfigs);
 
             AtomicReference<LLMCallInfo> llmCallInfo = new AtomicReference<>();
 
@@ -310,7 +312,7 @@ public class OpenAICompletionTest extends HttpClientTestBase {
             mockGetPrompts(mockedClient, MODEL_GPT_TURBO_35, templateName, getChatPromptContent());
             mockOpenAIChatCall(mockedClient, chatCompletion1);
 
-            Freeplay fpClient = new Freeplay(freeplayApiKey, baseUrl, new OpenAIProviderConfig(openaiApiKey));
+            Freeplay fpClient = new Freeplay(freeplayApiKey, baseUrl, providerConfigs);
             CompletionSession session = fpClient.createSession(projectId, "latest");
             session.getChatCompletion(
                     templateName,
@@ -339,7 +341,7 @@ public class OpenAICompletionTest extends HttpClientTestBase {
 
             try {
 
-                Freeplay fpClient = new Freeplay(freeplayApiKey, baseUrl, new OpenAIProviderConfig(openaiApiKey));
+                Freeplay fpClient = new Freeplay(freeplayApiKey, baseUrl, providerConfigs);
                 fpClient.getCompletion(
                         projectId,
                         "my-prompt",
@@ -361,7 +363,7 @@ public class OpenAICompletionTest extends HttpClientTestBase {
             mockUnauthorizedGetPrompts(mockedClient);
 
             try {
-                Freeplay fpClient = new Freeplay(freeplayApiKey, baseUrl, new OpenAIProviderConfig(openaiApiKey));
+                Freeplay fpClient = new Freeplay(freeplayApiKey, baseUrl, providerConfigs);
                 fpClient.getCompletion(
                         projectId,
                         "my-prompt",
@@ -384,7 +386,7 @@ public class OpenAICompletionTest extends HttpClientTestBase {
             mockUnauthorizedOpenAITextCall(mockedClient);
 
             try {
-                Freeplay fpClient = new Freeplay(freeplayApiKey, baseUrl, new OpenAIProviderConfig(openaiApiKey));
+                Freeplay fpClient = new Freeplay(freeplayApiKey, baseUrl, providerConfigs);
                 fpClient.getCompletion(
                         projectId,
                         "my-prompt",
@@ -420,7 +422,7 @@ public class OpenAICompletionTest extends HttpClientTestBase {
                     Map<String, Object> callParams = Map.of("temperature", "0.44");
 
                     Freeplay fpClient = new Freeplay(
-                            freeplayApiKey, baseUrl, new OpenAIProviderConfig(openaiApiKey), clientParams);
+                            freeplayApiKey, baseUrl, providerConfigs, clientParams);
 
                     fpClient.getCompletion(
                             projectId,
@@ -442,5 +444,28 @@ public class OpenAICompletionTest extends HttpClientTestBase {
                     assertEquals("0.44", recordedParameters.get("temperature"));
                 }
         );
+    }
+
+    @Test
+    public void unconfiguredProviderErrors() {
+        withMockedClient((HttpClient mockedClient) -> {
+            mockCreateSession(mockedClient);
+            mockGetPrompts(mockedClient, templateName, textPromptContent, Collections.emptyMap(), "openai_text");
+
+            Freeplay fpClient = new Freeplay(MockFixtures.freeplayApiKey, baseUrl, new ProviderConfigs(new AnthropicProviderConfig("")));
+
+            try {
+                fpClient.getCompletion(
+                        projectId,
+                        "my-prompt",
+                        Map.of("question", "why isn't my sink working?"),
+                        Map.of("model", MODEL_TEXT_DAVINCI_003),
+                        "latest"
+                );
+            } catch (FreeplayException fpe) {
+                assertEquals("The OpenAI provider is not configured on the ProviderConfig. " +
+                        "Set up this provider config to call OpenAI endpoints.", fpe.getMessage());
+            }
+        });
     }
 }

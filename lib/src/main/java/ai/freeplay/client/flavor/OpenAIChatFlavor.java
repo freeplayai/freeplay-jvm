@@ -1,7 +1,8 @@
 package ai.freeplay.client.flavor;
 
 import ai.freeplay.client.HttpConfig;
-import ai.freeplay.client.ProviderConfig;
+import ai.freeplay.client.ProviderConfig.OpenAIProviderConfig;
+import ai.freeplay.client.ProviderConfigs;
 import ai.freeplay.client.exceptions.FreeplayException;
 import ai.freeplay.client.internal.Http;
 import ai.freeplay.client.internal.JSONUtil;
@@ -58,7 +59,7 @@ public class OpenAIChatFlavor extends OpenAIFlavor<Collection<ChatMessage>, Inde
     @Override
     public CompletionResponse callService(
             Collection<ChatMessage> formattedMessages,
-            ProviderConfig providerConfig,
+            ProviderConfigs providerConfig,
             Map<String, Object> mergedLLMParameters,
             HttpConfig httpConfig
     ) throws FreeplayException {
@@ -70,18 +71,19 @@ public class OpenAIChatFlavor extends OpenAIFlavor<Collection<ChatMessage>, Inde
     @Override
     public ChatCompletionResponse callChatService(
             Collection<ChatMessage> formattedMessages,
-            ProviderConfig providerConfig,
+            ProviderConfigs providerConfig,
             Map<String, Object> llmParameters,
             HttpConfig httpConfig
     ) throws FreeplayException {
         validateParameters(llmParameters);
+        OpenAIProviderConfig openAIProviderConfig = validateConfig(providerConfig);
 
         Map<String, Object> bodyMap = new HashMap<>(llmParameters);
         bodyMap.put("messages", formattedMessages);
 
         HttpResponse<String> response;
         try {
-            response = Http.postJsonWithBearer(OPENAI_CHAT_URL, bodyMap, providerConfig.getApiKey(), httpConfig);
+            response = Http.postJsonWithBearer(OPENAI_CHAT_URL, bodyMap, openAIProviderConfig.getApiKey(), httpConfig);
         } catch (Exception e) {
             throw new FreeplayException("Error calling OpenAI.", e);
         }
@@ -108,7 +110,7 @@ public class OpenAIChatFlavor extends OpenAIFlavor<Collection<ChatMessage>, Inde
     @Override
     public Stream<IndexedChatMessage> callServiceStream(
             Collection<ChatMessage> formattedPrompt,
-            ProviderConfig providerConfig,
+            ProviderConfigs providerConfig,
             Map<String, Object> mergedLLMParameters,
             HttpConfig httpConfig
     ) {

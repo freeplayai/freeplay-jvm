@@ -1,7 +1,8 @@
 package ai.freeplay.client.flavor;
 
 import ai.freeplay.client.HttpConfig;
-import ai.freeplay.client.ProviderConfig;
+import ai.freeplay.client.ProviderConfig.OpenAIProviderConfig;
+import ai.freeplay.client.ProviderConfigs;
 import ai.freeplay.client.exceptions.FreeplayException;
 import ai.freeplay.client.internal.Http;
 import ai.freeplay.client.internal.StringUtils;
@@ -36,18 +37,19 @@ public class OpenAITextFlavor extends OpenAIFlavor<String, CompletionResponse> {
     @Override
     public CompletionResponse callService(
             String formattedPrompt,
-            ProviderConfig providerConfig,
+            ProviderConfigs providerConfig,
             Map<String, Object> mergedLLMParameters,
             HttpConfig httpConfig
     ) throws FreeplayException {
         validateParameters(mergedLLMParameters);
+        OpenAIProviderConfig config = validateConfig(providerConfig);
 
         Map<String, Object> bodyMap = new HashMap<>(mergedLLMParameters);
         bodyMap.put("prompt", formattedPrompt);
 
         HttpResponse<String> response;
         try {
-            response = Http.postJsonWithBearer(OPENAI_COMPLETIONS_URL, bodyMap, providerConfig.getApiKey(), httpConfig);
+            response = Http.postJsonWithBearer(OPENAI_COMPLETIONS_URL, bodyMap, config.getApiKey(), httpConfig);
         } catch (Exception e) {
             throw new FreeplayException("Error calling OpenAI.", e);
         }
@@ -76,7 +78,7 @@ public class OpenAITextFlavor extends OpenAIFlavor<String, CompletionResponse> {
     @Override
     public Stream<CompletionResponse> callServiceStream(
             String formattedPrompt,
-            ProviderConfig providerConfig,
+            ProviderConfigs providerConfig,
             Map<String, Object> mergedLLMParameters,
             HttpConfig httpConfig
     ) {

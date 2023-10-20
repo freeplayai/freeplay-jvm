@@ -1,7 +1,8 @@
 package ai.freeplay.client.flavor;
 
 import ai.freeplay.client.HttpConfig;
-import ai.freeplay.client.ProviderConfig;
+import ai.freeplay.client.ProviderConfig.AnthropicProviderConfig;
+import ai.freeplay.client.ProviderConfigs;
 import ai.freeplay.client.exceptions.FreeplayException;
 import ai.freeplay.client.internal.Http;
 import ai.freeplay.client.internal.JSONUtil;
@@ -51,11 +52,13 @@ public class AnthropicFlavor implements Flavor<String, CompletionResponse> {
     @Override
     public CompletionResponse callService(
             String formattedPrompt,
-            ProviderConfig providerConfig,
+            ProviderConfigs providerConfig,
             Map<String, Object> mergedLLMParameters,
             HttpConfig httpConfig
     ) throws FreeplayException {
         validateParameters(mergedLLMParameters);
+        AnthropicProviderConfig anthropicProviderConfig = validateConfig(providerConfig);
+
         Map<String, Object> bodyMap = getRequestBody(formattedPrompt, mergedLLMParameters);
 
         HttpResponse<String> response;
@@ -66,7 +69,7 @@ public class AnthropicFlavor implements Flavor<String, CompletionResponse> {
                     httpConfig,
                     "accept", "application/json",
                     "anthropic-version", ANTHROPIC_VERSION,
-                    "x-api-key", providerConfig.getApiKey()
+                    "x-api-key", anthropicProviderConfig.getApiKey()
             );
         } catch (Exception e) {
             throw new FreeplayException("Error calling Anthropic.", e);
@@ -82,11 +85,13 @@ public class AnthropicFlavor implements Flavor<String, CompletionResponse> {
     @Override
     public Stream<CompletionResponse> callServiceStream(
             String formattedPrompt,
-            ProviderConfig providerConfig,
+            ProviderConfigs providerConfig,
             Map<String, Object> mergedLLMParameters,
             HttpConfig httpConfig
     ) {
         validateParameters(mergedLLMParameters);
+        AnthropicProviderConfig anthropicProviderConfig = validateConfig(providerConfig);
+
         Map<String, Object> bodyMap = getRequestBody(formattedPrompt, mergedLLMParameters);
         bodyMap.put("stream", true);
 
@@ -99,7 +104,7 @@ public class AnthropicFlavor implements Flavor<String, CompletionResponse> {
                     httpConfig,
                     "accept", "application/json",
                     "anthropic-version", ANTHROPIC_VERSION,
-                    "x-api-key", providerConfig.getApiKey()
+                    "x-api-key", anthropicProviderConfig.getApiKey()
             );
         } catch (Exception e) {
             throw new FreeplayException("Error calling Anthropic.", e);
@@ -196,6 +201,15 @@ public class AnthropicFlavor implements Flavor<String, CompletionResponse> {
             // to be tolerant of new event types. So we simply ignore pings and any new event types.
             streamState.reset();
             return null;
+        }
+    }
+
+    private AnthropicProviderConfig validateConfig(ProviderConfigs providerConfig) {
+        if (providerConfig.getAnthropicConfig() != null) {
+            return providerConfig.getAnthropicConfig();
+        } else {
+            throw new FreeplayException("The Anthropic provider is not configured on the ProviderConfig. " +
+                    "Set up this provider config to call Anthropic endpoints.");
         }
     }
 

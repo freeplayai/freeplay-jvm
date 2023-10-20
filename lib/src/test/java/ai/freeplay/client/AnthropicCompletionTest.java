@@ -1,6 +1,7 @@
 package ai.freeplay.client;
 
 import ai.freeplay.client.ProviderConfig.AnthropicProviderConfig;
+import ai.freeplay.client.ProviderConfig.OpenAIProviderConfig;
 import ai.freeplay.client.exceptions.FreeplayException;
 import ai.freeplay.client.internal.utilities.MockFixtures;
 import ai.freeplay.client.model.CompletionResponse;
@@ -68,7 +69,10 @@ public class AnthropicCompletionTest extends HttpClientTestBase {
             mockGetPrompts(mockedClient, templateName, textPromptContent, Collections.emptyMap(), "anthropic_text");
             mockAnthropicTextCall(mockedClient, textCompletion);
 
-            Freeplay fpClient = new Freeplay(MockFixtures.freeplayApiKey, baseUrl, new AnthropicProviderConfig(anthropicApiKey));
+            Freeplay fpClient = new Freeplay(
+                    MockFixtures.freeplayApiKey,
+                    baseUrl,
+                    new ProviderConfigs(new AnthropicProviderConfig(anthropicApiKey)));
             fpClient.getCompletion(
                     projectId,
                     "my-prompt",
@@ -217,6 +221,35 @@ public class AnthropicCompletionTest extends HttpClientTestBase {
                 fail("Should have gotten an exception for a 401");
             } catch (FreeplayException fpe) {
                 assertEquals("Error making call [401]", fpe.getMessage());
+            }
+        });
+    }
+
+    @Test
+    public void unconfiguredProviderErrors() {
+        withMockedClient((HttpClient mockedClient) -> {
+            mockCreateSession(mockedClient);
+            mockGetPrompts(mockedClient, templateName, textPromptContent, Collections.emptyMap(), "anthropic_text");
+
+            Freeplay fpClient = new Freeplay(
+                    MockFixtures.freeplayApiKey,
+                    baseUrl,
+                    new ProviderConfigs(new OpenAIProviderConfig("")));
+
+            try {
+                fpClient.getCompletion(
+                        projectId,
+                        "my-prompt",
+                        Map.of("question", "why isn't my sink working?"),
+                        Map.of(
+                                "model", MODEL_CLAUDE_2,
+                                "max_tokens_to_sample", 64
+                        ),
+                        "latest"
+                );
+            } catch (FreeplayException fpe) {
+                assertEquals("The Anthropic provider is not configured on the ProviderConfig." +
+                        " Set up this provider config to call Anthropic endpoints.", fpe.getMessage());
             }
         });
     }
