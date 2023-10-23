@@ -1,5 +1,6 @@
 package ai.freeplay.client.internal;
 
+import java.time.Instant;
 import java.util.Map;
 
 public class CallInfo {
@@ -13,11 +14,15 @@ public class CallInfo {
     private final String returnContent;
     private final boolean isComplete;
 
+    private static double instantToDouble(Instant instant) {
+        return Double.parseDouble(instant.getEpochSecond() + "." + instant.getNano());
+    }
+
     public CallInfo(
             String sessionId,
             String testRunId,
-            double startTime,
-            double endTime,
+            Instant startTime,
+            Instant endTime,
             String tag,
             Map<String, Object> inputs,
             String promptContent,
@@ -25,8 +30,8 @@ public class CallInfo {
             boolean isComplete) {
         this.sessionId = sessionId;
         this.testRunId = testRunId;
-        this.startTime = startTime;
-        this.endTime = endTime;
+        this.startTime = instantToDouble(startTime);
+        this.endTime = instantToDouble(endTime);
         this.tag = tag;
         this.inputs = inputs;
         this.promptContent = promptContent;

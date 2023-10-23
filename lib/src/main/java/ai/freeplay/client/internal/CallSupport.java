@@ -11,12 +11,14 @@ import ai.freeplay.client.processor.LLMCallInfo;
 import ai.freeplay.client.processor.PromptProcessor;
 
 import java.net.http.HttpResponse;
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
 import static java.lang.String.format;
 import static java.lang.String.valueOf;
+import static java.lang.System.currentTimeMillis;
 import static java.util.stream.Collectors.toList;
 
 public class CallSupport {
@@ -131,14 +133,13 @@ public class CallSupport {
                         new LLMCallInfo(activeFlavor.getProviderEnum(), mergedLLMParameters)) :
                 formattedPrompt;
 
-        double start = System.nanoTime() / 1e9;
+        Instant start = Instant.ofEpochMilli(currentTimeMillis());
         CompletionResponse response = activeFlavor.callService(
                 modifiedPrompt,
                 providerConfig,
                 mergedLLMParameters,
                 httpConfig);
-        double end = System.nanoTime() / 1e9;
-
+        Instant end = Instant.ofEpochMilli(currentTimeMillis());
         record(
                 new PromptInfo(
                         template.getPromptTemplateVersionId(),
@@ -184,7 +185,7 @@ public class CallSupport {
                         new LLMCallInfo(activeFlavor.getProviderEnum(), mergedLLMParameters)) :
                 formattedPrompt;
 
-        double start = System.nanoTime() / 1e9;
+        Instant start = Instant.ofEpochMilli(currentTimeMillis());
         Stream<R> responseStream = activeFlavor.callServiceStream(
                 modifiedPrompt,
                 providerConfig,
@@ -253,10 +254,10 @@ public class CallSupport {
                         new LLMCallInfo(activeFlavor.getProviderEnum(), mergedLLMParameters)) :
                 formattedMessages;
 
-        double start = System.nanoTime() / 1e9;
+        Instant start = Instant.ofEpochMilli(currentTimeMillis());
         ChatCompletionResponse response = activeFlavor.callChatService(
                 finalMessages, providerConfig, mergedLLMParameters, httpConfig);
-        double end = System.nanoTime() / 1e9;
+        Instant end = Instant.ofEpochMilli(currentTimeMillis());
 
         record(
                 new PromptInfo(
@@ -294,7 +295,7 @@ public class CallSupport {
         Map<String, Object> mergedLLMParameters = getMergedParameters(template, llmParameters);
         ChatFlavor activeFlavor = getActiveChatFlavor(clientFlavor, template);
 
-        double start = System.nanoTime() / 1e9;
+        Instant start = Instant.ofEpochMilli(currentTimeMillis());
         Stream<IndexedChatMessage> responseStream = activeFlavor.callServiceStream(
                 formattedMessages, providerConfig, mergedLLMParameters, httpConfig);
 
@@ -329,7 +330,7 @@ public class CallSupport {
             Map<String, Object> mergedLLMParameters,
             Flavor<P, R> activeFlavor,
             P formattedPrompt,
-            double start,
+            Instant start,
             Stream<R> responseStream
     ) {
         AtomicReference<String> aggregatedContent = new AtomicReference<>("");
@@ -337,7 +338,7 @@ public class CallSupport {
                 peek((R chunk) -> {
                     aggregatedContent.getAndUpdate((String previous) -> previous + activeFlavor.getContentFromChunk(chunk));
                     if (activeFlavor.isLastChunk(chunk)) {
-                        double end = System.nanoTime() / 1e9;
+                        Instant end = Instant.ofEpochMilli(currentTimeMillis());
                         record(
                                 new PromptInfo(
                                         template.getPromptTemplateVersionId(),
