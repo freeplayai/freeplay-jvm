@@ -14,10 +14,10 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static ai.freeplay.client.ProviderConfig.OpenAIProviderConfig;
+import static ai.freeplay.client.RecordProcessor.DO_NOT_RECORD_PROCESSOR;
 import static ai.freeplay.client.internal.utilities.MockFixtures.*;
 import static ai.freeplay.client.internal.utilities.MockMethods.*;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 import static org.mockito.Mockito.when;
 
 public class OpenAIContinuousChatStreamTest extends HttpClientTestBase {
@@ -111,6 +111,45 @@ public class OpenAIContinuousChatStreamTest extends HttpClientTestBase {
             }
         });
     }
+
+    @Test
+    public void chatDoesNotRecordWhenAskedNotTo() {
+        withMockedClient((HttpClient mockedClient) -> {
+            mockCreateSession(mockedClient);
+            mockGetPrompts(mockedClient, MODEL_GPT_TURBO_35, templateName, getChatPromptContent());
+            mock2OpenAIChatStreamCalls(mockedClient);
+
+            Freeplay fpClient = new Freeplay(
+                    freeplayApiKey,
+                    baseUrl,
+                    new ProviderConfigs(new OpenAIProviderConfig(openaiApiKey)),
+                    DO_NOT_RECORD_PROCESSOR);
+            Map<String, Object> llmParameters = Collections.emptyMap();
+
+            // Start
+            ChatStart<Stream<IndexedChatMessage>> chatStart = fpClient.startChatStream(
+                    projectId,
+                    templateName,
+                    Map.of("question", "why isn't my sink working?"),
+                    llmParameters,
+                    "latest"
+            );
+
+            List<IndexedChatMessage> startChunks = chatStart.getFirstCompletion().collect(Collectors.toList());
+
+            // Completion
+            assertEquals(4, startChunks.size());
+            assertEquals("assistant", startChunks.get(0).getRole());
+            assertEquals("", startChunks.get(0).getContent());
+            assertEquals("Well ", startChunks.get(1).getContent());
+            assertEquals("hello", startChunks.get(2).getContent());
+            assertEquals("", startChunks.get(3).getContent());
+
+            // Record call
+            assertTrue(routeNotCalled(mockedClient, 3, "record"));
+        });
+    }
+
 
     @Test
     public void disallowsMessagesParam() {

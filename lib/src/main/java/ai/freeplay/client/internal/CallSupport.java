@@ -3,6 +3,7 @@ package ai.freeplay.client.internal;
 import ai.freeplay.client.Freeplay;
 import ai.freeplay.client.HttpConfig;
 import ai.freeplay.client.ProviderConfigs;
+import ai.freeplay.client.RecordProcessor;
 import ai.freeplay.client.exceptions.FreeplayException;
 import ai.freeplay.client.flavor.*;
 import ai.freeplay.client.model.*;
@@ -31,6 +32,7 @@ public class CallSupport {
     private final Map<String, Object> clientLLMParameters;
     private final ProviderConfigs providerConfig;
     private final HttpConfig httpConfig;
+    private final RecordProcessor recordProcessor;
 
     public CallSupport(
             String freeplayApiKey,
@@ -38,7 +40,8 @@ public class CallSupport {
             ProviderConfigs providerConfig,
             Flavor<?, ?> flavor,
             Map<String, Object> llmParameters,
-            HttpConfig httpConfig
+            HttpConfig httpConfig,
+            RecordProcessor recordProcessor
     ) {
         this.freeplayApiKey = freeplayApiKey;
         this.baseUrl = baseUrl;
@@ -46,6 +49,9 @@ public class CallSupport {
         this.clientFlavor = flavor;
         this.clientLLMParameters = llmParameters != null ? llmParameters : Collections.emptyMap();
         this.httpConfig = httpConfig;
+        this.recordProcessor = recordProcessor != null ?
+                recordProcessor :
+                new DefaultRecordProcessor();
     }
 
     public String createSession(String projectId, String tag) throws FreeplayException {
@@ -140,7 +146,7 @@ public class CallSupport {
                 mergedLLMParameters,
                 httpConfig);
         Instant end = Instant.ofEpochMilli(currentTimeMillis());
-        record(
+        recordProcessor.record(
                 new PromptInfo(
                         template.getPromptTemplateVersionId(),
                         template.getPromptTemplateId(),
@@ -259,7 +265,7 @@ public class CallSupport {
                 finalMessages, providerConfig, mergedLLMParameters, httpConfig);
         Instant end = Instant.ofEpochMilli(currentTimeMillis());
 
-        record(
+        recordProcessor.record(
                 new PromptInfo(
                         template.getPromptTemplateVersionId(),
                         template.getPromptTemplateId(),
@@ -339,7 +345,7 @@ public class CallSupport {
                     aggregatedContent.getAndUpdate((String previous) -> previous + activeFlavor.getContentFromChunk(chunk));
                     if (activeFlavor.isLastChunk(chunk)) {
                         Instant end = Instant.ofEpochMilli(currentTimeMillis());
-                        record(
+                        recordProcessor.record(
                                 new PromptInfo(
                                         template.getPromptTemplateVersionId(),
                                         template.getPromptTemplateId(),
@@ -362,35 +368,6 @@ public class CallSupport {
                         );
                     }
                 });
-    }
-
-    private void record(
-            PromptInfo promptInfo,
-            CallInfo callInfo
-    ) {
-        String url = getUrl("v1/record");
-        Map<String, Object> payload = new HashMap<>(32);
-        payload.put("session_id", callInfo.getSessionId());
-        payload.put("project_version_id", promptInfo.getPromptTemplateVersionId());
-        payload.put("prompt_template_id", promptInfo.getPromptTemplateId());
-        payload.put("start_time", callInfo.getStartTime());
-        payload.put("end_time", callInfo.getEndTime());
-        payload.put("tag", callInfo.getTag());
-        payload.put("inputs", callInfo.getInputs());
-        payload.put("prompt_content", callInfo.getPromptContent());
-        payload.put("return_content", callInfo.getReturnContent());
-        payload.put("format_type", promptInfo.getFormatType());
-        payload.put("is_complete", callInfo.isComplete());
-        payload.put("test_run_id", callInfo.getTestRunId());
-        payload.put("provider", promptInfo.getProvider());
-        payload.put("model", promptInfo.getModel());
-        payload.put("llm_parameters", promptInfo.getLLMParameters());
-
-        try {
-            Http.postJsonWithBearer(url, payload, freeplayApiKey);
-        } catch (Exception e) {
-            LOGGER.log(System.Logger.Level.WARNING, "Unable to record LLM call. Cause: {0}", e.getMessage());
-        }
     }
 
     private Flavor<?, ?> getActiveFlavor(Flavor<?, ?> callFlavor, PromptTemplate prompt) {
@@ -439,5 +416,35 @@ public class CallSupport {
 
     private String getUrl(String path, Object... args) {
         return format("%s/%s", baseUrl, format(path, args));
+    }
+
+    private class DefaultRecordProcessor implements RecordProcessor {
+        @Override
+        public void record(PromptInfo promptInfo, CallInfo callInfo) {
+
+            String url = getUrl("v1/record");
+            Map<String, Object> payload = new HashMap<>(32);
+            payload.put("session_id", callInfo.getSessionId());
+            payload.put("project_version_id", promptInfo.getPromptTemplateVersionId());
+            payload.put("prompt_template_id", promptInfo.getPromptTemplateId());
+            payload.put("start_time", callInfo.getStartTime());
+            payload.put("end_time", callInfo.getEndTime());
+            payload.put("tag", callInfo.getTag());
+            payload.put("inputs", callInfo.getInputs());
+            payload.put("prompt_content", callInfo.getPromptContent());
+            payload.put("return_content", callInfo.getReturnContent());
+            payload.put("format_type", promptInfo.getFormatType());
+            payload.put("is_complete", callInfo.isComplete());
+            payload.put("test_run_id", callInfo.getTestRunId());
+            payload.put("provider", promptInfo.getProvider());
+            payload.put("model", promptInfo.getModel());
+            payload.put("llm_parameters", promptInfo.getLLMParameters());
+
+            try {
+                Http.postJsonWithBearer(url, payload, freeplayApiKey);
+            } catch (Exception e) {
+                LOGGER.log(System.Logger.Level.WARNING, "Unable to record LLM call. Cause: {0}", e.getMessage());
+            }
+        }
     }
 }

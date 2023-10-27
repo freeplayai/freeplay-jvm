@@ -12,8 +12,9 @@ import java.net.http.HttpClient;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static ai.freeplay.client.RecordProcessor.DO_NOT_RECORD_PROCESSOR;
 import static ai.freeplay.client.internal.utilities.MockFixtures.*;
-import static ai.freeplay.client.internal.utilities.MockMethods.getCapturedBodyAsMap;
+import static ai.freeplay.client.internal.utilities.MockMethods.*;
 import static ai.freeplay.client.internal.utilities.PromptProcessors.testChatProcessor;
 import static org.junit.Assert.*;
 
@@ -466,6 +467,34 @@ public class OpenAICompletionTest extends HttpClientTestBase {
                 assertEquals("The OpenAI provider is not configured on the ProviderConfig. " +
                         "Set up this provider config to call OpenAI endpoints.", fpe.getMessage());
             }
+        });
+    }
+
+    @Test
+    public void chatDoesNotRecordWhenAskedNotTo() {
+        withMockedClient((HttpClient mockedClient) -> {
+            mockCreateSession(mockedClient);
+            mockGetPrompts(mockedClient, MODEL_GPT_TURBO_35, templateName, getChatPromptContent());
+            mockOpenAIChatCall(mockedClient, chatCompletion1);
+
+            Freeplay fpClient = new Freeplay(
+                    freeplayApiKey,
+                    baseUrl,
+                    providerConfigs,
+                    DO_NOT_RECORD_PROCESSOR);
+
+            CompletionResponse completionResponse = fpClient.getCompletion(
+                    projectId,
+                    templateName,
+                    Map.of("question", "why isn't my sink working?"),
+                    "latest"
+            );
+
+            // Completion
+            assertEquals(chatCompletion1Expected, completionResponse.getContent());
+
+            // Make sure the Record call didn't happen (it would be the 4th)
+            assertTrue(routeNotCalled(mockedClient, 3, "record"));
         });
     }
 }

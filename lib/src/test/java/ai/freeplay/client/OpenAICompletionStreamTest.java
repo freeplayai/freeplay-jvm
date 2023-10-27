@@ -14,9 +14,12 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static ai.freeplay.client.ProviderConfig.OpenAIProviderConfig;
+import static ai.freeplay.client.RecordProcessor.DO_NOT_RECORD_PROCESSOR;
 import static ai.freeplay.client.internal.utilities.MockFixtures.*;
 import static ai.freeplay.client.internal.utilities.MockMethods.getCapturedBodyAsMap;
+import static ai.freeplay.client.internal.utilities.MockMethods.routeNotCalled;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 @SuppressWarnings("FieldCanBeLocal")
 public class OpenAICompletionStreamTest extends HttpClientTestBase {
@@ -171,6 +174,70 @@ public class OpenAICompletionStreamTest extends HttpClientTestBase {
             // Record call
             Map<String, Object> recordBodyMap = getCapturedBodyAsMap(mockedClient, 4, 3);
             assertEquals(chatPromptWithInsertedMessage, recordBodyMap.get("prompt_content"));
+        });
+    }
+
+    @Test
+    public void textDoesNotRecordWhenAskedNotTo() {
+        withMockedClient((HttpClient mockedClient) -> {
+            mockCreateSession(mockedClient);
+            mockGetPrompts(mockedClient, MODEL_TEXT_DAVINCI_003, templateName, textPromptContent, "openai_text");
+            mockOpenAITextCallStream(mockedClient);
+
+            Freeplay fpClient = new Freeplay(
+                    freeplayApiKey,
+                    baseUrl,
+                    new ProviderConfigs(new OpenAIProviderConfig(openaiApiKey)),
+                    DO_NOT_RECORD_PROCESSOR);
+            CompletionSession session = fpClient.createSession(projectId, "latest");
+            Stream<CompletionResponse> responseStream = session.getCompletionStream(
+                    templateName,
+                    Map.of("question", "why isn't my sink working?"),
+                    Collections.emptyMap()
+            );
+            List<CompletionResponse> chunks = responseStream.collect(Collectors.toList());
+
+            // Completion
+            assertEquals(3, chunks.size());
+            assertEquals("Well ", chunks.get(0).getContent());
+            assertEquals("hello", chunks.get(1).getContent());
+            assertEquals("", chunks.get(2).getContent());
+
+            // Record call
+            assertTrue(routeNotCalled(mockedClient, 3, "record"));
+        });
+    }
+
+    @Test
+    public void chatDoesNotRecordWhenAskedNotTo() {
+        withMockedClient((HttpClient mockedClient) -> {
+            mockCreateSession(mockedClient);
+            mockGetPrompts(mockedClient, MODEL_GPT_TURBO_35, templateName, getChatPromptContent());
+            mockOpenAIChatCallStream(mockedClient);
+
+            Freeplay fpClient = new Freeplay(
+                    freeplayApiKey,
+                    baseUrl,
+                    new ProviderConfigs(new OpenAIProviderConfig(openaiApiKey)),
+                    DO_NOT_RECORD_PROCESSOR);
+            CompletionSession session = fpClient.createSession(projectId, "latest");
+            Stream<IndexedChatMessage> responseStream = session.getCompletionStream(
+                    templateName,
+                    Map.of("question", "why isn't my sink working?"),
+                    Collections.emptyMap()
+            );
+            List<IndexedChatMessage> chunks = responseStream.collect(Collectors.toList());
+
+            // Completion
+            assertEquals(4, chunks.size());
+            assertEquals("assistant", chunks.get(0).getRole());
+            assertEquals("", chunks.get(0).getContent());
+            assertEquals("Well ", chunks.get(1).getContent());
+            assertEquals("hello", chunks.get(2).getContent());
+            assertEquals("", chunks.get(3).getContent());
+
+            // Record call
+            assertTrue(routeNotCalled(mockedClient, 3, "record"));
         });
     }
 }

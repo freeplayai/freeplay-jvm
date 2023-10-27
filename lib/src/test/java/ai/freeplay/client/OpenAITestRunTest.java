@@ -10,9 +10,12 @@ import java.net.http.HttpClient;
 import java.util.Map;
 
 import static ai.freeplay.client.ProviderConfig.OpenAIProviderConfig;
+import static ai.freeplay.client.RecordProcessor.DO_NOT_RECORD_PROCESSOR;
 import static ai.freeplay.client.internal.utilities.MockFixtures.*;
 import static ai.freeplay.client.internal.utilities.MockMethods.getCapturedBodyAsMap;
+import static ai.freeplay.client.internal.utilities.MockMethods.routeNotCalled;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class OpenAITestRunTest extends HttpClientTestBase {
 
@@ -23,7 +26,7 @@ public class OpenAITestRunTest extends HttpClientTestBase {
 
             String environment = "prod";
             String testListName = "core-tests";
-            Freeplay fpClient = new Freeplay(MockFixtures.freeplayApiKey, baseUrl, new OpenAIProviderConfig(openaiApiKey));
+            Freeplay fpClient = new Freeplay(freeplayApiKey, baseUrl, new OpenAIProviderConfig(openaiApiKey));
             TestRun testRun = fpClient.createTestRun(
                     projectId,
                     environment,
@@ -51,7 +54,7 @@ public class OpenAITestRunTest extends HttpClientTestBase {
 
             String environment = "prod";
             String testListName = "core-tests";
-            Freeplay fpClient = new Freeplay(MockFixtures.freeplayApiKey, baseUrl, new OpenAIProviderConfig(openaiApiKey));
+            Freeplay fpClient = new Freeplay(freeplayApiKey, baseUrl, new OpenAIProviderConfig(openaiApiKey));
             TestRun testRun = fpClient.createTestRun(
                     projectId,
                     environment,
@@ -66,6 +69,39 @@ public class OpenAITestRunTest extends HttpClientTestBase {
             Map<String, Object> recordBodyMap = getCapturedBodyAsMap(mockedClient, 5, 4);
             assertEquals(promptTemplateVersionId, recordBodyMap.get("project_version_id"));
             assertEquals(testRun.getTestRunId(), recordBodyMap.get("test_run_id"));
+        });
+    }
+
+    @Test
+    public void doesNotRecordWhenAskedNotTo() {
+        String templateName = "my-prompt";
+        String chatCompletion1 = "\\n\\nSorry, I will try to help";
+        withMockedClient((HttpClient mockedClient) -> {
+            mockCreateSession(mockedClient);
+            mockCreateTestRun(mockedClient);
+            mockGetPrompts(mockedClient, MODEL_GPT_TURBO_35, templateName, getChatPromptContent());
+            mockOpenAIChatCall(mockedClient, chatCompletion1);
+
+            String environment = "prod";
+            String testListName = "core-tests";
+            Freeplay fpClient = new Freeplay(
+                    freeplayApiKey,
+                    baseUrl,
+                    new ProviderConfigs(new OpenAIProviderConfig(openaiApiKey)),
+                    DO_NOT_RECORD_PROCESSOR);
+
+            TestRun testRun = fpClient.createTestRun(
+                    projectId,
+                    environment,
+                    testListName
+            );
+            CompletionSession session = testRun.createSession();
+            CompletionResponse completion = session.getCompletion(templateName, testRun.getInputs().get(0));
+
+            assertEquals(unescapeExpected(chatCompletion1), completion.getContent());
+
+            // Record call
+            assertTrue(routeNotCalled(mockedClient, 4, "record"));
         });
     }
 }

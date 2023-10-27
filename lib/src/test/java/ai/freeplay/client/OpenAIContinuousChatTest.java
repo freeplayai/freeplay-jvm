@@ -12,6 +12,7 @@ import java.util.Collections;
 import java.util.Map;
 
 import static ai.freeplay.client.ProviderConfig.OpenAIProviderConfig;
+import static ai.freeplay.client.RecordProcessor.DO_NOT_RECORD_PROCESSOR;
 import static ai.freeplay.client.internal.utilities.MockFixtures.*;
 import static ai.freeplay.client.internal.utilities.MockMethods.*;
 import static org.junit.Assert.*;
@@ -195,6 +196,40 @@ public class OpenAIContinuousChatTest extends HttpClientTestBase {
             assertEquals("0.44", recordedParameters.get("temperature"));
         });
     }
+
+    @Test
+    public void chatDoesNotRecordWhenAskedNotTo() {
+        String completion1 = "\\n\\nSorry, I will try to help";
+        String completion1Expected = "\n\nSorry, I will try to help";
+
+        withMockedClient((HttpClient mockedClient) -> {
+            mockCreateSession(mockedClient);
+            mockGetPrompts(mockedClient, MODEL_GPT_TURBO_35, templateName, getChatPromptContent());
+            mockOpenAIChatCall(mockedClient, completion1);
+
+            Freeplay fpClient = new Freeplay(
+                    freeplayApiKey,
+                    baseUrl,
+                    new ProviderConfigs(new OpenAIProviderConfig(openaiApiKey)),
+                    DO_NOT_RECORD_PROCESSOR);
+
+            // Start
+            // --------
+            ChatStart<IndexedChatMessage> chatStart = fpClient.startChat(
+                    projectId,
+                    templateName,
+                    Map.of("question", "why isn't my sink working?"),
+                    "latest"
+            );
+
+            // Completion
+            assertEquals(completion1Expected, chatStart.getFirstCompletion().getContent());
+
+            // Record call
+            assertTrue(routeNotCalled(mockedClient, 3, "record"));
+        });
+    }
+
 
     @SuppressWarnings("SameParameterValue")
     private void mock2OpenAICalls(HttpClient mockedClient, String completion1, String completion2) throws RuntimeException {

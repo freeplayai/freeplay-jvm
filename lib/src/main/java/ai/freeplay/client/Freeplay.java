@@ -21,6 +21,15 @@ public class Freeplay {
     }
 
     public Freeplay(
+            String freeplayApiKey,
+            String baseUrl,
+            ProviderConfigs providerConfigs,
+            RecordProcessor recordProcessor
+    ) {
+        this(freeplayApiKey, baseUrl, providerConfigs, null, null, new HttpConfig(), recordProcessor);
+    }
+
+    public Freeplay(
             String freeplayAPIKey,
             String baseUrl,
             ProviderConfigs providerConfigs,
@@ -43,9 +52,32 @@ public class Freeplay {
             String freeplayAPIKey,
             String baseUrl,
             ProviderConfigs providerConfigs,
+            Map<String, Object> llmParameters,
+            HttpConfig httpConfig,
+            RecordProcessor recordProcessor
+    ) {
+        this(freeplayAPIKey, baseUrl, providerConfigs, null, llmParameters, httpConfig, recordProcessor);
+    }
+
+    public Freeplay(
+            String freeplayAPIKey,
+            String baseUrl,
+            ProviderConfigs providerConfigs,
             Flavor<?, ?> flavor,
             Map<String, Object> llmParameters,
             HttpConfig httpConfig
+    ) {
+        this(freeplayAPIKey, baseUrl, providerConfigs, flavor, llmParameters, httpConfig, null);
+    }
+
+    public Freeplay(
+            String freeplayAPIKey,
+            String baseUrl,
+            ProviderConfigs providerConfigs,
+            Flavor<?, ?> flavor,
+            Map<String, Object> llmParameters,
+            HttpConfig httpConfig,
+            RecordProcessor recordProcessor
     ) {
         callSupport = new CallSupport(
                 freeplayAPIKey,
@@ -53,7 +85,8 @@ public class Freeplay {
                 providerConfigs,
                 flavor,
                 llmParameters,
-                httpConfig);
+                httpConfig,
+                recordProcessor);
     }
 
     // ====================================================

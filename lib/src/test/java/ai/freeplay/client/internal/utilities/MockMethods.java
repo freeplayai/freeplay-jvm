@@ -16,8 +16,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 public class MockMethods {
     public static HttpUrlArgumentMatcher requestMatches(String method, String urlPattern) {
@@ -72,6 +71,23 @@ public class MockMethods {
         assertTrue(recordBodyPublisher.isPresent());
 
         return stringFromBodyPublisher(recordBodyPublisher.get());
+    }
+
+    public static boolean routeNotCalled(HttpClient mockedClient, int totalCalls, String urlPart) throws RuntimeException {
+        ArgumentCaptor<HttpRequest> recordRequestArg = ArgumentCaptor.forClass(HttpRequest.class);
+        try {
+            verify(mockedClient, times(totalCalls)).send(recordRequestArg.capture(), any());
+        } catch (IOException | InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+
+        List<HttpRequest> requests = recordRequestArg.getAllValues();
+        for (HttpRequest request : requests) {
+            if (request.uri().getPath().contains(urlPart)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public static HttpRequest getCapturedRequest(HttpClient mockedClient, int totalCalls, int index) throws RuntimeException {
