@@ -1,6 +1,5 @@
 package ai.freeplay.client;
 
-import ai.freeplay.client.internal.utilities.MockFixtures;
 import ai.freeplay.client.model.CompletionResponse;
 import ai.freeplay.client.model.CompletionSession;
 import ai.freeplay.client.model.TestRun;
