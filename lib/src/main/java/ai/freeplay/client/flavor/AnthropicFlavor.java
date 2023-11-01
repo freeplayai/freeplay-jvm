@@ -3,7 +3,10 @@ package ai.freeplay.client.flavor;
 import ai.freeplay.client.HttpConfig;
 import ai.freeplay.client.ProviderConfig.AnthropicProviderConfig;
 import ai.freeplay.client.ProviderConfigs;
+import ai.freeplay.client.exceptions.FreeplayConfigurationException;
 import ai.freeplay.client.exceptions.FreeplayException;
+import ai.freeplay.client.exceptions.LLMClientException;
+import ai.freeplay.client.exceptions.LLMServerException;
 import ai.freeplay.client.internal.Http;
 import ai.freeplay.client.internal.JSONUtil;
 import ai.freeplay.client.internal.StringUtils;
@@ -19,8 +22,7 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
-import static ai.freeplay.client.internal.Http.parseBody;
-import static ai.freeplay.client.internal.Http.throwIfError;
+import static ai.freeplay.client.internal.Http.*;
 import static ai.freeplay.client.internal.StringUtils.isBlank;
 import static ai.freeplay.client.internal.StringUtils.isNotBlank;
 import static java.lang.String.format;
@@ -72,11 +74,16 @@ public class AnthropicFlavor implements Flavor<String, CompletionResponse> {
                     "x-api-key", anthropicProviderConfig.getApiKey()
             );
         } catch (Exception e) {
-            throw new FreeplayException("Error calling Anthropic.", e);
+            throw new LLMServerException("Error calling Anthropic.", e);
         }
 
-        Map<String, Object> responseBody = parseBody(response);
-        throwIfError(response, 200);
+        Map<String, Object> responseBody;
+        try {
+            responseBody = parseBody(response);
+        } catch (FreeplayException e) {
+            throw new LLMServerException("Error calling Anthropic.", e);
+        }
+        throwLLMIfError(response, 200);
 
         boolean isComplete = "stop_sequence".equals(responseBody.get("stop_reason"));
         return new CompletionResponse(valueOf(responseBody.get("completion")), isComplete, true);
@@ -107,7 +114,7 @@ public class AnthropicFlavor implements Flavor<String, CompletionResponse> {
                     "x-api-key", anthropicProviderConfig.getApiKey()
             );
         } catch (Exception e) {
-            throw new FreeplayException("Error calling Anthropic.", e);
+            throw new LLMServerException("Error calling Anthropic.", e);
         }
 
         AtomicReference<StreamState> streamStateRef = new AtomicReference<>(new StreamState());
@@ -149,13 +156,13 @@ public class AnthropicFlavor implements Flavor<String, CompletionResponse> {
 
     private static void validateParameters(Map<String, Object> llmParameters) {
         if (!llmParameters.containsKey("model")) {
-            throw new FreeplayException("The 'model' parameter is required when calling Anthropic.");
+            throw new LLMClientException("The 'model' parameter is required when calling Anthropic.");
         }
         if (!llmParameters.containsKey("max_tokens_to_sample")) {
-            throw new FreeplayException("The 'max_tokens_to_sample' parameter is required when calling Anthropic.");
+            throw new LLMClientException("The 'max_tokens_to_sample' parameter is required when calling Anthropic.");
         }
         if (llmParameters.containsKey("prompt")) {
-            throw new FreeplayException("The 'prompt' parameter cannot be specified. It is populated automatically.");
+            throw new LLMClientException("The 'prompt' parameter cannot be specified. It is populated automatically.");
         }
     }
 
@@ -176,7 +183,12 @@ public class AnthropicFlavor implements Flavor<String, CompletionResponse> {
                 if (isBlank(fieldValue.trim())) {
                     return null;
                 }
-                Map<String, Object> objectMap = JSONUtil.parseMap(fieldValue);
+                Map<String, Object> objectMap;
+                try {
+                    objectMap = JSONUtil.parseMap(fieldValue);
+                } catch (Exception e) {
+                    throw new LLMServerException("Error processing Anthropic stream. ", e);
+                }
 
                 streamState.appendData((String) objectMap.get("completion"));
                 streamState.setStopReason((String) objectMap.get("stop_reason"));
@@ -185,10 +197,10 @@ public class AnthropicFlavor implements Flavor<String, CompletionResponse> {
             } else if ("event".equals(fieldName)) {
                 streamState.startEvent(fieldValue);
             } else {
-                throw new FreeplayException("Got unknown field in the stream: '" + fieldName + "'");
+                throw new LLMServerException("Got unknown field in the stream: '" + fieldName + "'");
             }
         } else {
-            throw new FreeplayException("Got unknown line in the stream: '" + line + "'");
+            throw new LLMServerException("Got unknown line in the stream: '" + line + "'");
         }
         return null;
     }
@@ -208,7 +220,7 @@ public class AnthropicFlavor implements Flavor<String, CompletionResponse> {
         if (providerConfig.getAnthropicConfig() != null) {
             return providerConfig.getAnthropicConfig();
         } else {
-            throw new FreeplayException("The Anthropic provider is not configured on the ProviderConfig. " +
+            throw new FreeplayConfigurationException("The Anthropic provider is not configured on the ProviderConfig. " +
                     "Set up this provider config to call Anthropic endpoints.");
         }
     }
@@ -228,7 +240,7 @@ public class AnthropicFlavor implements Flavor<String, CompletionResponse> {
         private void startEvent(String name) {
             synchronized (lock) {
                 if (eventName != null) {
-                    throw new FreeplayException(
+                    throw new LLMServerException(
                             format("Attempting to start a new event (%s) when the previous has not been closed.%n", name));
                 }
                 eventName = name;

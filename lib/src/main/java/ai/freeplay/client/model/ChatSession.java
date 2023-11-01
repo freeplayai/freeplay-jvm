@@ -1,6 +1,8 @@
 package ai.freeplay.client.model;
 
+import ai.freeplay.client.exceptions.FreeplayConfigurationException;
 import ai.freeplay.client.exceptions.FreeplayException;
+import ai.freeplay.client.exceptions.LLMServerException;
 import ai.freeplay.client.flavor.ChatFlavor;
 import ai.freeplay.client.internal.CallSupport;
 
@@ -30,7 +32,7 @@ public class ChatSession {
         this.callSupport = callSupport;
         this.sessionId = sessionId;
         this.targetTemplate = callSupport.findPrompt(prompts, templateName).orElseThrow(
-                () -> new FreeplayException("Cannot find template " + templateName + " in environment " + tag + "."));
+                () -> new FreeplayConfigurationException("Cannot find template " + templateName + " in environment " + tag + "."));
     }
 
     public ChatStart<IndexedChatMessage> startChat(
@@ -50,7 +52,7 @@ public class ChatSession {
                 this,
                 response
                         .getFirstChoice()
-                        .orElseThrow(() -> new FreeplayException("Did not receive a choice within the chat response.")));
+                        .orElseThrow(() -> new LLMServerException("Did not receive a choice within the chat response.")));
     }
 
     @SuppressWarnings("UnusedReturnValue")

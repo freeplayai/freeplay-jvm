@@ -3,7 +3,9 @@ package ai.freeplay.client.flavor;
 import ai.freeplay.client.HttpConfig;
 import ai.freeplay.client.ProviderConfig.OpenAIProviderConfig;
 import ai.freeplay.client.ProviderConfigs;
+import ai.freeplay.client.exceptions.FreeplayClientException;
 import ai.freeplay.client.exceptions.FreeplayException;
+import ai.freeplay.client.exceptions.LLMServerException;
 import ai.freeplay.client.internal.Http;
 import ai.freeplay.client.internal.JSONUtil;
 import ai.freeplay.client.internal.StringUtils;
@@ -22,7 +24,7 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 import static ai.freeplay.client.internal.Http.parseBody;
-import static ai.freeplay.client.internal.Http.throwIfError;
+import static ai.freeplay.client.internal.Http.throwLLMIfError;
 import static ai.freeplay.client.internal.StringUtils.isBlank;
 import static java.lang.String.valueOf;
 import static java.util.stream.Collectors.toList;
@@ -52,7 +54,7 @@ public class OpenAIChatFlavor extends OpenAIFlavor<Collection<ChatMessage>, Inde
                 );
             }).collect(toList());
         } catch (IOException e) {
-            throw new FreeplayException("Error formatting chat prompt template.", e);
+            throw new FreeplayClientException("Error formatting chat prompt template.", e);
         }
     }
 
@@ -85,11 +87,16 @@ public class OpenAIChatFlavor extends OpenAIFlavor<Collection<ChatMessage>, Inde
         try {
             response = Http.postJsonWithBearer(OPENAI_CHAT_URL, bodyMap, openAIProviderConfig.getApiKey(), httpConfig);
         } catch (Exception e) {
-            throw new FreeplayException("Error calling OpenAI.", e);
+            throw new LLMServerException("Error calling OpenAI.", e);
         }
 
-        Map<String, Object> responseBody = parseBody(response);
-        throwIfError(response, 200);
+        Map<String, Object> responseBody;
+        try {
+            responseBody = parseBody(response);
+        } catch (FreeplayException e) {
+            throw new LLMServerException("Error calling OpenAI.", e);
+        }
+        throwLLMIfError(response, 200);
 
         List<Map<String, Object>> choices = (List<Map<String, Object>>) responseBody.get("choices");
         validateChoices(choices);
@@ -149,7 +156,11 @@ public class OpenAIChatFlavor extends OpenAIFlavor<Collection<ChatMessage>, Inde
 
     @Override
     public String serializeForRecord(Collection<ChatMessage> formattedMessages) {
-        return JSONUtil.asString(formattedMessages);
+        try {
+            return JSONUtil.asString(formattedMessages);
+        } catch (Exception e) {
+            throw new LLMServerException("Error processing messages from OpenAI.", e);
+        }
     }
 
     private IndexedChatMessage createItem(Map<String, Object> choice, AtomicReference<String> roleReference) {

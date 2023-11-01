@@ -4,7 +4,9 @@ import ai.freeplay.client.Freeplay;
 import ai.freeplay.client.HttpConfig;
 import ai.freeplay.client.ProviderConfigs;
 import ai.freeplay.client.RecordProcessor;
+import ai.freeplay.client.exceptions.FreeplayConfigurationException;
 import ai.freeplay.client.exceptions.FreeplayException;
+import ai.freeplay.client.exceptions.FreeplayServerException;
 import ai.freeplay.client.flavor.*;
 import ai.freeplay.client.model.*;
 import ai.freeplay.client.processor.ChatPromptProcessor;
@@ -17,6 +19,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
+import static ai.freeplay.client.internal.Http.throwFreeplayIfError;
 import static java.lang.String.format;
 import static java.lang.String.valueOf;
 import static java.lang.System.currentTimeMillis;
@@ -58,11 +61,20 @@ public class CallSupport {
         String finalTag = getFinalTag(tag);
         String url = getUrl("projects/%s/sessions/tag/%s", projectId, finalTag);
 
-        HttpResponse<String> response = Http.postWithBearer(url, freeplayApiKey, httpConfig);
-        throwIfError(response, 201);
+        HttpResponse<String> response;
+        try {
+            response = Http.postWithBearer(url, freeplayApiKey, httpConfig);
+        } catch (FreeplayException e) {
+            throw new FreeplayServerException("Error creating session.", e);
+        }
+        throwFreeplayIfError(response, 201);
 
-        Map<String, Object> sessionMap = Http.parseBody(response);
-        return valueOf(sessionMap.get("session_id"));
+        try {
+            Map<String, Object> sessionMap = Http.parseBody(response);
+            return valueOf(sessionMap.get("session_id"));
+        } catch (FreeplayException e) {
+            throw new FreeplayServerException("Error creating session.", e);
+        }
     }
 
     @SuppressWarnings("unchecked")
@@ -70,9 +82,14 @@ public class CallSupport {
         String finalTag = getFinalTag(tag);
         String url = getUrl("projects/%s/templates/all/%s", projectId, finalTag);
         HttpResponse<String> response = Http.get(url, freeplayApiKey, httpConfig);
-        throwIfError(response, 200);
+        throwFreeplayIfError(response, 200);
 
-        Map<String, Object> templatesMap = Http.parseBody(response);
+        Map<String, Object> templatesMap;
+        try {
+            templatesMap = Http.parseBody(response);
+        } catch (FreeplayException e) {
+            throw new FreeplayServerException("Error getting prompts.", e);
+        }
         List<Map<String, Object>> templates = (List<Map<String, Object>>) templatesMap.get("templates");
 
         return templates.stream().map((Object template) -> {
@@ -96,13 +113,26 @@ public class CallSupport {
 
     public TestRun createTestRun(String projectId, String environment, String testListName) {
         String url = getUrl("projects/%s/test-runs", projectId);
-        HttpResponse<String> response = Http.postJsonWithBearer(
-                url,
-                Map.of("playlist_name", testListName),
-                freeplayApiKey,
-                httpConfig
-        );
-        Map<String, Object> objectMap = Http.parseBody(response);
+        HttpResponse<String> response;
+        try {
+            response = Http.postJsonWithBearer(
+                    url,
+                    Map.of("playlist_name", testListName),
+                    freeplayApiKey,
+                    httpConfig
+            );
+        } catch (FreeplayException e) {
+            throw new FreeplayServerException("Error creating test run.", e);
+        }
+        throwFreeplayIfError(response, 201);
+
+
+        Map<String, Object> objectMap;
+        try {
+            objectMap = Http.parseBody(response);
+        } catch (FreeplayException e) {
+            throw new FreeplayServerException("Error creating test run.", e);
+        }
 
         String testRunId = valueOf(objectMap.get("test_run_id"));
         @SuppressWarnings("unchecked")
@@ -124,7 +154,7 @@ public class CallSupport {
     ) throws FreeplayException {
         Optional<PromptTemplate> maybePrompt = findPrompt(templates, templateName);
         if (maybePrompt.isEmpty()) {
-            throw new FreeplayException(
+            throw new FreeplayConfigurationException(
                     "Prompt template " + templateName + " in environment " + tag + " not found.");
         }
         PromptTemplate template = maybePrompt.get();
@@ -237,7 +267,7 @@ public class CallSupport {
                     promptProcessor
             );
         }).orElseThrow(() ->
-                new FreeplayException(format("Prompt template %s not found in environment %s.", templateName, tag))
+                new FreeplayConfigurationException(format("Prompt template %s not found in environment %s.", templateName, tag))
         );
     }
 
@@ -322,7 +352,7 @@ public class CallSupport {
         Flavor<?, ?> activeFlavor = getActiveFlavor(flavor, prompt);
 
         if (!(activeFlavor instanceof ChatFlavor)) {
-            throw new FreeplayException("Chat sessions must use an instance of ChatFlavor");
+            throw new FreeplayConfigurationException("Chat sessions must use an instance of ChatFlavor");
         }
         return (ChatFlavor) activeFlavor;
     }
@@ -383,7 +413,7 @@ public class CallSupport {
             case "openai_chat":
                 return new OpenAIChatFlavor();
             default:
-                throw new FreeplayException(format("Unable to create Flavor for name '%s'.%n", flavorName));
+                throw new FreeplayConfigurationException(format("Unable to create Flavor for name '%s'.%n", flavorName));
         }
     }
 
@@ -396,18 +426,6 @@ public class CallSupport {
         merged.putAll(clientLLMParameters);
         merged.putAll(callLLMParameters);
         return merged;
-    }
-
-    private void throwIfError(HttpResponse<String> response, int expectedStatus) throws FreeplayException {
-        if (response.statusCode() != expectedStatus) {
-            if (response.body() != null && response.body().length() > 0) {
-                Map<String, Object> bodyMap = Http.parseBody(response);
-                Object message = bodyMap.get("message");
-                throw new FreeplayException(format("Error calling Freeplay [%s]: %s", response.statusCode(), message));
-            } else {
-                throw new FreeplayException(format("Error calling Freeplay [%s]", response.statusCode()));
-            }
-        }
     }
 
     private static String getFinalTag(String tag) {

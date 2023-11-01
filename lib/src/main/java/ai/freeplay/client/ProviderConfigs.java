@@ -2,7 +2,7 @@ package ai.freeplay.client;
 
 import ai.freeplay.client.ProviderConfig.AnthropicProviderConfig;
 import ai.freeplay.client.ProviderConfig.OpenAIProviderConfig;
-import ai.freeplay.client.exceptions.FreeplayException;
+import ai.freeplay.client.exceptions.FreeplayConfigurationException;
 
 public class ProviderConfigs {
 
@@ -16,7 +16,7 @@ public class ProviderConfigs {
         if (providerConfig instanceof AnthropicProviderConfig) {
             return new ProviderConfigs((AnthropicProviderConfig) providerConfig);
         }
-        throw new FreeplayException("Unknown provider config of type " + providerConfig.getClass().getName());
+        throw new FreeplayConfigurationException("Unknown provider config of type " + providerConfig.getClass().getName());
     }
 
     public ProviderConfigs(OpenAIProviderConfig openAIConfig, AnthropicProviderConfig anthropicConfig) {

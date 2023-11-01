@@ -2,6 +2,7 @@ package ai.freeplay.client;
 
 import ai.freeplay.client.ProviderConfig.AnthropicProviderConfig;
 import ai.freeplay.client.ProviderConfig.OpenAIProviderConfig;
+import ai.freeplay.client.exceptions.FreeplayClientException;
 import ai.freeplay.client.exceptions.FreeplayException;
 import ai.freeplay.client.internal.utilities.MockFixtures;
 import ai.freeplay.client.model.*;
@@ -341,7 +342,6 @@ public class OpenAICompletionTest extends HttpClientTestBase {
             mockUnauthorizedCreateSession(mockedClient);
 
             try {
-
                 Freeplay fpClient = new Freeplay(freeplayApiKey, baseUrl, providerConfigs);
                 fpClient.getCompletion(
                         projectId,
@@ -351,8 +351,8 @@ public class OpenAICompletionTest extends HttpClientTestBase {
                         "latest"
                 );
                 fail("Should have gotten an exception for a 401");
-            } catch (FreeplayException fpe) {
-                assertEquals("Error calling Freeplay [401]", fpe.getMessage());
+            } catch (FreeplayClientException fpe) {
+                assertEquals("Error making call [401]", fpe.getMessage());
             }
         });
     }
@@ -373,8 +373,8 @@ public class OpenAICompletionTest extends HttpClientTestBase {
                         "latest"
                 );
                 fail("Should have gotten an exception for a 401");
-            } catch (FreeplayException fpe) {
-                assertEquals("Error calling Freeplay [401]", fpe.getMessage());
+            } catch (FreeplayClientException fpe) {
+                assertEquals("Error making call [401]", fpe.getMessage());
             }
         });
     }

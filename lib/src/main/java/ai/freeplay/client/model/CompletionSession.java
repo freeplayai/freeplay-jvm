@@ -1,6 +1,6 @@
 package ai.freeplay.client.model;
 
-import ai.freeplay.client.exceptions.FreeplayException;
+import ai.freeplay.client.exceptions.FreeplayConfigurationException;
 import ai.freeplay.client.flavor.Flavor;
 import ai.freeplay.client.internal.CallSupport;
 import ai.freeplay.client.processor.ChatPromptProcessor;
@@ -157,7 +157,7 @@ public class CompletionSession {
     ) {
         PromptTemplate template = callSupport
                 .findPrompt(promptTemplates, templateName)
-                .orElseThrow(() -> new FreeplayException(
+                .orElseThrow(() -> new FreeplayConfigurationException(
                         "Unable to find prompt template with name " + templateName + " in environment " + tag));
 
         return callSupport.makeCallStream(

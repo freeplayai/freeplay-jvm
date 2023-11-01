@@ -4,6 +4,7 @@ import ai.freeplay.client.HttpConfig;
 import ai.freeplay.client.ProviderConfig.OpenAIProviderConfig;
 import ai.freeplay.client.ProviderConfigs;
 import ai.freeplay.client.exceptions.FreeplayException;
+import ai.freeplay.client.exceptions.LLMServerException;
 import ai.freeplay.client.internal.Http;
 import ai.freeplay.client.internal.StringUtils;
 import ai.freeplay.client.internal.TemplateUtils;
@@ -17,7 +18,7 @@ import java.util.Objects;
 import java.util.stream.Stream;
 
 import static ai.freeplay.client.internal.Http.parseBody;
-import static ai.freeplay.client.internal.Http.throwIfError;
+import static ai.freeplay.client.internal.Http.throwLLMIfError;
 import static ai.freeplay.client.internal.StringUtils.isBlank;
 import static java.lang.String.valueOf;
 
@@ -51,11 +52,16 @@ public class OpenAITextFlavor extends OpenAIFlavor<String, CompletionResponse> {
         try {
             response = Http.postJsonWithBearer(OPENAI_COMPLETIONS_URL, bodyMap, config.getApiKey(), httpConfig);
         } catch (Exception e) {
-            throw new FreeplayException("Error calling OpenAI.", e);
+            throw new LLMServerException("Error calling OpenAI.", e);
         }
 
-        Map<String, Object> responseBody = parseBody(response);
-        throwIfError(response, 200);
+        Map<String, Object> responseBody;
+        try {
+            responseBody = parseBody(response);
+        } catch (FreeplayException e) {
+            throw new LLMServerException("Error calling OpenAI.", e);
+        }
+        throwLLMIfError(response, 200);
 
         List<Map<String, Object>> choices = (List<Map<String, Object>>) responseBody.get("choices");
         validateChoices(choices);

@@ -3,7 +3,10 @@ package ai.freeplay.client.flavor;
 import ai.freeplay.client.HttpConfig;
 import ai.freeplay.client.ProviderConfig.OpenAIProviderConfig;
 import ai.freeplay.client.ProviderConfigs;
+import ai.freeplay.client.exceptions.FreeplayConfigurationException;
 import ai.freeplay.client.exceptions.FreeplayException;
+import ai.freeplay.client.exceptions.LLMClientException;
+import ai.freeplay.client.exceptions.LLMServerException;
 import ai.freeplay.client.internal.Http;
 import ai.freeplay.client.internal.JSONUtil;
 import ai.freeplay.client.model.Provider;
@@ -24,19 +27,19 @@ public abstract class OpenAIFlavor<P, R> implements Flavor<P, R> {
 
     protected static void validateChoices(List<Map<String, Object>> choices) throws FreeplayException {
         if (choices.isEmpty()) {
-            throw new FreeplayException("Did not get any 'choices' back from OpenAI.");
+            throw new LLMServerException("Did not get any 'choices' back from OpenAI.");
         }
     }
 
     protected static void validateParameters(Map<String, Object> llmParameters) {
         if (!llmParameters.containsKey("model")) {
-            throw new FreeplayException("The 'model' parameter is required when calling OpenAI");
+            throw new LLMClientException("The 'model' parameter is required when calling OpenAI");
         }
         if (llmParameters.containsKey("prompt")) {
-            throw new FreeplayException("The 'prompt' parameter cannot be specified. It is populated automatically.");
+            throw new LLMClientException("The 'prompt' parameter cannot be specified. It is populated automatically.");
         }
         if (llmParameters.containsKey("messages")) {
-            throw new FreeplayException("The 'messages' parameter cannot be specified. It is populated automatically.");
+            throw new LLMClientException("The 'messages' parameter cannot be specified. It is populated automatically.");
         }
     }
 
@@ -65,7 +68,7 @@ public abstract class OpenAIFlavor<P, R> implements Flavor<P, R> {
                     httpConfig
             );
         } catch (Exception e) {
-            throw new FreeplayException("Error calling OpenAI.", e);
+            throw new LLMServerException("Error calling OpenAI.", e);
         }
 
         return response.body();
@@ -77,14 +80,19 @@ public abstract class OpenAIFlavor<P, R> implements Flavor<P, R> {
             if ("[DONE]".equals(field[1].trim())) {
                 return null;
             } else {
-                Map<String, Object> objectMap = JSONUtil.parseMap(field[1]);
+                Map<String, Object> objectMap;
+                try {
+                    objectMap = JSONUtil.parseMap(field[1]);
+                } catch (Exception e) {
+                    throw new LLMServerException("Error processing OpenAI stream.", e);
+                }
                 @SuppressWarnings("unchecked")
                 List<Map<String, Object>> choices = (List<Map<String, Object>>) objectMap.get("choices");
                 Map<String, Object> firstChoice = choices.get(0);
                 return itemCreator.apply(firstChoice);
             }
         } else {
-            throw new FreeplayException("Got unknown line in the stream: '" + line + "'");
+            throw new LLMServerException("Got unknown line in the stream: '" + line + "'");
         }
     }
 
@@ -92,7 +100,7 @@ public abstract class OpenAIFlavor<P, R> implements Flavor<P, R> {
         if (providerConfig.getOpenAIConfig() != null) {
             return providerConfig.getOpenAIConfig();
         } else {
-            throw new FreeplayException("The OpenAI provider is not configured on the ProviderConfig. " +
+            throw new FreeplayConfigurationException("The OpenAI provider is not configured on the ProviderConfig. " +
                     "Set up this provider config to call OpenAI endpoints.");
         }
     }

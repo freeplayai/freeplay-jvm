@@ -1,7 +1,7 @@
 package ai.freeplay.client.internal;
 
 import ai.freeplay.client.HttpConfig;
-import ai.freeplay.client.exceptions.FreeplayException;
+import ai.freeplay.client.exceptions.*;
 import com.fasterxml.jackson.jr.ob.JSON;
 
 import java.io.IOException;
@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 import static java.lang.String.format;
 
@@ -112,11 +113,7 @@ public class Http {
             if (httpConfig.getRequestTimeout() != null) {
                 requestBuilder.timeout(httpConfig.getRequestTimeout());
             }
-        } catch (URISyntaxException e) {
-            throw new FreeplayException("Error in URL during POST request. ", e);
-        }
 
-        try {
             HttpClient.Builder clientBuilder = HttpClient.newBuilder();
             if (httpConfig.getExecutor() != null) {
                 clientBuilder.executor(httpConfig.getExecutor());
@@ -132,16 +129,12 @@ public class Http {
         }
     }
 
-    public static HttpResponse<String> get(String url, String apiKey) throws FreeplayException {
-        return get(url, apiKey, new HttpConfig());
-    }
-
     public static HttpResponse<String> get(String url, String apiKey, HttpConfig httpConfig) throws FreeplayException {
         HttpRequest.Builder requestBuilder;
         try {
             requestBuilder = HttpRequest.newBuilder(new URI(url));
         } catch (URISyntaxException e) {
-            throw new FreeplayException("Error in URL during GET request. ", e);
+            throw new FreeplayException("Error in URL during GET request.", e);
         }
 
         if (apiKey != null) {
@@ -176,16 +169,41 @@ public class Http {
         }
     }
 
-    public static void throwIfError(HttpResponse<String> response, int expectedStatus) throws FreeplayException {
+    public static void throwFreeplayIfError(
+            HttpResponse<String> response,
+            int expectedStatus
+    ) throws FreeplayException {
+        throwIfError(response, expectedStatus, FreeplayClientException::new, FreeplayServerException::new);
+    }
+
+    public static void throwLLMIfError(
+            HttpResponse<String> response,
+            int expectedStatus
+    ) throws FreeplayException {
+        throwIfError(response, expectedStatus, LLMClientException::new, LLMServerException::new);
+    }
+
+    public static void throwIfError(
+            HttpResponse<String> response,
+            int expectedStatus,
+            Function<String, ? extends FreeplayException> clientExceptionCreator,
+            Function<String, ? extends FreeplayException> serverExceptionCreator
+    ) throws FreeplayException {
         if (response.statusCode() != expectedStatus) {
-            Map<String, Object> bodyMap = Http.parseBody(response);
-            Object message = bodyMap.get("message");
-            if (message != null) {
-                throw new FreeplayException(String.format("Error making call [%s]: %s", response.statusCode(), message));
+            String message = format("Error making call [%s]", response.statusCode());
+            try {
+                Map<String, Object> bodyMap = Http.parseBody(response);
+                if (bodyMap.get("message") != null) {
+                    message += bodyMap.get("message").toString();
+                }
+            } catch (Exception ignore) {
+            }
+
+            if (response.statusCode() >= 500) {
+                throw serverExceptionCreator.apply(message);
             } else {
-                throw new FreeplayException(String.format("Error making call [%s]", response.statusCode()));
+                throw clientExceptionCreator.apply(message);
             }
         }
     }
-
 }
