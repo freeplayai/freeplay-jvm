@@ -1,38 +1,41 @@
 package ai.freeplay.client;
 
 import ai.freeplay.client.ProviderConfig.AnthropicProviderConfig;
-import ai.freeplay.client.ProviderConfig.OpenAIProviderConfig;
 import ai.freeplay.client.exceptions.FreeplayException;
 import ai.freeplay.client.internal.utilities.MockFixtures;
+import ai.freeplay.client.model.ChatStart;
 import ai.freeplay.client.model.CompletionResponse;
+import ai.freeplay.client.model.IndexedChatMessage;
 import org.junit.Test;
 
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static ai.freeplay.client.internal.utilities.MockFixtures.*;
 import static ai.freeplay.client.internal.utilities.MockMethods.getCapturedBodyAsMap;
 import static ai.freeplay.client.internal.utilities.MockMethods.getCapturedRequest;
-import static ai.freeplay.client.internal.utilities.PromptProcessors.testTextProcessor;
+import static ai.freeplay.client.internal.utilities.PromptProcessors.testChatProcessor;
 import static java.lang.String.format;
 import static org.junit.Assert.*;
 
-public class AnthropicCompletionTest extends HttpClientTestBase {
+public class AnthropicChatCompletionTest extends HttpClientTestBase {
 
     private final String templateName = "my-prompt";
 
-    private final String textPromptContent = "Answer this question: {{question}}";
+    private final String chatPromptContent = "[{\"role\": \"user\", \"content\": \"Answer this question: {{question}}\"}]";
     private final String textCompletion = " I apologize that your sink isn't working. Can I help you";
 
     @Test
     public void textCompletionReturnsValue() {
         withMockedClient((HttpClient mockedClient) -> {
             mockCreateSession(mockedClient);
-            mockGetPrompts(mockedClient, templateName, textPromptContent, Collections.emptyMap(), "anthropic_text");
+            mockGetPrompts(mockedClient, templateName, chatPromptContent, Collections.emptyMap(), "anthropic_chat");
             mockAnthropicTextCall(mockedClient, textCompletion);
 
             CompletionResponse completion;
@@ -56,7 +59,7 @@ public class AnthropicCompletionTest extends HttpClientTestBase {
             Map<String, Object> recordBodyMap = getCapturedBodyAsMap(mockedClient, 4, 3);
             assertEquals(promptTemplateVersionId, recordBodyMap.get("project_version_id"));
             assertEquals(promptTemplateId, recordBodyMap.get("prompt_template_id"));
-            assertEquals("Answer this question: why isn't my sink working?", recordBodyMap.get("prompt_content"));
+            assertEquals("[{\"content\":\"Answer this question: why isn't my sink working?\",\"role\":\"Human\"}]", recordBodyMap.get("prompt_content"));
             assertEquals(" I apologize that your sink isn't working. Can I help you", recordBodyMap.get("return_content"));
             assertNull(recordBodyMap.get("test_run_id"));
         });
@@ -66,13 +69,10 @@ public class AnthropicCompletionTest extends HttpClientTestBase {
     public void textCompletionHandlesProcessor() {
         withMockedClient((HttpClient mockedClient) -> {
             mockCreateSession(mockedClient);
-            mockGetPrompts(mockedClient, templateName, textPromptContent, Collections.emptyMap(), "anthropic_text");
+            mockGetPrompts(mockedClient, templateName, chatPromptContent, Collections.emptyMap(), "anthropic_chat");
             mockAnthropicTextCall(mockedClient, textCompletion);
 
-            Freeplay fpClient = new Freeplay(
-                    MockFixtures.freeplayApiKey,
-                    baseUrl,
-                    new ProviderConfigs(new AnthropicProviderConfig(anthropicApiKey)));
+            Freeplay fpClient = new Freeplay(MockFixtures.freeplayApiKey, baseUrl, new AnthropicProviderConfig(anthropicApiKey));
             fpClient.getCompletion(
                     projectId,
                     "my-prompt",
@@ -82,19 +82,23 @@ public class AnthropicCompletionTest extends HttpClientTestBase {
                             "max_tokens_to_sample", 64
                     ),
                     "latest",
-                    testTextProcessor
+                    testChatProcessor
             );
 
             // Modified Anthropic call
             Map<String, Object> anthropicRequestBody = getCapturedBodyAsMap(mockedClient, 4, 2);
             assertEquals(
-                    "\n\nHuman: PREPENDED_TEXT Answer this question: why isn't my sink working? \n\nAssistant:",
+                    "\n\nHuman: Answer this question: why isn't my sink working?\n" +
+                            "\n" +
+                            "Human: Inserted Message\n" +
+                            "\n" +
+                            "Assistant:",
                     anthropicRequestBody.get("prompt"));
 
             // Record call
             Map<String, Object> recordBodyMap = getCapturedBodyAsMap(mockedClient, 4, 3);
             assertEquals(
-                    "PREPENDED_TEXT Answer this question: why isn't my sink working?",
+                    "[{\"content\":\"Answer this question: why isn't my sink working?\",\"role\":\"Human\"},{\"content\":\"Inserted Message\",\"role\":\"user\"}]",
                     recordBodyMap.get("prompt_content"));
         });
     }
@@ -103,7 +107,7 @@ public class AnthropicCompletionTest extends HttpClientTestBase {
     public void requiresRequiredParams() {
         withMockedClient((HttpClient mockedClient) -> {
             mockCreateSession(mockedClient);
-            mockGetPrompts(mockedClient, templateName, textPromptContent, Collections.emptyMap(), "anthropic_text");
+            mockGetPrompts(mockedClient, templateName, chatPromptContent, Collections.emptyMap(), "anthropic_chat");
             mockAnthropicTextCall(mockedClient, textCompletion);
 
             Stream<String> requiredParameters = Stream.of("model", "max_tokens_to_sample");
@@ -139,7 +143,7 @@ public class AnthropicCompletionTest extends HttpClientTestBase {
     public void disallowsPromptParam() {
         withMockedClient((HttpClient mockedClient) -> {
             mockCreateSession(mockedClient);
-            mockGetPrompts(mockedClient, templateName, textPromptContent, Collections.emptyMap(), "anthropic_text");
+            mockGetPrompts(mockedClient, templateName, chatPromptContent, Collections.emptyMap(), "anthropic_chat");
             mockAnthropicTextCall(mockedClient, textCompletion);
 
             try {
@@ -167,7 +171,7 @@ public class AnthropicCompletionTest extends HttpClientTestBase {
     public void sendsRequiredHeaders() {
         withMockedClient((HttpClient mockedClient) -> {
             mockCreateSession(mockedClient);
-            mockGetPrompts(mockedClient, templateName, textPromptContent, Collections.emptyMap(), "anthropic_text");
+            mockGetPrompts(mockedClient, templateName, chatPromptContent, Collections.emptyMap(), "anthropic_chat");
             mockAnthropicTextCall(mockedClient, textCompletion);
 
             Freeplay fpClient = new Freeplay(
@@ -199,7 +203,7 @@ public class AnthropicCompletionTest extends HttpClientTestBase {
     public void handlesUnauthorizedCallingAnthropic() {
         withMockedClient((HttpClient mockedClient) -> {
             mockCreateSession(mockedClient);
-            mockGetPrompts(mockedClient, templateName, textPromptContent, Collections.emptyMap(), "anthropic_text");
+            mockGetPrompts(mockedClient, templateName, chatPromptContent, Collections.emptyMap(), "anthropic_chat");
             mockUnauthorizedAnthropicTextCall(mockedClient);
 
             try {
@@ -226,31 +230,39 @@ public class AnthropicCompletionTest extends HttpClientTestBase {
     }
 
     @Test
-    public void unconfiguredProviderErrors() {
+    public void chatCompletionStream() {
+        String templateName = "my-prompt";
+
         withMockedClient((HttpClient mockedClient) -> {
             mockCreateSession(mockedClient);
-            mockGetPrompts(mockedClient, templateName, textPromptContent, Collections.emptyMap(), "anthropic_text");
+            mockGetPrompts(mockedClient, templateName, chatPromptContent, Collections.emptyMap(), "anthropic_chat");
+            mockAnthropicTextCallStream(mockedClient);
 
-            Freeplay fpClient = new Freeplay(
-                    MockFixtures.freeplayApiKey,
-                    baseUrl,
-                    new ProviderConfigs(new OpenAIProviderConfig("")));
+            Freeplay fpClient = new Freeplay(MockFixtures.freeplayApiKey, baseUrl, new AnthropicProviderConfig(anthropicApiKey));
+            ChatStart<Stream<IndexedChatMessage>> responseStream = fpClient.startChatStream(
+                    projectId,
+                    "my-prompt",
+                    Map.of("question", "why isn't my sink working?"),
+                    Map.of(
+                            "model", MODEL_CLAUDE_2,
+                            "max_tokens_to_sample", 64
+                    ),
+                    "latest"
+            );
 
-            try {
-                fpClient.getCompletion(
-                        projectId,
-                        "my-prompt",
-                        Map.of("question", "why isn't my sink working?"),
-                        Map.of(
-                                "model", MODEL_CLAUDE_2,
-                                "max_tokens_to_sample", 64
-                        ),
-                        "latest"
-                );
-            } catch (FreeplayException fpe) {
-                assertEquals("The Anthropic provider is not configured on the ProviderConfig." +
-                        " Set up this provider config to call Anthropic endpoints.", fpe.getMessage());
-            }
+            List<IndexedChatMessage> chunks = responseStream.getFirstCompletion().collect(Collectors.toList());
+
+            // Completion
+            assertEquals(4, chunks.size());
+            assertEquals(" Oh", chunks.get(0).getContent());
+            assertEquals(" dear", chunks.get(1).getContent());
+            assertEquals(",", chunks.get(2).getContent());
+            assertEquals(" really", chunks.get(3).getContent());
+
+            // Record call
+            Map<String, Object> recordBodyMap = getCapturedBodyAsMap(mockedClient, 4, 3);
+            assertEquals("[{\"content\":\"Answer this question: why isn't my sink working?\",\"role\":\"Human\"}]", recordBodyMap.get("prompt_content"));
+            assertEquals(" Oh dear, really", recordBodyMap.get("return_content"));
         });
     }
 }

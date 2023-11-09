@@ -18,7 +18,7 @@ import static ai.freeplay.client.internal.utilities.MockMethods.getCapturedBodyA
 import static ai.freeplay.client.internal.utilities.PromptProcessors.testTextProcessor;
 import static org.junit.Assert.assertEquals;
 
-public class AnthropicCompletionStreamTest extends HttpClientTestBase {
+public class AnthropicTextCompletionStreamTest extends HttpClientTestBase {
 
     @Test
     public void textCompletionReturnsValue() {

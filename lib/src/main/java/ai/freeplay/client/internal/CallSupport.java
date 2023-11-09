@@ -407,11 +407,13 @@ public class CallSupport {
         String flavorName = prompt.getFlavorName();
         switch (flavorName) {
             case "anthropic_text":
-                return new AnthropicFlavor();
+                return new AnthropicTextFlavor();
             case "openai_text":
                 return new OpenAITextFlavor();
             case "openai_chat":
                 return new OpenAIChatFlavor();
+            case "anthropic_chat":
+                return new AnthropicChatFlavor();
             default:
                 throw new FreeplayConfigurationException(format("Unable to create Flavor for name '%s'.%n", flavorName));
         }

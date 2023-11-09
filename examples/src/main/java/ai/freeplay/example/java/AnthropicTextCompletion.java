@@ -2,10 +2,8 @@ package ai.freeplay.example.java;
 
 import ai.freeplay.client.Freeplay;
 import ai.freeplay.client.ProviderConfig.AnthropicProviderConfig;
-import ai.freeplay.client.flavor.AnthropicFlavor;
 import ai.freeplay.client.model.CompletionResponse;
 
-import java.util.Collections;
 import java.util.Map;
 
 import static java.lang.String.format;
