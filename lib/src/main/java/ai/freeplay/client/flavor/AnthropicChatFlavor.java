@@ -2,6 +2,7 @@ package ai.freeplay.client.flavor;
 
 import ai.freeplay.client.HttpConfig;
 import ai.freeplay.client.ProviderConfig;
+import ai.freeplay.client.ProviderConfigs;
 import ai.freeplay.client.exceptions.FreeplayException;
 import ai.freeplay.client.internal.Http;
 import ai.freeplay.client.internal.JSONUtil;
@@ -18,7 +19,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
 import static ai.freeplay.client.internal.Http.parseBody;
-import static ai.freeplay.client.internal.Http.throwIfError;
+import static ai.freeplay.client.internal.Http.throwFreeplayIfError;
 import static ai.freeplay.client.internal.StringUtils.isBlank;
 import static ai.freeplay.client.internal.StringUtils.isNotBlank;
 import static java.lang.String.format;
@@ -70,7 +71,7 @@ public class AnthropicChatFlavor implements ChatFlavor {
     @Override
     public CompletionResponse callService(
             Collection<ChatMessage> formattedMessages,
-            ProviderConfig providerConfig,
+            ProviderConfigs providerConfig,
             Map<String, Object> mergedLLMParameters,
             HttpConfig httpConfig
     ) throws FreeplayException {
@@ -81,7 +82,7 @@ public class AnthropicChatFlavor implements ChatFlavor {
     @Override
     public Stream<IndexedChatMessage> callServiceStream(
             Collection<ChatMessage> formattedMessages,
-            ProviderConfig providerConfig,
+            ProviderConfigs providerConfig,
             Map<String, Object> mergedLLMParameters,
             HttpConfig httpConfig
     ) {
@@ -98,7 +99,7 @@ public class AnthropicChatFlavor implements ChatFlavor {
                     httpConfig,
                     "accept", "application/json",
                     "anthropic-version", ANTHROPIC_VERSION,
-                    "x-api-key", providerConfig.getApiKey()
+                    "x-api-key", providerConfig.getAnthropicConfig().getApiKey()
             );
         } catch (Exception e) {
             throw new FreeplayException("Error calling Anthropic.", e);
@@ -121,7 +122,7 @@ public class AnthropicChatFlavor implements ChatFlavor {
     @Override
     public ChatCompletionResponse callChatService(
             Collection<ChatMessage> messages,
-            ProviderConfig providerConfig,
+            ProviderConfigs providerConfig,
             Map<String, Object> llmParameters,
             HttpConfig httpConfig
     ) throws FreeplayException {
@@ -136,14 +137,14 @@ public class AnthropicChatFlavor implements ChatFlavor {
                     httpConfig,
                     "accept", "application/json",
                     "anthropic-version", ANTHROPIC_VERSION,
-                    "x-api-key", providerConfig.getApiKey()
+                    "x-api-key", providerConfig.getAnthropicConfig().getApiKey()
             );
         } catch (Exception e) {
             throw new FreeplayException("Error calling Anthropic.", e);
         }
 
         Map<String, Object> responseBody = parseBody(response);
-        throwIfError(response, 200);
+        throwFreeplayIfError(response, 200);
 
         boolean isComplete = "stop_sequence".equals(responseBody.get("stop_reason"));
         return new ChatCompletionResponse(List.of(
