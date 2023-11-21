@@ -4,6 +4,7 @@ import ai.freeplay.client.Freeplay;
 import ai.freeplay.client.HttpConfig;
 import ai.freeplay.client.ProviderConfigs;
 import ai.freeplay.client.RecordProcessor;
+import ai.freeplay.client.exceptions.FreeplayClientException;
 import ai.freeplay.client.exceptions.FreeplayConfigurationException;
 import ai.freeplay.client.exceptions.FreeplayException;
 import ai.freeplay.client.exceptions.FreeplayServerException;
@@ -57,13 +58,20 @@ public class CallSupport {
                 new DefaultRecordProcessor();
     }
 
-    public String createSession(String projectId, String tag) throws FreeplayException {
+    public String createSession(String projectId, String tag, Map<String, Object> metadata) throws FreeplayException {
         String finalTag = getFinalTag(tag);
         String url = getUrl("projects/%s/sessions/tag/%s", projectId, finalTag);
 
+        for (Map.Entry<String, Object> entry : metadata.entrySet()) {
+            if (!(entry.getValue() instanceof String || entry.getValue() instanceof Number)) {
+                throw new FreeplayClientException("Invalid value for key '" + entry.getKey() +
+                        "': Value must be a string or number.");
+            }
+        }
+
         HttpResponse<String> response;
         try {
-            response = Http.postWithBearer(url, freeplayApiKey, httpConfig);
+            response = Http.postJsonWithBearer(url, Map.of("metadata", metadata), freeplayApiKey, httpConfig);
         } catch (FreeplayException e) {
             throw new FreeplayServerException("Error creating session.", e);
         }

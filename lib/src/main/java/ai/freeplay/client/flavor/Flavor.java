@@ -45,4 +45,7 @@ public interface Flavor<P, R> {
     boolean isLastChunk(R chunk);
 
     boolean isComplete(R chunk);
+
+    @SuppressWarnings("rawtypes")
+    Flavor DEFAULT = null;
 }

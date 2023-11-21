@@ -138,7 +138,11 @@ public class Freeplay {
     }
 
     public CompletionSession createSession(String projectId, String environment) {
-        String sessionId = callSupport.createSession(projectId, environment);
+        return createSession(projectId, environment, Collections.emptyMap());
+    }
+
+    public CompletionSession createSession(String projectId, String environment, Map<String, Object> metadata) {
+        String sessionId = callSupport.createSession(projectId, environment, metadata);
         Collection<PromptTemplate> prompts = callSupport.getPrompts(projectId, environment);
 
         return new CompletionSession(callSupport, sessionId, prompts, environment);
@@ -210,7 +214,28 @@ public class Freeplay {
             Flavor<P, CompletionResponse> flavor,
             PromptProcessor<P> promptProcessor
     ) throws FreeplayException {
-        String sessionId = callSupport.createSession(projectId, environment);
+        return getCompletion(
+                projectId,
+                templateName,
+                variables,
+                llmParameters,
+                environment,
+                flavor,
+                promptProcessor,
+                Collections.emptyMap());
+    }
+
+    public <P> CompletionResponse getCompletion(
+            String projectId,
+            String templateName,
+            Map<String, Object> variables,
+            Map<String, Object> llmParameters,
+            String environment,
+            Flavor<P, CompletionResponse> flavor,
+            PromptProcessor<P> promptProcessor,
+            Map<String, Object> metadata
+    ) throws FreeplayException {
+        String sessionId = callSupport.createSession(projectId, environment, metadata);
         Collection<PromptTemplate> prompts = callSupport.getPrompts(projectId, environment);
         return callSupport.prepareAndMakeCall(
                 sessionId,
@@ -252,7 +277,20 @@ public class Freeplay {
             String environment,
             ChatFlavor flavor
     ) throws FreeplayException {
-        String sessionId = callSupport.createSession(projectId, environment);
+        return startChat(projectId, templateName, variables, llmParameters, environment, flavor, Collections.emptyMap());
+    }
+
+
+    public ChatStart<IndexedChatMessage> startChat(
+            String projectId,
+            String templateName,
+            Map<String, Object> variables,
+            Map<String, Object> llmParameters,
+            String environment,
+            ChatFlavor flavor,
+            Map<String, Object> metadata
+    ) throws FreeplayException {
+        String sessionId = callSupport.createSession(projectId, environment, metadata);
         Collection<PromptTemplate> prompts = callSupport.getPrompts(projectId, environment);
         ChatSession chatSession =
                 new ChatSession(
@@ -287,7 +325,19 @@ public class Freeplay {
             String environment,
             ChatFlavor flavor
     ) throws FreeplayException {
-        String sessionId = callSupport.createSession(projectId, environment);
+        return startChatStream(projectId, templateName, variables, llmParameters, environment, flavor, Collections.emptyMap());
+    }
+
+    public ChatStart<Stream<IndexedChatMessage>> startChatStream(
+            String projectId,
+            String templateName,
+            Map<String, Object> variables,
+            Map<String, Object> llmParameters,
+            String environment,
+            ChatFlavor flavor,
+            Map<String, Object> metadata
+    ) throws FreeplayException {
+        String sessionId = callSupport.createSession(projectId, environment, metadata);
         Collection<PromptTemplate> prompts = callSupport.getPrompts(projectId, environment);
         ChatSession chatSession = new ChatSession(callSupport, sessionId, prompts, templateName, environment);
         return new ChatStart<>(

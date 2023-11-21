@@ -3,6 +3,7 @@ package ai.freeplay.client.model;
 import ai.freeplay.client.internal.CallSupport;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -44,7 +45,10 @@ public class TestRun {
     }
 
     public CompletionSession createSession() {
-        String sessionId = callSupport.createSession(projectId, environment);
+        return createSession(Collections.emptyMap());
+    }
+    public CompletionSession createSession(Map<String, Object> metadata) {
+        String sessionId = callSupport.createSession(projectId, environment, metadata);
         Collection<PromptTemplate> prompts = callSupport.getPrompts(projectId, environment);
         return new CompletionSession(callSupport, sessionId, prompts, environment, testRunId);
     }

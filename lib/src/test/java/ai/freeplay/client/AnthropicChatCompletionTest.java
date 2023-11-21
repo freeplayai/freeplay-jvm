@@ -2,10 +2,12 @@ package ai.freeplay.client;
 
 import ai.freeplay.client.ProviderConfig.AnthropicProviderConfig;
 import ai.freeplay.client.exceptions.FreeplayException;
+import ai.freeplay.client.flavor.Flavor;
 import ai.freeplay.client.internal.utilities.MockFixtures;
 import ai.freeplay.client.model.ChatStart;
 import ai.freeplay.client.model.CompletionResponse;
 import ai.freeplay.client.model.IndexedChatMessage;
+import ai.freeplay.client.processor.PromptProcessor;
 import org.junit.Test;
 
 import java.net.http.HttpClient;
@@ -32,7 +34,7 @@ public class AnthropicChatCompletionTest extends HttpClientTestBase {
     private final String textCompletion = " I apologize that your sink isn't working. Can I help you";
 
     @Test
-    public void textCompletionReturnsValue() {
+    public void chatCompletionReturnsValue() {
         withMockedClient((HttpClient mockedClient) -> {
             mockCreateSession(mockedClient);
             mockGetPrompts(mockedClient, templateName, chatPromptContent, Collections.emptyMap(), "anthropic_chat");
@@ -41,6 +43,7 @@ public class AnthropicChatCompletionTest extends HttpClientTestBase {
             CompletionResponse completion;
 
             Freeplay fpClient = new Freeplay(MockFixtures.freeplayApiKey, baseUrl, new AnthropicProviderConfig(anthropicApiKey));
+            //noinspection unchecked
             completion = fpClient.getCompletion(
                     projectId,
                     "my-prompt",
@@ -49,8 +52,17 @@ public class AnthropicChatCompletionTest extends HttpClientTestBase {
                             "model", MODEL_CLAUDE_2,
                             "max_tokens_to_sample", 64
                     ),
-                    "latest"
+                    "latest",
+                    Flavor.DEFAULT,
+                    PromptProcessor.DEFAULT,
+                    Map.of("customer_id", 123)
             );
+
+            Map<String, Object> sessionBody = getCapturedBodyAsMap(mockedClient, 4, 0);
+
+            assertEquals(
+                    Map.of("customer_id", 123),
+                    sessionBody.get("metadata"));
 
             // Completion
             assertEquals(textCompletion, completion.getContent());
@@ -66,7 +78,7 @@ public class AnthropicChatCompletionTest extends HttpClientTestBase {
     }
 
     @Test
-    public void textCompletionHandlesProcessor() {
+    public void chatCompletionHandlesProcessor() {
         withMockedClient((HttpClient mockedClient) -> {
             mockCreateSession(mockedClient);
             mockGetPrompts(mockedClient, templateName, chatPromptContent, Collections.emptyMap(), "anthropic_chat");
