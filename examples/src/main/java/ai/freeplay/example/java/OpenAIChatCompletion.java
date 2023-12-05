@@ -3,6 +3,7 @@ package ai.freeplay.example.java;
 import ai.freeplay.client.Freeplay;
 import ai.freeplay.client.HttpConfig;
 import ai.freeplay.client.ProviderConfig.OpenAIProviderConfig;
+import ai.freeplay.client.ProviderConfigs;
 import ai.freeplay.client.model.ChatCompletionResponse;
 import ai.freeplay.client.model.ChatMessage;
 import ai.freeplay.client.model.CompletionResponse;
@@ -27,7 +28,7 @@ public class OpenAIChatCompletion {
         Freeplay fpClient = new Freeplay(
                 freeplayApiKey,
                 baseUrl,
-                new OpenAIProviderConfig(openaiApiKey),
+                new ProviderConfigs(new OpenAIProviderConfig(openaiApiKey)),
                 Collections.emptyMap(),
                 new HttpConfig(Duration.ofMillis(10_000))
         );
@@ -49,6 +50,6 @@ public class OpenAIChatCompletion {
         );
 
         chatResponse.getFirstChoice().ifPresent((ChatMessage message) ->
-                System.out.printf("Chat Completion text [%s]: %s%n", message.getRole(), chatResponse.getContent()));
+                System.out.printf("Chat Completion content [%s]: %s%n", message.getRole(), chatResponse.getContent()));
     }
 }

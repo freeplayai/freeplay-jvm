@@ -25,7 +25,11 @@ public class OpenAITestRunTest extends HttpClientTestBase {
 
             String environment = "prod";
             String testListName = "core-tests";
-            Freeplay fpClient = new Freeplay(freeplayApiKey, baseUrl, new OpenAIProviderConfig(openaiApiKey));
+            Freeplay fpClient = new Freeplay(
+                    freeplayApiKey,
+                    baseUrl,
+                    new ProviderConfigs(new OpenAIProviderConfig(openaiApiKey))
+            );
             TestRun testRun = fpClient.createTestRun(
                     projectId,
                     environment,
@@ -48,12 +52,16 @@ public class OpenAITestRunTest extends HttpClientTestBase {
         withMockedClient((HttpClient mockedClient) -> {
             mockCreateSession(mockedClient);
             mockCreateTestRun(mockedClient);
-            mockGetPrompts(mockedClient, MODEL_GPT_TURBO_35, templateName, getChatPromptContent());
-            mockOpenAIChatCall(mockedClient, chatCompletion1);
+            mockGetPrompts(mockedClient, MODEL_GPT_35_TURBO, templateName, getChatPromptContent());
+            mockOpenAIChatCalls(mockedClient, chatCompletion1);
 
             String environment = "prod";
             String testListName = "core-tests";
-            Freeplay fpClient = new Freeplay(freeplayApiKey, baseUrl, new OpenAIProviderConfig(openaiApiKey));
+            Freeplay fpClient = new Freeplay(
+                    freeplayApiKey,
+                    baseUrl,
+                    new ProviderConfigs(new OpenAIProviderConfig(openaiApiKey))
+            );
             TestRun testRun = fpClient.createTestRun(
                     projectId,
                     environment,
@@ -78,8 +86,8 @@ public class OpenAITestRunTest extends HttpClientTestBase {
         withMockedClient((HttpClient mockedClient) -> {
             mockCreateSession(mockedClient);
             mockCreateTestRun(mockedClient);
-            mockGetPrompts(mockedClient, MODEL_GPT_TURBO_35, templateName, getChatPromptContent());
-            mockOpenAIChatCall(mockedClient, chatCompletion1);
+            mockGetPrompts(mockedClient, MODEL_GPT_35_TURBO, templateName, getChatPromptContent());
+            mockOpenAIChatCalls(mockedClient, chatCompletion1);
 
             String environment = "prod";
             String testListName = "core-tests";

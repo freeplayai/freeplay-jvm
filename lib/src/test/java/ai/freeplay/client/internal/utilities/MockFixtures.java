@@ -4,6 +4,7 @@ import ai.freeplay.client.internal.JSONUtil;
 import ai.freeplay.client.model.PromptTemplate;
 
 import java.net.http.HttpClient;
+import java.net.http.HttpResponse;
 import java.util.*;
 import java.util.stream.Stream;
 
@@ -17,8 +18,7 @@ public class MockFixtures {
 
     public static final String baseUrl = "http://localhost:8080/api";
 
-    public static final String MODEL_TEXT_DAVINCI_003 = "text-davinci-003";
-    public static final String MODEL_GPT_TURBO_35 = "gpt-3.5-turbo";
+    public static final String MODEL_GPT_35_TURBO = "gpt-3.5-turbo";
     public static final String MODEL_CLAUDE_2 = "claude-2";
 
     public static final String freeplayApiKey = "<freeplay-api-key>";
@@ -36,24 +36,6 @@ public class MockFixtures {
             when(request(mockedClient, "POST", "projects/[^/]*/sessions"))
                     .thenReturn(
                             response(201, getSessionRequestPayload(UUID.randomUUID().toString())));
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public static void mockGetPrompts(
-            HttpClient mockedClient,
-            String model,
-            String templateName,
-            String templateContent,
-            String flavor
-    ) throws RuntimeException {
-        Map<String, Object> llmParameters = new HashMap<>();
-        if (model != null)
-            llmParameters.put("model", model);
-
-        try {
-            mockGetPrompts(mockedClient, templateName, templateContent, llmParameters, flavor);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -159,32 +141,15 @@ public class MockFixtures {
         }
     }
 
-    // OpenAI
-    public static void mockOpenAITextCall(HttpClient mockedClient, String completion) throws RuntimeException {
-        try {
-            when(request(mockedClient, "api.openai.com", "POST", "v1/completions"))
-                    .thenReturn(
-                            response(200, getOpenAITextResponse(MODEL_TEXT_DAVINCI_003, completion)));
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
+    public static void mockOpenAIChatCalls(HttpClient mockedClient, String... completions) throws RuntimeException {
+        @SuppressWarnings("unchecked")
+        HttpResponse<Object>[] responses = Arrays.stream(completions)
+                .map(completion -> response(200, getOpenAIChatResponse(completion)))
+                .toArray(HttpResponse[]::new);
 
-    public static void mockOpenAIChatCall(HttpClient mockedClient, String completion) throws RuntimeException {
         try {
             when(request(mockedClient, "api.openai.com", "POST", "v1/chat/completions"))
-                    .thenReturn(
-                            response(200, getOpenAIChatResponse(completion)));
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public static void mockOpenAITextCallStream(HttpClient mockedClient) throws RuntimeException {
-        try {
-            when(request(mockedClient, "api.openai.com", "POST", "v1/completions"))
-                    .thenReturn(
-                            response(200, getOpenAITextResponseStreamMessages()));
+                    .thenReturn(responses[0], Arrays.copyOfRange(responses, 1, responses.length));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -200,15 +165,6 @@ public class MockFixtures {
         }
     }
 
-    public static void mockUnauthorizedOpenAITextCall(HttpClient mockedClient) throws RuntimeException {
-        try {
-            when(request(mockedClient, "api.openai.com", "POST", "v1/completions"))
-                    .thenReturn(response(401, getOpenAIUnauthorizedResponse()));
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     public static void mockUnauthorizedOpenAIChatCall(HttpClient mockedClient) throws RuntimeException {
         try {
             when(request(mockedClient, "api.openai.com", "POST", "v1/chat/completions"))
@@ -219,27 +175,27 @@ public class MockFixtures {
     }
 
     // Anthropic
-    public static void mockAnthropicTextCall(HttpClient mockedClient, String completion) throws RuntimeException {
+    public static void mockAnthropicCall(HttpClient mockedClient, String completion) throws RuntimeException {
         try {
             when(request(mockedClient, "api.anthropic.com", "POST", "v1/complete"))
                     .thenReturn(
-                            response(200, getAnthropicTextResponse(MODEL_TEXT_DAVINCI_003, completion)));
+                            response(200, getAnthropicResponse(MODEL_CLAUDE_2, completion)));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
-    public static void mockAnthropicTextCallStream(HttpClient mockedClient) throws RuntimeException {
+    public static void mockAnthropicCallStream(HttpClient mockedClient) throws RuntimeException {
         try {
             when(request(mockedClient, "api.anthropic.com", "POST", "v1/complete"))
                     .thenReturn(
-                            response(200, getAnthropicTextResponseStreamMessages()));
+                            response(200, getAnthropicResponseStreamMessages()));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
-    public static void mockUnauthorizedAnthropicTextCall(HttpClient mockedClient) throws RuntimeException {
+    public static void mockUnauthorizedAnthropicCall(HttpClient mockedClient) throws RuntimeException {
         try {
             when(request(mockedClient, "api.anthropic.com", "POST", "v1/complete"))
                     .thenReturn(response(401, getAnthropicUnauthorizedResponse()));
@@ -308,28 +264,6 @@ public class MockFixtures {
         ));
     }
 
-    public static String getOpenAITextResponse(String model, String response) {
-        return "{\n" +
-                "  \"id\": \"cmpl-7pjGh1KgUrY1eDYfTsZqK9pFfAzmj\",\n" +
-                "  \"object\": \"text_completion\",\n" +
-                "  \"created\": 1692563095,\n" +
-                "  \"model\": \"" + model + "\",\n" +
-                "  \"choices\": [\n" +
-                "    {\n" +
-                "      \"text\": \"" + response + "\",\n" +
-                "      \"index\": 0,\n" +
-                "      \"logprobs\": null,\n" +
-                "      \"finish_reason\": \"length\"\n" +
-                "    }\n" +
-                "  ],\n" +
-                "  \"usage\": {\n" +
-                "    \"prompt_tokens\": 11,\n" +
-                "    \"completion_tokens\": 16,\n" +
-                "    \"total_tokens\": 27\n" +
-                "  }\n" +
-                "}\n";
-    }
-
     public static String getOpenAIChatResponse(String response) {
         return "{\n" +
                 "  \"id\": \"chatcmpl-7r34GwVSTw9RCL63j3g3AlCXQ4TSw\",\n" +
@@ -352,14 +286,6 @@ public class MockFixtures {
                 "    \"total_tokens\": 64\n" +
                 "  }\n" +
                 "}\n";
-    }
-
-    public static Stream<String> getOpenAITextResponseStreamMessages() {
-        return Stream.of(
-                "data: {\"warning\":\"This model version is deprecated. Migrate before January 4, 2024 to avoid disruption of service. Learn more https://platform.openai.com/docs/deprecations\",\"id\":\"cmpl-7ujDryokBzhNQPDNatuRkMV3R1SU2\",\"object\":\"text_completion\",\"created\":1693754559,\"choices\":[{\"text\":\"Well \",\"index\":0,\"logprobs\":null,\"finish_reason\":null}],\"model\":\"text-davinci-003\"}\n\n",
-                "data: {\"warning\":\"This model version is deprecated. Migrate before January 4, 2024 to avoid disruption of service. Learn more https://platform.openai.com/docs/deprecations\",\"id\":\"cmpl-7ujDryokBzhNQPDNatuRkMV3R1SU2\",\"object\":\"text_completion\",\"created\":1693754559,\"choices\":[{\"text\":\"hello\",\"index\":0,\"logprobs\":null,\"finish_reason\":null}],\"model\":\"text-davinci-003\"}\n\n",
-                "data: {\"warning\":\"This model version is deprecated. Migrate before January 4, 2024 to avoid disruption of service. Learn more https://platform.openai.com/docs/deprecations\",\"id\":\"cmpl-7ujDryokBzhNQPDNatuRkMV3R1SU2\",\"object\":\"text_completion\",\"created\":1693754559,\"choices\":[{\"text\":\"\",\"index\":0,\"logprobs\":null,\"finish_reason\":\"length\"}],\"model\":\"text-davinci-003\"}\n\n"
-        );
     }
 
     public static Stream<String> getOpenAIChatResponseStreamMessages() {
@@ -391,7 +317,7 @@ public class MockFixtures {
                 "}\n";
     }
 
-    public static String getAnthropicTextResponse(String model, String response) {
+    public static String getAnthropicResponse(String model, String response) {
         return "{\n" +
                 "  \"completion\": \"" + response + "\",\n" +
                 "  \"stop_reason\": \"max_tokens\",\n" +
@@ -401,7 +327,7 @@ public class MockFixtures {
                 "}";
     }
 
-    public static Stream<String> getAnthropicTextResponseStreamMessages() {
+    public static Stream<String> getAnthropicResponseStreamMessages() {
         return Stream.of(
                 "event: completion",
                 "data: {\"completion\":\" Oh\",\"stop_reason\":null,\"model\":\"claude-2.0\",\"stop\":null,\"log_id\":\"d0914d5a1c9eaa87de003830bc290dcf32d4bd6c097b27466b2d65a7c80bf7d7\"}",
@@ -434,7 +360,7 @@ public class MockFixtures {
     }
 
 
-    private static Map<String, Object> object(Object... keysAndValues) {
+    public static Map<String, Object> object(Object... keysAndValues) {
         if (keysAndValues.length % 2 != 0)
             throw new IllegalArgumentException("Must have even number of args for keys and values");
 
@@ -446,7 +372,7 @@ public class MockFixtures {
         return object;
     }
 
-    private static List<Object> array(Object... objects) {
+    public static List<Object> array(Object... objects) {
         return Arrays.asList(objects);
     }
 

@@ -2,8 +2,8 @@ package ai.freeplay.example.java;
 
 import ai.freeplay.client.Freeplay;
 import ai.freeplay.client.ProviderConfig.OpenAIProviderConfig;
+import ai.freeplay.client.ProviderConfigs;
 import ai.freeplay.client.model.ChatMessage;
-import ai.freeplay.client.model.CompletionResponse;
 import ai.freeplay.client.model.CompletionSession;
 
 import java.util.Collections;
@@ -22,7 +22,11 @@ public class OpenAIStreamCompletion {
 
         String baseUrl = format("https://%s.freeplay.ai/api", customerDomain);
 
-        Freeplay fpClient = new Freeplay(freeplayApiKey, baseUrl, new OpenAIProviderConfig(openaiApiKey));
+        Freeplay fpClient = new Freeplay(
+                freeplayApiKey,
+                baseUrl,
+                new ProviderConfigs(new OpenAIProviderConfig(openaiApiKey))
+        );
         Map<String, Object> llmParameters = Collections.emptyMap();
 
         CompletionSession session = fpClient.createSession(projectId, "prod");
@@ -32,17 +36,7 @@ public class OpenAIStreamCompletion {
                 Map.of("question", "why isn't my sink working?"),
                 llmParameters
         );
-        completionStream.forEach((ChatMessage chunk) -> {
-            System.out.printf("Message [%s]: %s%n", chunk.getRole(), chunk.getContent());
-        });
-
-        Stream<CompletionResponse> textStream = session.getCompletionStream(
-                "my-prompt",
-                Map.of("question", "why isn't my sink working?"),
-                llmParameters
-        );
-        textStream.forEach((CompletionResponse chunk) -> {
-            System.out.printf("Message [TEXT]: %s%n", chunk.getContent());
-        });
+        completionStream.forEach((ChatMessage chunk) ->
+                System.out.printf("Message [%s]: %s%n", chunk.getRole(), chunk.getContent()));
     }
 }

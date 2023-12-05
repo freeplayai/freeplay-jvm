@@ -414,10 +414,6 @@ public class CallSupport {
 
         String flavorName = prompt.getFlavorName();
         switch (flavorName) {
-            case "anthropic_text":
-                return new AnthropicTextFlavor();
-            case "openai_text":
-                return new OpenAITextFlavor();
             case "openai_chat":
                 return new OpenAIChatFlavor();
             case "anthropic_chat":

@@ -2,13 +2,12 @@ package ai.freeplay.example.java;
 
 import ai.freeplay.client.Freeplay;
 import ai.freeplay.client.ProviderConfig.OpenAIProviderConfig;
+import ai.freeplay.client.ProviderConfigs;
 import ai.freeplay.client.model.ChatCompletionResponse;
 import ai.freeplay.client.model.ChatMessage;
-import ai.freeplay.client.model.CompletionResponse;
 import ai.freeplay.client.model.CompletionSession;
 import ai.freeplay.client.processor.ChatPromptProcessor;
 import ai.freeplay.client.processor.LLMCallInfo;
-import ai.freeplay.client.processor.TextPromptProcessor;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -27,7 +26,11 @@ public class OpenAIModifiedChatCompletion {
 
         String baseUrl = format("https://%s.freeplay.ai/api", customerDomain);
 
-        Freeplay fpClient = new Freeplay(freeplayApiKey, baseUrl, new OpenAIProviderConfig(openaiApiKey));
+        Freeplay fpClient = new Freeplay(
+                freeplayApiKey,
+                baseUrl,
+                new ProviderConfigs(new OpenAIProviderConfig(openaiApiKey))
+        );
         Map<String, Object> llmParameters = Collections.emptyMap();
 
         CompletionSession session = fpClient.createSession(projectId, "prod");
@@ -41,14 +44,6 @@ public class OpenAIModifiedChatCompletion {
         chatResponse.getFirstChoice().ifPresent((ChatMessage message) ->
                 System.out.printf("Chat Completion text [%s]: %s%n", message.getRole(), chatResponse.getContent())
         );
-
-        CompletionResponse textResponse = session.getCompletion(
-                "my-prompt",
-                Map.of("question", "Why isn't my window working?"),
-                llmParameters,
-                TEXT_PROMPT_PROCESSOR
-        );
-        System.out.printf("Text completion: %s%n", textResponse.getContent());
 
         System.out.printf("We sent a total of %s characters to the LLMs.%n", totalCharCount.get());
     }
@@ -67,14 +62,5 @@ public class OpenAIModifiedChatCompletion {
                         .sum());
 
         return newMessages;
-    };
-
-    private static final TextPromptProcessor TEXT_PROMPT_PROCESSOR = (String message, LLMCallInfo info) -> {
-        System.out.printf("Calling '%s' with model '%s'%n",
-                info.getProvider().getFriendlyName(),
-                info.getLLMParameters().get("model"));
-        String newMessage = "Answer nicely without making anything up. " + message;
-        totalCharCount.getAndAdd(newMessage.length());
-        return newMessage;
     };
 }
