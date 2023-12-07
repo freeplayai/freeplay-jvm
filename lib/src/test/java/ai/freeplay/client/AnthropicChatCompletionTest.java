@@ -33,6 +33,8 @@ public class AnthropicChatCompletionTest extends HttpClientTestBase {
 
     private final String chatPromptContent = "[{\"role\": \"user\", \"content\": \"Answer this question: {{question}}\"}]";
     private final String completionContent = " I apologize that your sink isn't working. Can I help you";
+    private final String complexChatPromptContent = "[{\"role\": \"user\", \"content\": \"Something {{#value}}{{name}}{{/value}}{{> post_run_messages}}\"}]";
+    private final String complexListChatPromptContent = "[{\"role\": \"user\", \"content\": \"Do these things: {{#tasks}}{{name}}{{/tasks}}\"}]";
 
     @Test
     public void chatCompletionReturnsValue() {
@@ -79,6 +81,78 @@ public class AnthropicChatCompletionTest extends HttpClientTestBase {
             assertEquals("[{\"content\":\"Answer this question: why isn't my sink working?\",\"role\":\"Human\"}]", recordBodyMap.get("prompt_content"));
             assertEquals(" I apologize that your sink isn't working. Can I help you", recordBodyMap.get("return_content"));
             assertNull(recordBodyMap.get("test_run_id"));
+        });
+    }
+
+    @Test
+    public void complexChatCompletionReturnsValue() {
+        withMockedClient((HttpClient mockedClient) -> {
+            mockCreateSession(mockedClient);
+            mockGetPrompts(mockedClient, templateName, complexChatPromptContent, Collections.emptyMap(), "anthropic_chat");
+            mockAnthropicCall(mockedClient, completionContent);
+
+            Freeplay fpClient = new Freeplay(
+                    MockFixtures.freeplayApiKey,
+                    baseUrl,
+                    new ProviderConfigs(new AnthropicProviderConfig(anthropicApiKey))
+            );
+            fpClient.getCompletion(
+                    projectId,
+                    "my-prompt",
+                    Map.of("value",
+                            Map.of("name", "this-is-a-name")
+                    ),
+                    Map.of(
+                            "model", MODEL_CLAUDE_2,
+                            "max_tokens_to_sample", 64
+                    ),
+                    "latest"
+            );
+
+            Map<String, Object> anthropicCall = getCapturedBodyAsMap(mockedClient, 4, 2);
+            assertEquals(
+                    "\n\nHuman: Something this-is-a-name\n\nAssistant:",
+                    anthropicCall.get("prompt"));
+        });
+    }
+
+    @Test
+    public void complexListChatCompletionReturnsValue() {
+        withMockedClient((HttpClient mockedClient) -> {
+            mockCreateSession(mockedClient);
+            mockGetPrompts(mockedClient, templateName, complexListChatPromptContent, Collections.emptyMap(), "anthropic_chat");
+            mockAnthropicCall(mockedClient, completionContent);
+
+            Freeplay fpClient = new Freeplay(
+                    MockFixtures.freeplayApiKey,
+                    baseUrl,
+                    new ProviderConfigs(new AnthropicProviderConfig(anthropicApiKey))
+            );
+            fpClient.getCompletion(
+                    projectId,
+                    "my-prompt",
+                    Map.of("tasks",
+                            List.of(
+                                    Map.of("name", "\ntask1"),
+                                    Map.of("name", "\ntask2"),
+                                    Map.of("name", "\ntask3")
+                            )
+                    ),
+                    Map.of(
+                            "model", MODEL_CLAUDE_2,
+                            "max_tokens_to_sample", 64
+                    ),
+                    "latest"
+            );
+
+            Map<String, Object> anthropicCall = getCapturedBodyAsMap(mockedClient, 4, 2);
+            assertEquals(
+                    "\n\nHuman: Do these things: \n" +
+                            "task1\n" +
+                            "task2\n" +
+                            "task3\n\n" +
+                            "Assistant:",
+                    anthropicCall.get("prompt"));
         });
     }
 

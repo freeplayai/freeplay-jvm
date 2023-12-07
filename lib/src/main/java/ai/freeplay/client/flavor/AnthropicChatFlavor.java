@@ -1,7 +1,6 @@
 package ai.freeplay.client.flavor;
 
 import ai.freeplay.client.HttpConfig;
-import ai.freeplay.client.ProviderConfig;
 import ai.freeplay.client.ProviderConfigs;
 import ai.freeplay.client.exceptions.FreeplayException;
 import ai.freeplay.client.internal.Http;
