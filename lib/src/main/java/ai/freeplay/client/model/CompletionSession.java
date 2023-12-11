@@ -1,10 +1,9 @@
 package ai.freeplay.client.model;
 
 import ai.freeplay.client.exceptions.FreeplayConfigurationException;
-import ai.freeplay.client.flavor.Flavor;
+import ai.freeplay.client.flavor.ChatFlavor;
 import ai.freeplay.client.internal.CallSupport;
 import ai.freeplay.client.processor.ChatPromptProcessor;
-import ai.freeplay.client.processor.PromptProcessor;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -61,33 +60,34 @@ public class CompletionSession {
         return getCompletion(templateName, variables, llmParameters, null, null);
     }
 
-    public <P, R> CompletionResponse getCompletion(
+    public CompletionResponse getCompletion(
             String templateName,
             Map<String, Object> variables,
             Map<String, Object> llmParameters,
-            PromptProcessor<P> promptProcessor
+            ChatPromptProcessor promptProcessor
     ) {
         return getCompletion(templateName, variables, llmParameters, null, promptProcessor);
     }
 
-    public <P, R> CompletionResponse getCompletion(
+    public CompletionResponse getCompletion(
             String templateName,
             Map<String, Object> variables,
             Map<String, Object> llmParameters,
-            Flavor<P, R> flavor
+            ChatFlavor flavor
     ) {
         return getCompletion(templateName, variables, llmParameters, flavor, null);
     }
 
-    public <P, R> CompletionResponse getCompletion(
+    public CompletionResponse getCompletion(
             String templateName,
             Map<String, Object> variables,
             Map<String, Object> llmParameters,
-            Flavor<P, R> flavor,
-            PromptProcessor<P> promptProcessor
+            ChatFlavor flavor,
+            ChatPromptProcessor promptProcessor
     ) {
         return callSupport.prepareAndMakeCall(
-                getSessionId(), promptTemplates,
+                getSessionId(),
+                promptTemplates,
                 templateName,
                 variables,
                 llmParameters,
@@ -98,14 +98,14 @@ public class CompletionSession {
         );
     }
 
-    public <P, R> Stream<R> getCompletionStream(
+    public Stream<IndexedChatMessage> getCompletionStream(
             String templateName,
             Map<String, Object> variables
     ) {
         return getCompletionStream(templateName, variables, Collections.emptyMap(), null, null, null);
     }
 
-    public <P, R> Stream<R> getCompletionStream(
+    public Stream<IndexedChatMessage> getCompletionStream(
             String templateName,
             Map<String, Object> variables,
             Map<String, Object> llmParameters
@@ -113,12 +113,12 @@ public class CompletionSession {
         return getCompletionStream(templateName, variables, llmParameters, null, null, null);
     }
 
-    public <P, R> Stream<R> getCompletionStream(
+    public Stream<IndexedChatMessage> getCompletionStream(
             String templateName,
             Map<String, Object> variables,
             Map<String, Object> llmParameters,
             String testRunId,
-            Flavor<P, R> flavor
+            ChatFlavor flavor
     ) {
         return getCompletionStream(
                 templateName,
@@ -130,12 +130,12 @@ public class CompletionSession {
         );
     }
 
-    public <P, R> Stream<R> getCompletionStream(
+    public Stream<IndexedChatMessage> getCompletionStream(
             String templateName,
             Map<String, Object> variables,
             Map<String, Object> llmParameters,
             String testRunId,
-            PromptProcessor<P> promptProcessor
+            ChatPromptProcessor promptProcessor
     ) {
         return getCompletionStream(
                 templateName,
@@ -147,13 +147,13 @@ public class CompletionSession {
         );
     }
 
-    public <P, R> Stream<R> getCompletionStream(
+    public Stream<IndexedChatMessage> getCompletionStream(
             String templateName,
             Map<String, Object> variables,
             Map<String, Object> llmParameters,
             String testRunId,
-            Flavor<P, R> flavor,
-            PromptProcessor<P> promptProcessor
+            ChatFlavor flavor,
+            ChatPromptProcessor promptProcessor
     ) {
         PromptTemplate template = callSupport
                 .findPrompt(promptTemplates, templateName)
@@ -203,7 +203,7 @@ public class CompletionSession {
             Map<String, Object> variables,
             Map<String, Object> llmParameters,
             String testRunId,
-            Flavor<ChatMessage, IndexedChatMessage> flavor,
+            ChatFlavor flavor,
             ChatPromptProcessor promptProcessor
     ) {
         return callSupport.makeContinueChatCall(

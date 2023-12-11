@@ -2,9 +2,11 @@ package ai.freeplay.client.model;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class ChatCompletionResponse {
     private final List<IndexedChatMessage> choices;
+    private AtomicReference<String> completionId;
 
     public ChatCompletionResponse(List<IndexedChatMessage> choices) {
         this.choices = choices;
@@ -23,5 +25,13 @@ public class ChatCompletionResponse {
     public boolean isComplete() {
         if (choices.isEmpty()) return false;
         return choices.get(0).isComplete();
+    }
+
+    public String getCompletionId() {
+        return completionId.get();
+    }
+
+    public void setCompletionId(String completionId) {
+        this.completionId.set(completionId);
     }
 }

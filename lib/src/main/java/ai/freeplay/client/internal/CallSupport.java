@@ -12,7 +12,6 @@ import ai.freeplay.client.flavor.*;
 import ai.freeplay.client.model.*;
 import ai.freeplay.client.processor.ChatPromptProcessor;
 import ai.freeplay.client.processor.LLMCallInfo;
-import ai.freeplay.client.processor.PromptProcessor;
 
 import java.net.http.HttpResponse;
 import java.time.Instant;
@@ -20,6 +19,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
+import static ai.freeplay.client.internal.Http.authHeaders;
 import static ai.freeplay.client.internal.Http.throwFreeplayIfError;
 import static java.lang.String.format;
 import static java.lang.String.valueOf;
@@ -32,7 +32,7 @@ public class CallSupport {
 
     private final String freeplayApiKey;
     private final String baseUrl;
-    private final Flavor<?, ?> clientFlavor;
+    private final ChatFlavor clientFlavor;
     private final Map<String, Object> clientLLMParameters;
     private final ProviderConfigs providerConfig;
     private final HttpConfig httpConfig;
@@ -42,7 +42,7 @@ public class CallSupport {
             String freeplayApiKey,
             String baseUrl,
             ProviderConfigs providerConfig,
-            Flavor<?, ?> flavor,
+            ChatFlavor flavor,
             Map<String, Object> llmParameters,
             HttpConfig httpConfig,
             RecordProcessor recordProcessor
@@ -62,12 +62,7 @@ public class CallSupport {
         String finalTag = getFinalTag(tag);
         String url = getUrl("projects/%s/sessions/tag/%s", projectId, finalTag);
 
-        for (Map.Entry<String, Object> entry : metadata.entrySet()) {
-            if (!(entry.getValue() instanceof String || entry.getValue() instanceof Number)) {
-                throw new FreeplayClientException("Invalid value for key '" + entry.getKey() +
-                        "': Value must be a string or number.");
-            }
-        }
+        validateBasicMap(metadata);
 
         HttpResponse<String> response;
         try {
@@ -82,6 +77,15 @@ public class CallSupport {
             return valueOf(sessionMap.get("session_id"));
         } catch (FreeplayException e) {
             throw new FreeplayServerException("Error creating session.", e);
+        }
+    }
+
+    private static void validateBasicMap(Map<String, Object> metadata) {
+        for (Map.Entry<String, Object> entry : metadata.entrySet()) {
+            if (!(entry.getValue() instanceof String || entry.getValue() instanceof Number || entry.getValue() instanceof Boolean)) {
+                throw new FreeplayClientException("Invalid value for key '" + entry.getKey() +
+                        "': Value must be a string or number.");
+            }
         }
     }
 
@@ -134,7 +138,6 @@ public class CallSupport {
         }
         throwFreeplayIfError(response, 201);
 
-
         Map<String, Object> objectMap;
         try {
             objectMap = Http.parseBody(response);
@@ -148,8 +151,7 @@ public class CallSupport {
         return new TestRun(this, projectId, environment, testRunId, inputs);
     }
 
-    @SuppressWarnings("unchecked")
-    public <P, R> CompletionResponse prepareAndMakeCall(
+    public CompletionResponse prepareAndMakeCall(
             String sessionId,
             Collection<PromptTemplate> templates,
             String templateName,
@@ -157,8 +159,8 @@ public class CallSupport {
             Map<String, Object> llmParameters,
             String tag,
             String testRunId,
-            Flavor<P, R> flavor,
-            PromptProcessor<P> promptProcessor
+            ChatFlavor flavor,
+            ChatPromptProcessor promptProcessor
     ) throws FreeplayException {
         Optional<PromptTemplate> maybePrompt = findPrompt(templates, templateName);
         if (maybePrompt.isEmpty()) {
@@ -168,10 +170,10 @@ public class CallSupport {
         PromptTemplate template = maybePrompt.get();
 
         Map<String, Object> mergedLLMParameters = getMergedParameters(template, llmParameters);
-        Flavor<P, R> activeFlavor = (Flavor<P, R>) getActiveFlavor(flavor, template);
+        ChatFlavor activeFlavor = getActiveFlavor(flavor, template);
 
-        P formattedPrompt = activeFlavor.formatPrompt(template.getContent(), variables);
-        P modifiedPrompt = promptProcessor != null ?
+        Collection<ChatMessage> formattedPrompt = activeFlavor.formatPrompt(template.getContent(), variables);
+        Collection<ChatMessage> modifiedPrompt = promptProcessor != null ?
                 promptProcessor.apply(
                         formattedPrompt,
                         new LLMCallInfo(activeFlavor.getProviderEnum(), mergedLLMParameters)) :
@@ -184,7 +186,7 @@ public class CallSupport {
                 mergedLLMParameters,
                 httpConfig);
         Instant end = Instant.ofEpochMilli(currentTimeMillis());
-        recordProcessor.record(
+        Optional<String> completionId = recordProcessor.record(
                 new PromptInfo(
                         template.getPromptTemplateVersionId(),
                         template.getPromptTemplateId(),
@@ -205,32 +207,33 @@ public class CallSupport {
                         response.isComplete()
                 )
         );
+        completionId.ifPresent(response::setCompletionId);
+
         return response;
     }
 
-    public <P, R> Stream<R> makeCallStream(
+    public Stream<IndexedChatMessage> makeCallStream(
             String sessionId,
             PromptTemplate template,
             Map<String, Object> variables,
             Map<String, Object> llmParameters,
             String tag,
             String testRunId,
-            Flavor<P, R> callFlavor,
-            PromptProcessor<P> promptProcessor
+            ChatFlavor callFlavor,
+            ChatPromptProcessor promptProcessor
     ) throws FreeplayException {
         Map<String, Object> mergedLLMParameters = getMergedParameters(template, llmParameters);
-        @SuppressWarnings("unchecked")
-        Flavor<P, R> activeFlavor = (Flavor<P, R>) getActiveFlavor(callFlavor, template);
+        ChatFlavor activeFlavor = getActiveFlavor(callFlavor, template);
 
-        P formattedPrompt = activeFlavor.formatPrompt(template.getContent(), variables);
-        P modifiedPrompt = promptProcessor != null ?
+        Collection<ChatMessage> formattedPrompt = activeFlavor.formatPrompt(template.getContent(), variables);
+        Collection<ChatMessage> modifiedPrompt = promptProcessor != null ?
                 promptProcessor.apply(
                         formattedPrompt,
                         new LLMCallInfo(activeFlavor.getProviderEnum(), mergedLLMParameters)) :
                 formattedPrompt;
 
         Instant start = Instant.ofEpochMilli(currentTimeMillis());
-        Stream<R> responseStream = activeFlavor.callServiceStream(
+        Stream<IndexedChatMessage> responseStream = activeFlavor.callServiceStream(
                 modifiedPrompt,
                 providerConfig,
                 mergedLLMParameters,
@@ -257,12 +260,12 @@ public class CallSupport {
             Map<String, Object> llmParameters,
             String tag,
             String testRunId,
-            Flavor<ChatMessage, IndexedChatMessage> flavor,
+            ChatFlavor flavor,
             ChatPromptProcessor promptProcessor
     ) throws FreeplayException {
         Optional<PromptTemplate> maybePrompt = findPrompt(templates, templateName);
         return maybePrompt.map((PromptTemplate prompt) -> {
-            ChatFlavor activeFlavor = getActiveChatFlavor(flavor, prompt);
+            ChatFlavor activeFlavor = getActiveFlavor(flavor, prompt);
             Collection<ChatMessage> formattedPrompt = activeFlavor.formatPrompt(prompt.getContent(), variables);
             return makeContinueChatCall(
                     sessionId,
@@ -290,7 +293,7 @@ public class CallSupport {
             ChatPromptProcessor promptProcessor
     ) throws FreeplayException {
         Map<String, Object> mergedLLMParameters = getMergedParameters(template, llmParameters);
-        ChatFlavor activeFlavor = getActiveChatFlavor(clientFlavor, template);
+        ChatFlavor activeFlavor = getActiveFlavor(clientFlavor, template);
 
         Collection<ChatMessage> finalMessages = promptProcessor != null ?
                 promptProcessor.apply(
@@ -303,7 +306,7 @@ public class CallSupport {
                 finalMessages, providerConfig, mergedLLMParameters, httpConfig);
         Instant end = Instant.ofEpochMilli(currentTimeMillis());
 
-        recordProcessor.record(
+        Optional<String> completionId = recordProcessor.record(
                 new PromptInfo(
                         template.getPromptTemplateVersionId(),
                         template.getPromptTemplateId(),
@@ -324,6 +327,7 @@ public class CallSupport {
                         response.isComplete()
                 )
         );
+        completionId.ifPresent(response::setCompletionId);
         return response;
     }
 
@@ -337,7 +341,7 @@ public class CallSupport {
             String testRunId
     ) throws FreeplayException {
         Map<String, Object> mergedLLMParameters = getMergedParameters(template, llmParameters);
-        ChatFlavor activeFlavor = getActiveChatFlavor(clientFlavor, template);
+        ChatFlavor activeFlavor = getActiveFlavor(clientFlavor, template);
 
         Instant start = Instant.ofEpochMilli(currentTimeMillis());
         Stream<IndexedChatMessage> responseStream = activeFlavor.callServiceStream(
@@ -356,34 +360,25 @@ public class CallSupport {
                 responseStream);
     }
 
-    public ChatFlavor getActiveChatFlavor(Flavor<?, ?> flavor, PromptTemplate prompt) {
-        Flavor<?, ?> activeFlavor = getActiveFlavor(flavor, prompt);
-
-        if (!(activeFlavor instanceof ChatFlavor)) {
-            throw new FreeplayConfigurationException("Chat sessions must use an instance of ChatFlavor");
-        }
-        return (ChatFlavor) activeFlavor;
-    }
-
-    private <P, R> Stream<R> handleStream(
+    private Stream<IndexedChatMessage> handleStream(
             String sessionId,
             PromptTemplate template,
             Map<String, Object> variables,
             String tag,
             String testRunId,
             Map<String, Object> mergedLLMParameters,
-            Flavor<P, R> activeFlavor,
-            P formattedPrompt,
+            ChatFlavor activeFlavor,
+            Collection<ChatMessage> formattedPrompt,
             Instant start,
-            Stream<R> responseStream
+            Stream<IndexedChatMessage> responseStream
     ) {
         AtomicReference<String> aggregatedContent = new AtomicReference<>("");
         return responseStream.
-                peek((R chunk) -> {
+                map((IndexedChatMessage chunk) -> {
                     aggregatedContent.getAndUpdate((String previous) -> previous + activeFlavor.getContentFromChunk(chunk));
                     if (activeFlavor.isLastChunk(chunk)) {
                         Instant end = Instant.ofEpochMilli(currentTimeMillis());
-                        recordProcessor.record(
+                        Optional<String> completionId = recordProcessor.record(
                                 new PromptInfo(
                                         template.getPromptTemplateVersionId(),
                                         template.getPromptTemplateId(),
@@ -404,11 +399,13 @@ public class CallSupport {
                                         activeFlavor.isComplete(chunk)
                                 )
                         );
+                        completionId.ifPresent(chunk::setCompletionId);
                     }
+                    return chunk;
                 });
     }
 
-    private Flavor<?, ?> getActiveFlavor(Flavor<?, ?> callFlavor, PromptTemplate prompt) {
+    public ChatFlavor getActiveFlavor(ChatFlavor callFlavor, PromptTemplate prompt) {
         if (callFlavor != null) return callFlavor;
         if (this.clientFlavor != null) return this.clientFlavor;
 
@@ -444,8 +441,7 @@ public class CallSupport {
 
     private class DefaultRecordProcessor implements RecordProcessor {
         @Override
-        public void record(PromptInfo promptInfo, CallInfo callInfo) {
-
+        public Optional<String> record(PromptInfo promptInfo, CallInfo callInfo) {
             String url = getUrl("v1/record");
             Map<String, Object> payload = new HashMap<>(32);
             payload.put("session_id", callInfo.getSessionId());
@@ -465,10 +461,31 @@ public class CallSupport {
             payload.put("llm_parameters", promptInfo.getLLMParameters());
 
             try {
-                Http.postJsonWithBearer(url, payload, freeplayApiKey);
+                HttpResponse<String> response = Http.postJsonWithBearer(url, payload, freeplayApiKey);
+                Map<String, Object> objectMap = Http.parseBody(response);
+                String completionId = valueOf(objectMap.get("completion_id"));
+                return Optional.of(completionId);
             } catch (Exception e) {
                 LOGGER.log(System.Logger.Level.WARNING, "Unable to record LLM call. Cause: {0}", e.getMessage());
+                return Optional.empty();
             }
+        }
+    }
+
+    public void recordCompletionFeedback(String completionId, Map<String, Object> feedback) throws FreeplayException {
+        validateBasicMap(feedback);
+
+        String url = getUrl("v1/completion_feedback/%s", completionId);
+        try {
+            Http.jsonRequest(
+                    url,
+                    JSONUtil.asString(feedback),
+                    HttpResponse.BodyHandlers.ofString(),
+                    httpConfig,
+                    "PUT",
+                    authHeaders(freeplayApiKey));
+        } catch (FreeplayException e) {
+            throw new FreeplayServerException("Error creating session.", e);
         }
     }
 }

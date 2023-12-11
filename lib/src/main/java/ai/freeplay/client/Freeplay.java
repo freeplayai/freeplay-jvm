@@ -2,10 +2,9 @@ package ai.freeplay.client;
 
 import ai.freeplay.client.exceptions.FreeplayException;
 import ai.freeplay.client.flavor.ChatFlavor;
-import ai.freeplay.client.flavor.Flavor;
 import ai.freeplay.client.internal.CallSupport;
 import ai.freeplay.client.model.*;
-import ai.freeplay.client.processor.PromptProcessor;
+import ai.freeplay.client.processor.ChatPromptProcessor;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -63,7 +62,7 @@ public class Freeplay {
             String freeplayAPIKey,
             String baseUrl,
             ProviderConfigs providerConfigs,
-            Flavor<?, ?> flavor,
+            ChatFlavor flavor,
             Map<String, Object> llmParameters,
             HttpConfig httpConfig
     ) {
@@ -74,7 +73,7 @@ public class Freeplay {
             String freeplayAPIKey,
             String baseUrl,
             ProviderConfigs providerConfigs,
-            Flavor<?, ?> flavor,
+            ChatFlavor flavor,
             Map<String, Object> llmParameters,
             HttpConfig httpConfig,
             RecordProcessor recordProcessor
@@ -124,7 +123,7 @@ public class Freeplay {
             String freeplayAPIKey,
             String baseUrl,
             ProviderConfig providerConfig,
-            Flavor<?, ?> flavor,
+            ChatFlavor flavor,
             Map<String, Object> llmParameters,
             HttpConfig httpConfig
     ) {
@@ -167,13 +166,13 @@ public class Freeplay {
         return getCompletion(projectId, templateName, variables, llmParameters, environment, null, null);
     }
 
-    public <P> CompletionResponse getCompletion(
+    public CompletionResponse getCompletion(
             String projectId,
             String templateName,
             Map<String, Object> variables,
             Map<String, Object> llmParameters,
             String environment,
-            Flavor<P, CompletionResponse> flavor
+            ChatFlavor flavor
     ) throws FreeplayException {
         return getCompletion(
                 projectId,
@@ -186,13 +185,13 @@ public class Freeplay {
         );
     }
 
-    public <P> CompletionResponse getCompletion(
+    public CompletionResponse getCompletion(
             String projectId,
             String templateName,
             Map<String, Object> variables,
             Map<String, Object> llmParameters,
             String environment,
-            PromptProcessor<P> promptProcessor
+            ChatPromptProcessor promptProcessor
     ) throws FreeplayException {
         return getCompletion(
                 projectId,
@@ -205,14 +204,14 @@ public class Freeplay {
         );
     }
 
-    public <P> CompletionResponse getCompletion(
+    public CompletionResponse getCompletion(
             String projectId,
             String templateName,
             Map<String, Object> variables,
             Map<String, Object> llmParameters,
             String environment,
-            Flavor<P, CompletionResponse> flavor,
-            PromptProcessor<P> promptProcessor
+            ChatFlavor flavor,
+            ChatPromptProcessor promptProcessor
     ) throws FreeplayException {
         return getCompletion(
                 projectId,
@@ -225,14 +224,14 @@ public class Freeplay {
                 Collections.emptyMap());
     }
 
-    public <P> CompletionResponse getCompletion(
+    public CompletionResponse getCompletion(
             String projectId,
             String templateName,
             Map<String, Object> variables,
             Map<String, Object> llmParameters,
             String environment,
-            Flavor<P, CompletionResponse> flavor,
-            PromptProcessor<P> promptProcessor,
+            ChatFlavor flavor,
+            ChatPromptProcessor promptProcessor,
             Map<String, Object> metadata
     ) throws FreeplayException {
         String sessionId = callSupport.createSession(projectId, environment, metadata);
@@ -352,5 +351,9 @@ public class Freeplay {
 
     public TestRun createTestRun(String projectId, String environment, String testListName) {
         return callSupport.createTestRun(projectId, environment, testListName);
+    }
+
+    public void recordCompletionFeedback(String completionId, Map<String, Object> feedback) {
+        callSupport.recordCompletionFeedback(completionId, feedback);
     }
 }

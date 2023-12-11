@@ -14,6 +14,7 @@ import java.net.http.HttpClient;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static ai.freeplay.client.CompletionFeedback.NEGATIVE_FEEDBACK;
 import static ai.freeplay.client.RecordProcessor.DO_NOT_RECORD_PROCESSOR;
 import static ai.freeplay.client.internal.utilities.MockFixtures.*;
 import static ai.freeplay.client.internal.utilities.MockMethods.*;
@@ -437,6 +438,32 @@ public class OpenAICompletionTest extends HttpClientTestBase {
 
             // Make sure the Record call didn't happen (it would be the 4th)
             assertTrue(routeNotCalled(mockedClient, 3, "record"));
+        });
+    }
+
+    @Test
+    public void chatCompletionFeedback() {
+        withMockedClient((HttpClient mockedClient) -> {
+            mockCreateSession(mockedClient);
+            mockGetPrompts(mockedClient, MODEL_GPT_35_TURBO, templateName, getChatPromptContent());
+            mockOpenAIChatCalls(mockedClient, chatCompletion1);
+            mockRecord(mockedClient);
+
+            Freeplay fpClient = new Freeplay(freeplayApiKey, baseUrl, providerConfigs);
+
+            CompletionResponse completionResponse = fpClient.getCompletion(
+                    projectId,
+                    templateName,
+                    Map.of("question", "why isn't my sink working?"),
+                    "latest"
+            );
+
+            String completionId = completionResponse.getCompletionId();
+            fpClient.recordCompletionFeedback(completionId, Map.of("feedback", NEGATIVE_FEEDBACK));
+
+            // Make sure we record feedback
+            Map<String, Object> feedbackMap = getCapturedBodyAsMap(mockedClient, 5, 4);
+            assertEquals(NEGATIVE_FEEDBACK, feedbackMap.get("feedback"));
         });
     }
 }

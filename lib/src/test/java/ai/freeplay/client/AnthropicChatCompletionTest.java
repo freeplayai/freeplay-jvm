@@ -2,13 +2,13 @@ package ai.freeplay.client;
 
 import ai.freeplay.client.ProviderConfig.AnthropicProviderConfig;
 import ai.freeplay.client.exceptions.FreeplayException;
-import ai.freeplay.client.flavor.Flavor;
+import ai.freeplay.client.flavor.ChatFlavor;
 import ai.freeplay.client.internal.utilities.MockFixtures;
 import ai.freeplay.client.model.ChatStart;
 import ai.freeplay.client.model.CompletionResponse;
 import ai.freeplay.client.model.CompletionSession;
 import ai.freeplay.client.model.IndexedChatMessage;
-import ai.freeplay.client.processor.PromptProcessor;
+import ai.freeplay.client.processor.ChatPromptProcessor;
 import org.junit.Test;
 
 import java.net.http.HttpClient;
@@ -50,7 +50,6 @@ public class AnthropicChatCompletionTest extends HttpClientTestBase {
                     baseUrl,
                     new ProviderConfigs(new AnthropicProviderConfig(anthropicApiKey))
             );
-            //noinspection unchecked
             completion = fpClient.getCompletion(
                     projectId,
                     "my-prompt",
@@ -60,8 +59,8 @@ public class AnthropicChatCompletionTest extends HttpClientTestBase {
                             "max_tokens_to_sample", 64
                     ),
                     "latest",
-                    Flavor.DEFAULT,
-                    PromptProcessor.DEFAULT,
+                    ChatFlavor.DEFAULT,
+                    ChatPromptProcessor.DEFAULT,
                     Map.of("customer_id", 123)
             );
 
@@ -389,7 +388,7 @@ public class AnthropicChatCompletionTest extends HttpClientTestBase {
                     new ProviderConfigs(new AnthropicProviderConfig(anthropicApiKey))
             );
             CompletionSession session = fpClient.createSession(projectId, "latest");
-            Stream<CompletionResponse> responseStream = session.getCompletionStream(
+            Stream<IndexedChatMessage> responseStream = session.getCompletionStream(
                     "my-prompt",
                     Map.of("question", "why isn't my sink working?"),
                     Map.of(
@@ -401,7 +400,7 @@ public class AnthropicChatCompletionTest extends HttpClientTestBase {
             );
 
             @SuppressWarnings("unused")
-            List<CompletionResponse> chunks = responseStream.collect(Collectors.toList());
+            List<IndexedChatMessage> chunks = responseStream.collect(Collectors.toList());
 
             // Modified Anthropic call
             Map<String, Object> anthropicRequest = getCapturedBodyAsMap(mockedClient, 4, 2);

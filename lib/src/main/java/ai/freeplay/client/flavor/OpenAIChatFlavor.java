@@ -3,17 +3,12 @@ package ai.freeplay.client.flavor;
 import ai.freeplay.client.HttpConfig;
 import ai.freeplay.client.ProviderConfig.OpenAIProviderConfig;
 import ai.freeplay.client.ProviderConfigs;
-import ai.freeplay.client.exceptions.FreeplayClientException;
-import ai.freeplay.client.exceptions.FreeplayException;
-import ai.freeplay.client.exceptions.LLMServerException;
+import ai.freeplay.client.exceptions.*;
 import ai.freeplay.client.internal.Http;
 import ai.freeplay.client.internal.JSONUtil;
 import ai.freeplay.client.internal.StringUtils;
 import ai.freeplay.client.internal.TemplateUtils;
-import ai.freeplay.client.model.ChatCompletionResponse;
-import ai.freeplay.client.model.ChatMessage;
-import ai.freeplay.client.model.CompletionResponse;
-import ai.freeplay.client.model.IndexedChatMessage;
+import ai.freeplay.client.model.*;
 import com.fasterxml.jackson.jr.ob.JSON;
 
 import java.io.IOException;
@@ -29,7 +24,92 @@ import static ai.freeplay.client.internal.StringUtils.isBlank;
 import static java.lang.String.valueOf;
 import static java.util.stream.Collectors.toList;
 
-public class OpenAIChatFlavor extends OpenAIFlavor<Collection<ChatMessage>, IndexedChatMessage> implements ChatFlavor {
+public class OpenAIChatFlavor implements ChatFlavor {
+
+    @Override
+    public Provider getProviderEnum() {
+        return Provider.OpenAI;
+    }
+
+    private static void validateChoices(List<Map<String, Object>> choices) throws FreeplayException {
+        if (choices.isEmpty()) {
+            throw new LLMServerException("Did not get any 'choices' back from OpenAI.");
+        }
+    }
+
+    private static void validateParameters(Map<String, Object> llmParameters) {
+        if (!llmParameters.containsKey("model")) {
+            throw new LLMClientException("The 'model' parameter is required when calling OpenAI");
+        }
+        if (llmParameters.containsKey("prompt")) {
+            throw new LLMClientException("The 'prompt' parameter cannot be specified. It is populated automatically.");
+        }
+        if (llmParameters.containsKey("messages")) {
+            throw new LLMClientException("The 'messages' parameter cannot be specified. It is populated automatically.");
+        }
+    }
+
+    private Stream<String> callOpenAIStream(
+            ProviderConfigs providerConfig,
+            String url,
+            String promptFieldName,
+            Map<String, Object> mergedLLMParameters,
+            Collection<ChatMessage> formattedPrompt,
+            HttpConfig httpConfig
+    ) {
+        validateParameters(mergedLLMParameters);
+        OpenAIProviderConfig openAIProviderConfig = validateConfig(providerConfig);
+
+        Map<String, Object> bodyMap = new HashMap<>(mergedLLMParameters);
+        bodyMap.put(promptFieldName, formattedPrompt);
+        bodyMap.put("stream", true);
+
+        HttpResponse<Stream<String>> response;
+        try {
+            response = Http.postJsonWithBearer(
+                    url,
+                    bodyMap,
+                    openAIProviderConfig.getApiKey(),
+                    HttpResponse.BodyHandlers.ofLines(),
+                    httpConfig
+            );
+        } catch (Exception e) {
+            throw new LLMServerException("Error calling OpenAI.", e);
+        }
+
+        return response.body();
+    }
+
+    private IndexedChatMessage parseLine(String line, Function<Map<String, Object>, IndexedChatMessage> itemCreator) {
+        String[] field = line.split(":", 2);
+        if (field.length == 2 && "data".equals(field[0])) {
+            if ("[DONE]".equals(field[1].trim())) {
+                return null;
+            } else {
+                Map<String, Object> objectMap;
+                try {
+                    objectMap = JSONUtil.parseMap(field[1]);
+                } catch (Exception e) {
+                    throw new LLMServerException("Error processing OpenAI stream.", e);
+                }
+                @SuppressWarnings("unchecked")
+                List<Map<String, Object>> choices = (List<Map<String, Object>>) objectMap.get("choices");
+                Map<String, Object> firstChoice = choices.get(0);
+                return itemCreator.apply(firstChoice);
+            }
+        } else {
+            throw new LLMServerException("Got unknown line in the stream: '" + line + "'");
+        }
+    }
+
+    private OpenAIProviderConfig validateConfig(ProviderConfigs providerConfig) {
+        if (providerConfig.getOpenAIConfig() != null) {
+            return providerConfig.getOpenAIConfig();
+        } else {
+            throw new FreeplayConfigurationException("The OpenAI provider is not configured on the ProviderConfig. " +
+                    "Set up this provider config to call OpenAI endpoints.");
+        }
+    }
 
     private static final String OPENAI_CHAT_URL = "https://api.openai.com/v1/chat/completions";
 

@@ -44,7 +44,7 @@ public class ChatSession {
         this.variables = variables;
         this.tag = environment;
 
-        ChatFlavor activeFlavor = callSupport.getActiveChatFlavor(flavor, targetTemplate);
+        ChatFlavor activeFlavor = callSupport.getActiveFlavor(flavor, targetTemplate);
         Collection<ChatMessage> formattedMessages = activeFlavor.formatPrompt(targetTemplate.getContent(), this.variables);
         ChatCompletionResponse response = continueChat(formattedMessages, llmParameters);
 
@@ -99,7 +99,7 @@ public class ChatSession {
         this.variables = variables;
         this.tag = environment;
 
-        ChatFlavor activeFlavor = callSupport.getActiveChatFlavor(flavor, targetTemplate);
+        ChatFlavor activeFlavor = callSupport.getActiveFlavor(flavor, targetTemplate);
         Collection<ChatMessage> formattedMessages =
                 activeFlavor.formatPrompt(targetTemplate.getContent(), this.variables);
         return continueChatStream(formattedMessages, llmParameters);

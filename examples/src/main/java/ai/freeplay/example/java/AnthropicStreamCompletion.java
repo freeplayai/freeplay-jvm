@@ -2,8 +2,8 @@ package ai.freeplay.example.java;
 
 import ai.freeplay.client.Freeplay;
 import ai.freeplay.client.ProviderConfig.AnthropicProviderConfig;
-import ai.freeplay.client.model.CompletionResponse;
 import ai.freeplay.client.model.CompletionSession;
+import ai.freeplay.client.model.IndexedChatMessage;
 
 import java.util.Map;
 import java.util.stream.Stream;
@@ -22,12 +22,12 @@ public class AnthropicStreamCompletion {
 
         Freeplay fpClient = new Freeplay(freeplayApiKey, baseUrl, new AnthropicProviderConfig(anthropicApiKey));
         CompletionSession session = fpClient.createSession(projectId, "prod");
-        Stream<CompletionResponse> completion = session.getCompletionStream(
+        Stream<IndexedChatMessage> completion = session.getCompletionStream(
                 "my-prompt-anthropic",
                 Map.of("question", "why isn't my sink working?")
         );
 
-        completion.forEach((CompletionResponse chunk) ->
+        completion.forEach((IndexedChatMessage chunk) ->
                 System.out.printf("Completion text: '%s'%n", chunk.getContent())
         );
     }

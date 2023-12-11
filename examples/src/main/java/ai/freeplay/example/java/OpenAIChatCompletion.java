@@ -43,6 +43,11 @@ public class OpenAIChatCompletion {
         );
         System.out.printf("Completion text: %s%n", response.getContent());
 
+        fpClient.recordCompletionFeedback(
+                response.getCompletionId(),
+                Map.of("feedback", "freeplay-positive-feedback")
+        );
+
         ChatCompletionResponse chatResponse = session.getChatCompletion(
                 "my-chat-start",
                 Map.of("question", "why isn't my sink working?"),

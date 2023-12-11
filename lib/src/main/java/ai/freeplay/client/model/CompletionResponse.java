@@ -4,6 +4,7 @@ public class CompletionResponse {
     private final String content;
     private final boolean isComplete;
     private final boolean isLast;
+    private String completionId;
 
     public CompletionResponse(String content, boolean isComplete, boolean isLast) {
         this.content = content;
@@ -21,5 +22,13 @@ public class CompletionResponse {
 
     public boolean isLast() {
         return isLast;
+    }
+
+    public String getCompletionId() {
+        return completionId;
+    }
+
+    public void setCompletionId(String completionId) {
+        this.completionId = completionId;
     }
 }

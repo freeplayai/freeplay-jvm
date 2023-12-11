@@ -3,13 +3,14 @@ package ai.freeplay.example.java;
 import ai.freeplay.client.Freeplay;
 import ai.freeplay.client.ProviderConfig.OpenAIProviderConfig;
 import ai.freeplay.client.ProviderConfigs;
-import ai.freeplay.client.model.ChatMessage;
 import ai.freeplay.client.model.CompletionSession;
+import ai.freeplay.client.model.IndexedChatMessage;
 
 import java.util.Collections;
 import java.util.Map;
 import java.util.stream.Stream;
 
+import static ai.freeplay.client.CompletionFeedback.POSITIVE_FEEDBACK;
 import static java.lang.String.format;
 
 public class OpenAIStreamCompletion {
@@ -31,12 +32,19 @@ public class OpenAIStreamCompletion {
 
         CompletionSession session = fpClient.createSession(projectId, "prod");
 
-        Stream<ChatMessage> completionStream = session.getCompletionStream(
+        Stream<IndexedChatMessage> completionStream = session.getCompletionStream(
                 "my-chat-start",
                 Map.of("question", "why isn't my sink working?"),
                 llmParameters
         );
-        completionStream.forEach((ChatMessage chunk) ->
-                System.out.printf("Message [%s]: %s%n", chunk.getRole(), chunk.getContent()));
+        completionStream.forEach((IndexedChatMessage chunk) -> {
+            System.out.printf("Message [%s]: %s%n", chunk.getRole(), chunk.getContent());
+            if (chunk.isLast()) {
+                fpClient.recordCompletionFeedback(
+                        chunk.getCompletionId(),
+                        Map.of("feedback", POSITIVE_FEEDBACK)
+                );
+            }
+        });
     }
 }

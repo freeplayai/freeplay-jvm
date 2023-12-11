@@ -41,6 +41,20 @@ public class MockFixtures {
         }
     }
 
+    public static void mockRecord(HttpClient mockedClient) throws RuntimeException {
+        try {
+            when(request(mockedClient, "POST", "v1/record"))
+                    .thenReturn(
+                            response(201,
+                                    JSONUtil.asString(
+                                            object(
+                                                    "completion_id", UUID.randomUUID().toString()
+                                            ))));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public static void mockGetPrompts(
             HttpClient mockedClient,
             String model,

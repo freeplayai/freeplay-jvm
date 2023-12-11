@@ -66,11 +66,14 @@ public class Http {
     ) throws FreeplayException {
         List<String> allHeadersArray = new ArrayList<>(headers.length + 3);
         Collections.addAll(allHeadersArray, headers);
-        allHeadersArray.add("Authorization");
-        allHeadersArray.add(format("Bearer %s", apiKey));
+        Collections.addAll(allHeadersArray, authHeaders(apiKey));
         String[] allHeaders = allHeadersArray.toArray(new String[]{});
 
         return postJson(url, body, responseBodyHandler, httpConfig, allHeaders);
+    }
+
+    public static String[] authHeaders(String apiKey) {
+        return new String[]{"Authorization", format("Bearer %s", apiKey)};
     }
 
     public static HttpResponse<String> postJson(
@@ -100,6 +103,17 @@ public class Http {
             HttpConfig httpConfig,
             String... headers
     ) throws FreeplayException {
+        return jsonRequest(url, body, responseBodyHandler, httpConfig,"POST", headers);
+    }
+
+    public static <R> HttpResponse<R> jsonRequest(
+            String url,
+            String body,
+            BodyHandler<R> responseBodyHandler,
+            HttpConfig httpConfig,
+            String method,
+            String... headers
+    ) throws FreeplayException {
         HttpRequest.BodyPublisher bodyPublisher = body != null ?
                 HttpRequest.BodyPublishers.ofString(body) :
                 HttpRequest.BodyPublishers.noBody();
@@ -109,7 +123,7 @@ public class Http {
                     .newBuilder(new URI(url))
                     .header("Content-Type", "application/json")
                     .headers(headers)
-                    .POST(bodyPublisher);
+                    .method(method, bodyPublisher);
             if (httpConfig.getRequestTimeout() != null) {
                 requestBuilder.timeout(httpConfig.getRequestTimeout());
             }

@@ -4,6 +4,7 @@ public class IndexedChatMessage extends ChatMessage {
     private final boolean isLast;
     private final int index;
     private final boolean isComplete;
+    private String completionId;
 
     public IndexedChatMessage(String role, String content, int index, boolean isComplete) {
         this(role, content, index, isComplete, false);
@@ -27,5 +28,13 @@ public class IndexedChatMessage extends ChatMessage {
 
     public boolean isLast() {
         return isLast;
+    }
+
+    public String getCompletionId() {
+        return completionId;
+    }
+
+    public void setCompletionId(String completionId) {
+        this.completionId = completionId;
     }
 }
