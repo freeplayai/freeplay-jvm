@@ -30,7 +30,8 @@ Publishing the SDK
 
 #### Set up gradle.properties
 1. Create a `gradle.properties` file in your `~/.gradle/gradle.properties` directory
-2. Add the following properties to the file:
+2. `chmod 600 ~/.gradle/gradle.properties`
+3. Add the following properties to the file:
 ```
 signing.keyId=YOUR_KEY_ID
 signing.password=YOUR_KEY_PASSWORD
@@ -40,8 +41,8 @@ ossrhUsername=YOUR_SONATYPE_USERNAME
 ossrhPassword=YOUR_SONATYPE_PASSWORD
 ```
 
-### Publish to MavenLocal
-This will publish the SDK to your local maven repository. This is useful for testing the SDK locally before publishing to MavenCentral.
+### (Optional) Publish to MavenLocal
+This step is not required. This will publish the SDK to your local maven repository. This is useful for testing the SDK locally before publishing to MavenCentral.
 1. Increment the version in `build.gradle.kts`
 2. `./gradlew publishAllToMavenLocal`
 
