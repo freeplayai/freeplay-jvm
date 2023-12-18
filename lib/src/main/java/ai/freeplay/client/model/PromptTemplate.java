@@ -2,6 +2,7 @@ package ai.freeplay.client.model;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.Objects;
 
 public class PromptTemplate {
     private final String name;
@@ -56,5 +57,23 @@ public class PromptTemplate {
 
     public Map<String, Object> getLLMParameters() {
         return llmParameters;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        PromptTemplate template = (PromptTemplate) o;
+        return Objects.equals(name, template.name) &&
+                Objects.equals(content, template.content) &&
+                Objects.equals(flavorName, template.flavorName) &&
+                Objects.equals(promptTemplateId, template.promptTemplateId) &&
+                Objects.equals(promptTemplateVersionId, template.promptTemplateVersionId) &&
+                Objects.equals(llmParameters, template.llmParameters);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, content, flavorName, promptTemplateId, promptTemplateVersionId, llmParameters);
     }
 }

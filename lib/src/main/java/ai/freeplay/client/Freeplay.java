@@ -1,10 +1,13 @@
 package ai.freeplay.client;
 
+import ai.freeplay.client.exceptions.FreeplayConfigurationException;
 import ai.freeplay.client.exceptions.FreeplayException;
 import ai.freeplay.client.flavor.ChatFlavor;
 import ai.freeplay.client.internal.CallSupport;
 import ai.freeplay.client.model.*;
+import ai.freeplay.client.processor.APITemplateResolver;
 import ai.freeplay.client.processor.ChatPromptProcessor;
+import ai.freeplay.client.processor.TemplateResolver;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -85,7 +88,23 @@ public class Freeplay {
                 flavor,
                 llmParameters,
                 httpConfig,
-                recordProcessor);
+                recordProcessor,
+                new APITemplateResolver(baseUrl, freeplayAPIKey, httpConfig)
+        );
+    }
+
+    public Freeplay(FreeplayConfig freeplayConfig) {
+        freeplayConfig.validate();
+        callSupport = new CallSupport(
+                freeplayConfig.freeplayAPIKey,
+                freeplayConfig.baseUrl,
+                freeplayConfig.providerConfigs,
+                null,
+                freeplayConfig.llmParameters,
+                freeplayConfig.httpConfig,
+                freeplayConfig.recordProcessor,
+                freeplayConfig.templateResolver
+        );
     }
 
     // ====================================================
@@ -355,5 +374,69 @@ public class Freeplay {
 
     public void recordCompletionFeedback(String completionId, Map<String, Object> feedback) {
         callSupport.recordCompletionFeedback(completionId, feedback);
+    }
+
+    public static FreeplayConfig Config() {
+        return new FreeplayConfig();
+    }
+
+    public static class FreeplayConfig {
+        private String freeplayAPIKey = null;
+        private String baseUrl = null;
+        private ProviderConfigs providerConfigs = null;
+        private Map<String, Object> llmParameters = Collections.emptyMap();
+        private HttpConfig httpConfig = new HttpConfig();
+        private RecordProcessor recordProcessor = null;
+        private TemplateResolver templateResolver = null;
+
+        public FreeplayConfig freeplayAPIKey(String freeplayAPIKey) {
+            this.freeplayAPIKey = freeplayAPIKey;
+            return this;
+        }
+
+        public FreeplayConfig customerDomain(String domain) {
+            return baseUrl(String.format("https://%s.freeplay.ai/api", domain));
+        }
+
+        public FreeplayConfig baseUrl(String baseUrl) {
+            this.baseUrl = baseUrl;
+            return this;
+        }
+
+        public FreeplayConfig providerConfigs(ProviderConfigs providerConfigs) {
+            this.providerConfigs = providerConfigs;
+            return this;
+        }
+
+        public FreeplayConfig llmParameters(Map<String, Object> llmParameters) {
+            this.llmParameters = llmParameters;
+            return this;
+        }
+
+        public FreeplayConfig httpConfig(HttpConfig httpConfig) {
+            this.httpConfig = httpConfig;
+            return this;
+        }
+
+        public FreeplayConfig recordProcessor(RecordProcessor recordProcessor) {
+            this.recordProcessor = recordProcessor;
+            return this;
+        }
+
+        public FreeplayConfig templateResolver(TemplateResolver templateResolver) {
+            this.templateResolver = templateResolver;
+            return this;
+        }
+
+        public void validate() {
+            if (templateResolver == null) {
+                if (freeplayAPIKey == null || baseUrl == null) {
+                    throw new FreeplayConfigurationException("Either a TemplateResolver must be configured, " +
+                            "or the Freeplay API key and base URL must be configured.");
+                } else {
+                    templateResolver = new APITemplateResolver(baseUrl, freeplayAPIKey, httpConfig);
+                }
+            }
+        }
     }
 }

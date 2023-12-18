@@ -1,0 +1,9 @@
+{
+    "content": "Answer this question: {{question}}",
+    "metadata": {
+        "params": {}
+    },
+    "name": "test-prompt-not-chat",
+    "prompt_template_id": "7f6507a8-fd6a-4925-a985-c77d37dcef96",
+    "prompt_template_version_id": "786293b6-4209-4d2c-9a50-4aadb932be22"
+}
