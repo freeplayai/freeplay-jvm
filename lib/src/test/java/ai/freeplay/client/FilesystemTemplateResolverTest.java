@@ -141,12 +141,13 @@ public class FilesystemTemplateResolverTest extends HttpClientTestBase {
     @Test
     public void testHandlesInvalidDirectory() {
         try {
-            new FilesystemTemplateResolver(FileSystems.getDefault().getPath("src", "test", "resources"));
+            // Note /prompts is a valid template directory -- we are one level up to test the failure state.
+            new FilesystemTemplateResolver(FileSystems.getDefault().getPath("src", "test", "testfiles"));
             fail("Should have gotten an exception");
         } catch (Exception e) {
             assertEquals(e.getClass(), FreeplayConfigurationException.class);
             assertTrue(e.getMessage().contains("Path for templates does not appear to be a Freeplay prompts directory"));
-            assertTrue(e.getMessage().contains("src/test/resources"));
+            assertTrue(e.getMessage().contains("src/test/testfiles"));
         }
     }
 
