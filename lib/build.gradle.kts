@@ -92,6 +92,7 @@ signing {
 
 tasks.register("publishAll") {
     dependsOn("clean")
+    dependsOn("test")
     dependsOn("jar")
     dependsOn("javadocJar")
     dependsOn("sourcesJar")
