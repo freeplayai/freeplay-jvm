@@ -26,7 +26,9 @@ Publishing the SDK
 1. `brew install gnupg`
 2. `gpg --gen-key`
 3. `gpg --export-secret-keys > ~/.gradle/secretring.gpg`
-4. `gpg --keyserver keys.openpgp.org --send-keys YOUR_KEY_ID`
+4. `chmod 600 ~/.gradle/secretring.gpg`
+5. `gpg --keyserver keys.openpgp.org --send-keys YOUR_KEY_ID`
+   * YOUR_KEY_ID should be the last 8 digits of your gpg public key from above.
 
 #### Set up gradle.properties
 1. Create a `gradle.properties` file in your `~/.gradle/gradle.properties` directory
