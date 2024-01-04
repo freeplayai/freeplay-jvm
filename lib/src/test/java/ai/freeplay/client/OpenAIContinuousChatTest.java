@@ -35,6 +35,7 @@ public class OpenAIContinuousChatTest extends HttpClientTestBase {
             mockCreateSession(mockedClient);
             mockGetPrompts(mockedClient, MODEL_GPT_35_TURBO, templateName, getChatPromptContent());
             mock2OpenAICalls(mockedClient, completion1, completion2);
+            mockRecord(mockedClient);
 
             Freeplay fpClient = new Freeplay(
                     freeplayApiKey,
