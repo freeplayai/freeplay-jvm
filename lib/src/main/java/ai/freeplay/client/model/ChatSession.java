@@ -21,18 +21,21 @@ public class ChatSession {
     private Map<String, Object> variables;
     private String tag;
     private final String testRunId = null;
+    private final Map<String, Object> customMetadata;
 
     public ChatSession(
             CallSupport callSupport,
             String sessionId,
             Collection<PromptTemplate> prompts,
             String templateName,
-            String tag
+            String tag,
+            Map<String, Object> customMetadata
     ) throws FreeplayException {
         this.callSupport = callSupport;
         this.sessionId = sessionId;
         this.targetTemplate = callSupport.findPrompt(prompts, templateName).orElseThrow(
                 () -> new FreeplayConfigurationException("Cannot find template " + templateName + " in environment " + tag + "."));
+        this.customMetadata = customMetadata;
     }
 
     public ChatStart<IndexedChatMessage> startChat(
@@ -81,6 +84,7 @@ public class ChatSession {
                 cleanMessages,
                 variables,
                 llmParameters,
+                this.customMetadata,
                 tag,
                 testRunId,
                 null);
@@ -124,6 +128,7 @@ public class ChatSession {
                 cleanMessages,
                 variables,
                 llmParameters,
+                this.customMetadata,
                 tag,
                 testRunId);
 

@@ -31,16 +31,6 @@ public class MockFixtures {
     public static final String promptTemplateVersionId = UUID.randomUUID().toString();
 
     // Freeplay
-    public static void mockCreateSession(HttpClient mockedClient) throws RuntimeException {
-        try {
-            when(request(mockedClient, "POST", "projects/[^/]*/sessions"))
-                    .thenReturn(
-                            response(201, getSessionRequestPayload(UUID.randomUUID().toString())));
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     public static void mockRecord(HttpClient mockedClient) throws RuntimeException {
         try {
             when(request(mockedClient, "POST", "v1/record"))

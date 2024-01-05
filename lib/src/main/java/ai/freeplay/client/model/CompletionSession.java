@@ -17,6 +17,7 @@ public class CompletionSession {
     private final Collection<PromptTemplate> promptTemplates;
     private final String tag;
     private final String testRunId;
+    private final Map<String, Object> customMetadata;
 
     public CompletionSession(
             CallSupport callSupport,
@@ -24,7 +25,7 @@ public class CompletionSession {
             Collection<PromptTemplate> prompts,
             String environment
     ) {
-        this(callSupport, sessionId, prompts, environment, null);
+        this(callSupport, sessionId, prompts, environment, null, Collections.emptyMap());
     }
 
     public CompletionSession(
@@ -34,11 +35,22 @@ public class CompletionSession {
             String environment,
             String testRunId
     ) {
+        this(callSupport, sessionId, prompts, environment, testRunId, Collections.emptyMap());
+    }
+
+    public CompletionSession(
+            CallSupport callSupport,
+            String sessionId,
+            Collection<PromptTemplate> prompts,
+            String environment,
+            String testRunId,
+            Map<String, Object> customMetadata) {
         this.callSupport = callSupport;
         this.sessionId = sessionId;
         this.promptTemplates = prompts;
         this.tag = environment;
         this.testRunId = testRunId;
+        this.customMetadata = customMetadata;
     }
 
     public String getSessionId() {
@@ -91,6 +103,7 @@ public class CompletionSession {
                 templateName,
                 variables,
                 llmParameters,
+                this.customMetadata,
                 tag,
                 testRunId,
                 flavor,
@@ -165,6 +178,7 @@ public class CompletionSession {
                 template,
                 variables,
                 llmParameters,
+                this.customMetadata,
                 tag,
                 testRunId,
                 flavor,
@@ -212,6 +226,7 @@ public class CompletionSession {
                 templateName,
                 variables,
                 llmParameters,
+                this.customMetadata,
                 tag,
                 testRunId,
                 flavor,

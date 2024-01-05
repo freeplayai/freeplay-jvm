@@ -46,11 +46,10 @@ public class OpenAITestRunTest extends HttpClientTestBase {
     }
 
     @Test
-    public void recordsTestRunId() {
+    public void recordsTestRunIdAndMetadata() {
         String templateName = "my-prompt";
         String chatCompletion1 = "\\n\\nSorry, I will try to help";
         withMockedClient((HttpClient mockedClient) -> {
-            mockCreateSession(mockedClient);
             mockCreateTestRun(mockedClient);
             mockGetPrompts(mockedClient, MODEL_GPT_35_TURBO, templateName, getChatPromptContent());
             mockOpenAIChatCalls(mockedClient, chatCompletion1);
@@ -67,15 +66,16 @@ public class OpenAITestRunTest extends HttpClientTestBase {
                     environment,
                     testListName
             );
-            CompletionSession session = testRun.createSession();
+            CompletionSession session = testRun.createSession(Map.of("customer_id", 123));
             CompletionResponse completion = session.getCompletion(templateName, testRun.getInputs().get(0));
 
             assertEquals(unescapeExpected(chatCompletion1), completion.getContent());
 
             // Record call
-            Map<String, Object> recordBodyMap = getCapturedBodyAsMap(mockedClient, 5, 4);
+            Map<String, Object> recordBodyMap = getCapturedBodyAsMap(mockedClient, 4, 3);
             assertEquals(promptTemplateVersionId, recordBodyMap.get("project_version_id"));
             assertEquals(testRun.getTestRunId(), recordBodyMap.get("test_run_id"));
+            assertEquals(Map.of("customer_id", 123), recordBodyMap.get("custom_metadata"));
         });
     }
 
@@ -84,7 +84,6 @@ public class OpenAITestRunTest extends HttpClientTestBase {
         String templateName = "my-prompt";
         String chatCompletion1 = "\\n\\nSorry, I will try to help";
         withMockedClient((HttpClient mockedClient) -> {
-            mockCreateSession(mockedClient);
             mockCreateTestRun(mockedClient);
             mockGetPrompts(mockedClient, MODEL_GPT_35_TURBO, templateName, getChatPromptContent());
             mockOpenAIChatCalls(mockedClient, chatCompletion1);
@@ -108,7 +107,7 @@ public class OpenAITestRunTest extends HttpClientTestBase {
             assertEquals(unescapeExpected(chatCompletion1), completion.getContent());
 
             // Record call
-            assertTrue(routeNotCalled(mockedClient, 4, "record"));
+            assertTrue(routeNotCalled(mockedClient, 3, "record"));
         });
     }
 }

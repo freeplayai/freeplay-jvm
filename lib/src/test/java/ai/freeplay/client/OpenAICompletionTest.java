@@ -37,7 +37,6 @@ public class OpenAICompletionTest extends HttpClientTestBase {
     @Test
     public void chatReturnsFromCompletionCall() {
         withMockedClient((HttpClient mockedClient) -> {
-            mockCreateSession(mockedClient);
             mockGetPrompts(mockedClient, MODEL_GPT_35_TURBO, templateName, getChatPromptContent());
             mockOpenAIChatCalls(mockedClient, chatCompletion1);
 
@@ -54,7 +53,7 @@ public class OpenAICompletionTest extends HttpClientTestBase {
             assertEquals(chatCompletion1Expected, completionResponse.getContent());
 
             // Record call
-            Map<String, Object> recordBodyMap = getCapturedBodyAsMap(mockedClient, 4, 3);
+            Map<String, Object> recordBodyMap = getCapturedBodyAsMap(mockedClient, 3, 2);
             assertEquals(formattedChatPromptExpected, recordBodyMap.get("prompt_content"));
             assertEquals(chatCompletion1Expected, recordBodyMap.get("return_content"));
         });
@@ -63,7 +62,6 @@ public class OpenAICompletionTest extends HttpClientTestBase {
     @Test
     public void chatReturnsFromChatCompletionCall() {
         withMockedClient((HttpClient mockedClient) -> {
-            mockCreateSession(mockedClient);
             mockGetPrompts(mockedClient, MODEL_GPT_35_TURBO, templateName, getChatPromptContent());
             mockOpenAIChatCalls(mockedClient, chatCompletion1);
 
@@ -82,7 +80,7 @@ public class OpenAICompletionTest extends HttpClientTestBase {
             assertEquals("assistant", completionResponse.getFirstChoice().get().getRole());
 
             // Record call
-            Map<String, Object> recordBodyMap = getCapturedBodyAsMap(mockedClient, 4, 3);
+            Map<String, Object> recordBodyMap = getCapturedBodyAsMap(mockedClient, 3, 2);
             assertEquals(formattedChatPromptExpected, recordBodyMap.get("prompt_content"));
             assertEquals(chatCompletion1Expected, recordBodyMap.get("return_content"));
         });
@@ -126,7 +124,6 @@ public class OpenAICompletionTest extends HttpClientTestBase {
                         Map.of("model", MODEL_GPT_35_TURBO))};
 
         withMockedClient((HttpClient mockedClient) -> {
-            mockCreateSession(mockedClient);
             mockGet2Prompts(mockedClient, promptFixtures);
             mockOpenAIChatCalls(mockedClient, completion1, completion2);
 
@@ -140,7 +137,7 @@ public class OpenAICompletionTest extends HttpClientTestBase {
             // First call
             assertTrue(response1.getFirstChoice().isPresent());
             assertEquals(unescapeExpected(completion1), response1.getContent());
-            Map<String, Object> recordBodyMap = getCapturedBodyAsMap(mockedClient, 4, 3);
+            Map<String, Object> recordBodyMap = getCapturedBodyAsMap(mockedClient, 3, 2);
             assertEquals(session.getSessionId(), recordBodyMap.get("session_id"));
             assertEquals(formattedPromptExpected, recordBodyMap.get("prompt_content"));
             assertEquals(unescapeExpected(completion1), recordBodyMap.get("return_content"));
@@ -151,7 +148,7 @@ public class OpenAICompletionTest extends HttpClientTestBase {
                     Map.of("movie", "War Games"));
 
             assertEquals(unescapeExpected(completion2), response2.getContent());
-            Map<String, Object> record2BodyMap = getCapturedBodyAsMap(mockedClient, 6, 5);
+            Map<String, Object> record2BodyMap = getCapturedBodyAsMap(mockedClient, 5, 4);
             assertEquals(session.getSessionId(), record2BodyMap.get("session_id"));
             assertEquals(formattedPrompt2Expected, record2BodyMap.get("prompt_content"));
             assertEquals(unescapeExpected(completion2), record2BodyMap.get("return_content"));
@@ -161,7 +158,6 @@ public class OpenAICompletionTest extends HttpClientTestBase {
     @Test
     public void requiresModelParam() {
         withMockedClient((HttpClient mockedClient) -> {
-            mockCreateSession(mockedClient);
             mockGetPrompts(mockedClient, templateName, getChatPromptContent(), Collections.emptyMap(), "openai_chat");
 
             try {
@@ -184,7 +180,6 @@ public class OpenAICompletionTest extends HttpClientTestBase {
     @Test
     public void disallowsPromptParam() {
         withMockedClient((HttpClient mockedClient) -> {
-            mockCreateSession(mockedClient);
             mockGetPrompts(mockedClient, templateName, getChatPromptContent(), Collections.emptyMap(), "openai_chat");
 
             try {
@@ -212,7 +207,6 @@ public class OpenAICompletionTest extends HttpClientTestBase {
     @Test
     public void chatCompletionHandlesProcessor() {
         withMockedClient((HttpClient mockedClient) -> {
-            mockCreateSession(mockedClient);
             mockGetPrompts(mockedClient, MODEL_GPT_35_TURBO, templateName, getChatPromptContent());
             mockOpenAIChatCalls(mockedClient, chatCompletion1);
 
@@ -235,7 +229,7 @@ public class OpenAICompletionTest extends HttpClientTestBase {
             );
 
             // Modified OpenAI call
-            Map<String, Object> openAiRequestBody = getCapturedBodyAsMap(mockedClient, 4, 2);
+            Map<String, Object> openAiRequestBody = getCapturedBodyAsMap(mockedClient, 3, 1);
             assertEquals(4, asList(openAiRequestBody.get("messages")).size());
             Map<String, Object> inserted = (Map<String, Object>) asList(openAiRequestBody.get("messages")).get(1);
             assertEquals("user", inserted.get("role"));
@@ -243,7 +237,7 @@ public class OpenAICompletionTest extends HttpClientTestBase {
             assertEquals("gpt-3.5-turbo", llmCallInfo.get().getLLMParameters().get("model"));
 
             // Record call
-            Map<String, Object> recordBodyMap = getCapturedBodyAsMap(mockedClient, 4, 3);
+            Map<String, Object> recordBodyMap = getCapturedBodyAsMap(mockedClient, 3, 2);
             assertEquals(chatPromptWithInsertedMessage, recordBodyMap.get("prompt_content"));
         });
     }
@@ -252,7 +246,6 @@ public class OpenAICompletionTest extends HttpClientTestBase {
     @Test
     public void chatCompletionAsChatHandlesProcessor() {
         withMockedClient((HttpClient mockedClient) -> {
-            mockCreateSession(mockedClient);
             mockGetPrompts(mockedClient, MODEL_GPT_35_TURBO, templateName, getChatPromptContent());
             mockOpenAIChatCalls(mockedClient, chatCompletion1);
             mockRecord(mockedClient);
@@ -267,43 +260,21 @@ public class OpenAICompletionTest extends HttpClientTestBase {
             );
 
             // Modified OpenAI call
-            Map<String, Object> openAiRequestBody = getCapturedBodyAsMap(mockedClient, 4, 2);
+            Map<String, Object> openAiRequestBody = getCapturedBodyAsMap(mockedClient, 3, 1);
             assertEquals(4, asList(openAiRequestBody.get("messages")).size());
             Map<String, Object> inserted = (Map<String, Object>) asList(openAiRequestBody.get("messages")).get(1);
             assertEquals("user", inserted.get("role"));
             assertEquals("Inserted Message", inserted.get("content"));
 
             // Record call
-            Map<String, Object> recordBodyMap = getCapturedBodyAsMap(mockedClient, 4, 3);
+            Map<String, Object> recordBodyMap = getCapturedBodyAsMap(mockedClient, 3, 2);
             assertEquals(chatPromptWithInsertedMessage, recordBodyMap.get("prompt_content"));
-        });
-    }
-
-    @Test
-    public void handlesUnauthorizedOnCreateSession() {
-        withMockedClient((HttpClient mockedClient) -> {
-            mockUnauthorizedCreateSession(mockedClient);
-
-            try {
-                Freeplay fpClient = new Freeplay(freeplayApiKey, baseUrl, providerConfigs);
-                fpClient.getCompletion(
-                        projectId,
-                        "my-prompt",
-                        Collections.emptyMap(),
-                        Collections.emptyMap(),
-                        "latest"
-                );
-                fail("Should have gotten an exception for a 401");
-            } catch (FreeplayClientException fpe) {
-                assertEquals("Error making call [401]", fpe.getMessage());
-            }
         });
     }
 
     @Test
     public void handlesUnauthorizedOnGetPrompts() {
         withMockedClient((HttpClient mockedClient) -> {
-            mockCreateSession(mockedClient);
             mockUnauthorizedGetPrompts(mockedClient);
 
             try {
@@ -325,7 +296,6 @@ public class OpenAICompletionTest extends HttpClientTestBase {
     @Test
     public void handlesUnauthorizedCallingOpenAI() {
         withMockedClient((HttpClient mockedClient) -> {
-            mockCreateSession(mockedClient);
             mockGetPrompts(mockedClient, templateName, getChatPromptContent(), Collections.emptyMap(), "openai_chat");
             mockUnauthorizedOpenAIChatCall(mockedClient);
 
@@ -349,7 +319,6 @@ public class OpenAICompletionTest extends HttpClientTestBase {
     @SuppressWarnings("unchecked")
     public void handlesLLMParameterMergePrecedence() {
         withMockedClient((HttpClient mockedClient) -> {
-                    mockCreateSession(mockedClient);
                     mockGetPrompts(
                             mockedClient,
                             templateName,
@@ -377,12 +346,12 @@ public class OpenAICompletionTest extends HttpClientTestBase {
                             "latest"
                     );
 
-                    Map<String, Object> openaiBody = getCapturedBodyAsMap(mockedClient, 4, 2);
+                    Map<String, Object> openaiBody = getCapturedBodyAsMap(mockedClient, 3, 1);
                     assertEquals("gpt-3.5-turbo", openaiBody.get("model"));
                     assertEquals("33", openaiBody.get("max_tokens"));
                     assertEquals("0.44", openaiBody.get("temperature"));
 
-                    Map<String, Object> recordBody = getCapturedBodyAsMap(mockedClient, 4, 3);
+                    Map<String, Object> recordBody = getCapturedBodyAsMap(mockedClient, 3, 2);
                     Map<String, Object> recordedParameters = (Map<String, Object>) recordBody.get("llm_parameters");
                     assertEquals("gpt-3.5-turbo", recordedParameters.get("model"));
                     assertEquals("33", recordedParameters.get("max_tokens"));
@@ -394,7 +363,6 @@ public class OpenAICompletionTest extends HttpClientTestBase {
     @Test
     public void unconfiguredProviderErrors() {
         withMockedClient((HttpClient mockedClient) -> {
-            mockCreateSession(mockedClient);
             mockGetPrompts(mockedClient, templateName, getChatPromptContent(), Collections.emptyMap(), "openai_chat");
 
             Freeplay fpClient = new Freeplay(MockFixtures.freeplayApiKey, baseUrl, new ProviderConfigs(new AnthropicProviderConfig("")));
@@ -417,7 +385,6 @@ public class OpenAICompletionTest extends HttpClientTestBase {
     @Test
     public void chatDoesNotRecordWhenAskedNotTo() {
         withMockedClient((HttpClient mockedClient) -> {
-            mockCreateSession(mockedClient);
             mockGetPrompts(mockedClient, MODEL_GPT_35_TURBO, templateName, getChatPromptContent());
             mockOpenAIChatCalls(mockedClient, chatCompletion1);
 
@@ -437,15 +404,14 @@ public class OpenAICompletionTest extends HttpClientTestBase {
             // Completion
             assertEquals(chatCompletion1Expected, completionResponse.getContent());
 
-            // Make sure the Record call didn't happen (it would be the 4th)
-            assertTrue(routeNotCalled(mockedClient, 3, "record"));
+            // Make sure the Record call didn't happen (it would be the 3rd)
+            assertTrue(routeNotCalled(mockedClient, 2, "record"));
         });
     }
 
     @Test
     public void chatCompletionFeedback() {
         withMockedClient((HttpClient mockedClient) -> {
-            mockCreateSession(mockedClient);
             mockGetPrompts(mockedClient, MODEL_GPT_35_TURBO, templateName, getChatPromptContent());
             mockOpenAIChatCalls(mockedClient, chatCompletion1);
             mockRecord(mockedClient);
@@ -463,7 +429,7 @@ public class OpenAICompletionTest extends HttpClientTestBase {
             fpClient.recordCompletionFeedback(completionId, Map.of("feedback", NEGATIVE_FEEDBACK));
 
             // Make sure we record feedback
-            Map<String, Object> feedbackMap = getCapturedBodyAsMap(mockedClient, 5, 4);
+            Map<String, Object> feedbackMap = getCapturedBodyAsMap(mockedClient, 4, 3);
             assertEquals(NEGATIVE_FEEDBACK, feedbackMap.get("feedback"));
         });
     }

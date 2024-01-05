@@ -48,8 +48,9 @@ public class TestRun {
         return createSession(Collections.emptyMap());
     }
     public CompletionSession createSession(Map<String, Object> metadata) {
-        String sessionId = callSupport.createSession(projectId, environment, metadata);
+        String sessionId = CallSupport.createSessionId();
+        CallSupport.validateBasicMap(metadata);
         Collection<PromptTemplate> prompts = callSupport.getPrompts(projectId, environment);
-        return new CompletionSession(callSupport, sessionId, prompts, environment, testRunId);
+        return new CompletionSession(callSupport, sessionId, prompts, environment, testRunId, metadata);
     }
 }

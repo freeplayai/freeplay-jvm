@@ -34,7 +34,10 @@ public class OpenAIChatCompletion {
         );
         Map<String, Object> llmParameters = Collections.emptyMap();
 
-        CompletionSession session = fpClient.createSession(projectId, "prod");
+        CompletionSession session = fpClient.createSession(
+                projectId,
+                "prod",
+                Map.of("customer_id", 123, "is_good", "true"));
 
         CompletionResponse response = session.getCompletion(
                 "my-chat-start",
@@ -50,7 +53,7 @@ public class OpenAIChatCompletion {
 
         ChatCompletionResponse chatResponse = session.getChatCompletion(
                 "my-chat-start",
-                Map.of("question", "why isn't my sink working?"),
+                Map.of("question", "why else isn't my sink working?"),
                 llmParameters
         );
 

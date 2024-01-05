@@ -27,6 +27,7 @@ import static ai.freeplay.client.internal.Http.throwFreeplayIfError;
 import static java.lang.String.format;
 import static java.lang.String.valueOf;
 import static java.lang.System.currentTimeMillis;
+import static java.util.UUID.randomUUID;
 
 public class CallSupport {
     // Using the Freeplay class to make it nicer, since these will be in customer application logs
@@ -63,29 +64,11 @@ public class CallSupport {
         this.templateResolver = templateResolver;
     }
 
-    public String createSession(String projectId, String tag, Map<String, Object> metadata) throws FreeplayException {
-        String finalTag = getFinalTag(tag);
-        String url = getUrl("projects/%s/sessions/tag/%s", projectId, finalTag);
-
-        validateBasicMap(metadata);
-
-        HttpResponse<String> response;
-        try {
-            response = Http.postJsonWithBearer(url, Map.of("metadata", metadata), freeplayApiKey, httpConfig);
-        } catch (FreeplayException e) {
-            throw new FreeplayServerException("Error creating session.", e);
-        }
-        throwFreeplayIfError(response, 201);
-
-        try {
-            Map<String, Object> sessionMap = Http.parseBody(response);
-            return valueOf(sessionMap.get("session_id"));
-        } catch (FreeplayException e) {
-            throw new FreeplayServerException("Error creating session.", e);
-        }
+    public static String createSessionId() throws FreeplayException {
+        return randomUUID().toString();
     }
 
-    private static void validateBasicMap(Map<String, Object> metadata) {
+    public static void validateBasicMap(Map<String, Object> metadata) {
         for (Map.Entry<String, Object> entry : metadata.entrySet()) {
             if (!(entry.getValue() instanceof String || entry.getValue() instanceof Number || entry.getValue() instanceof Boolean)) {
                 throw new FreeplayClientException("Invalid value for key '" + entry.getKey() +
@@ -139,6 +122,7 @@ public class CallSupport {
             String templateName,
             Map<String, Object> variables,
             Map<String, Object> llmParameters,
+            Map<String, Object> customMetadata,
             String tag,
             String testRunId,
             ChatFlavor flavor,
@@ -184,6 +168,7 @@ public class CallSupport {
                         end,
                         tag,
                         variables,
+                        customMetadata,
                         activeFlavor.serializeForRecord(modifiedPrompt),
                         response.getContent(),
                         response.isComplete()
@@ -199,6 +184,7 @@ public class CallSupport {
             PromptTemplate template,
             Map<String, Object> variables,
             Map<String, Object> llmParameters,
+            Map<String, Object> customMetadata,
             String tag,
             String testRunId,
             ChatFlavor callFlavor,
@@ -228,6 +214,7 @@ public class CallSupport {
                 tag,
                 testRunId,
                 mergedLLMParameters,
+                customMetadata,
                 activeFlavor,
                 modifiedPrompt,
                 start,
@@ -240,6 +227,7 @@ public class CallSupport {
             String templateName,
             Map<String, Object> variables,
             Map<String, Object> llmParameters,
+            Map<String, Object> customMetadata,
             String tag,
             String testRunId,
             ChatFlavor flavor,
@@ -255,6 +243,7 @@ public class CallSupport {
                     formattedPrompt,
                     variables,
                     llmParameters,
+                    customMetadata,
                     tag,
                     testRunId,
                     promptProcessor
@@ -270,6 +259,7 @@ public class CallSupport {
             Collection<ChatMessage> formattedMessages,
             Map<String, Object> variables,
             Map<String, Object> llmParameters,
+            Map<String, Object> customMetadata,
             String tag,
             String testRunId,
             ChatPromptProcessor promptProcessor
@@ -304,6 +294,7 @@ public class CallSupport {
                         end,
                         tag,
                         variables,
+                        customMetadata,
                         activeFlavor.serializeForRecord(finalMessages),
                         response.getContent(),
                         response.isComplete()
@@ -319,6 +310,7 @@ public class CallSupport {
             Collection<ChatMessage> formattedMessages,
             Map<String, Object> variables,
             Map<String, Object> llmParameters,
+            Map<String, Object> customMetadata,
             String tag,
             String testRunId
     ) throws FreeplayException {
@@ -336,6 +328,7 @@ public class CallSupport {
                 tag,
                 testRunId,
                 mergedLLMParameters,
+                customMetadata,
                 activeFlavor,
                 formattedMessages,
                 start,
@@ -349,6 +342,7 @@ public class CallSupport {
             String tag,
             String testRunId,
             Map<String, Object> mergedLLMParameters,
+            Map<String, Object> customMetadata,
             ChatFlavor activeFlavor,
             Collection<ChatMessage> formattedPrompt,
             Instant start,
@@ -376,6 +370,7 @@ public class CallSupport {
                                         end,
                                         tag,
                                         variables,
+                                        customMetadata,
                                         activeFlavor.serializeForRecord(formattedPrompt),
                                         aggregatedContent.get(),
                                         activeFlavor.isComplete(chunk)
@@ -433,6 +428,7 @@ public class CallSupport {
             payload.put("end_time", callInfo.getEndTime());
             payload.put("tag", callInfo.getTag());
             payload.put("inputs", callInfo.getInputs());
+            payload.put("custom_metadata", callInfo.getCustomMetadata());
             payload.put("prompt_content", callInfo.getPromptContent());
             payload.put("return_content", callInfo.getReturnContent());
             payload.put("format_type", promptInfo.getFormatType());

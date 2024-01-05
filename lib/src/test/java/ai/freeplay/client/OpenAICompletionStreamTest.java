@@ -32,7 +32,6 @@ public class OpenAICompletionStreamTest extends HttpClientTestBase {
     @Test
     public void chatReturnsFromCompletionCall() {
         withMockedClient((HttpClient mockedClient) -> {
-            mockCreateSession(mockedClient);
             mockGetPrompts(mockedClient, MODEL_GPT_35_TURBO, templateName, getChatPromptContent());
             mockOpenAIChatCallStream(mockedClient);
 
@@ -58,9 +57,38 @@ public class OpenAICompletionStreamTest extends HttpClientTestBase {
             assertEquals("", chunks.get(3).getContent());
 
             // Record call
-            Map<String, Object> recordBodyMap = getCapturedBodyAsMap(mockedClient, 4, 3);
+            Map<String, Object> recordBodyMap = getCapturedBodyAsMap(mockedClient, 3, 2);
             assertEquals(formattedChatPromptExpected, recordBodyMap.get("prompt_content"));
             assertEquals(chatCompletion1Expected, recordBodyMap.get("return_content"));
+        });
+    }
+
+    @Test
+    public void completionStreamCustomMetadata() {
+        Map<String, Object> customMetadata = Map.of("customer_id", "123", "batch_size", 456);
+        withMockedClient((HttpClient mockedClient) -> {
+            mockGetPrompts(mockedClient, MODEL_GPT_35_TURBO, templateName, getChatPromptContent());
+            mockOpenAIChatCallStream(mockedClient);
+
+            Freeplay fpClient = new Freeplay(
+                    freeplayApiKey,
+                    baseUrl,
+                    new ProviderConfigs(new OpenAIProviderConfig(openaiApiKey))
+            );
+            CompletionSession session = fpClient.createSession(projectId, "latest", customMetadata);
+            Stream<IndexedChatMessage> responseStream = session.getCompletionStream(
+                    templateName,
+                    Map.of("question", "why isn't my sink working?"),
+                    Collections.emptyMap(),
+                    null,
+                    null,
+                    null
+            );
+            List<IndexedChatMessage> chunks = responseStream.collect(Collectors.toList());
+
+            // Record call
+            Map<String, Object> recordBodyMap = getCapturedBodyAsMap(mockedClient, 3, 2);
+            assertEquals(customMetadata, recordBodyMap.get("custom_metadata"));
         });
     }
 
@@ -68,7 +96,6 @@ public class OpenAICompletionStreamTest extends HttpClientTestBase {
     @Test
     public void chatStreamHandlesProcessor() {
         withMockedClient((HttpClient mockedClient) -> {
-            mockCreateSession(mockedClient);
             mockGetPrompts(mockedClient, MODEL_GPT_35_TURBO, templateName, getChatPromptContent());
             mockOpenAIChatCallStream(mockedClient);
 
@@ -97,7 +124,7 @@ public class OpenAICompletionStreamTest extends HttpClientTestBase {
             @SuppressWarnings("unused")
             List<IndexedChatMessage> chunks = responseStream.collect(Collectors.toList());
 
-            Map<String, Object> openAiRequestBody = getCapturedBodyAsMap(mockedClient, 4, 2);
+            Map<String, Object> openAiRequestBody = getCapturedBodyAsMap(mockedClient, 3, 1);
             assertEquals(4, asList(openAiRequestBody.get("messages")).size());
             Map<String, Object> inserted = (Map<String, Object>) asList(openAiRequestBody.get("messages")).get(1);
             assertEquals("user", inserted.get("role"));
@@ -105,7 +132,7 @@ public class OpenAICompletionStreamTest extends HttpClientTestBase {
             assertEquals("gpt-3.5-turbo", llmCallInfo.get().getLLMParameters().get("model"));
 
             // Record call
-            Map<String, Object> recordBodyMap = getCapturedBodyAsMap(mockedClient, 4, 3);
+            Map<String, Object> recordBodyMap = getCapturedBodyAsMap(mockedClient, 3, 2);
             assertEquals(chatPromptWithInsertedMessage, recordBodyMap.get("prompt_content"));
         });
     }
@@ -113,7 +140,6 @@ public class OpenAICompletionStreamTest extends HttpClientTestBase {
     @Test
     public void chatDoesNotRecordWhenAskedNotTo() {
         withMockedClient((HttpClient mockedClient) -> {
-            mockCreateSession(mockedClient);
             mockGetPrompts(mockedClient, MODEL_GPT_35_TURBO, templateName, getChatPromptContent());
             mockOpenAIChatCallStream(mockedClient);
 
@@ -139,7 +165,7 @@ public class OpenAICompletionStreamTest extends HttpClientTestBase {
             assertEquals("", chunks.get(3).getContent());
 
             // Record call
-            assertTrue(routeNotCalled(mockedClient, 3, "record"));
+            assertTrue(routeNotCalled(mockedClient, 2, "record"));
         });
     }
 }

@@ -10,6 +10,7 @@ public class CallInfo {
     private final double endTime;
     private final String tag;
     private final Map<String, Object> inputs;
+    private final Map<String, Object> customMetadata;
     private final String promptContent;
     private final String returnContent;
     private final boolean isComplete;
@@ -25,6 +26,7 @@ public class CallInfo {
             Instant endTime,
             String tag,
             Map<String, Object> inputs,
+            Map<String, Object> customMetadata,
             String promptContent,
             String returnContent,
             boolean isComplete) {
@@ -34,6 +36,7 @@ public class CallInfo {
         this.endTime = instantToDouble(endTime);
         this.tag = tag;
         this.inputs = inputs;
+        this.customMetadata = customMetadata;
         this.promptContent = promptContent;
         this.returnContent = returnContent;
         this.isComplete = isComplete;
@@ -61,6 +64,10 @@ public class CallInfo {
 
     public Map<String, Object> getInputs() {
         return inputs;
+    }
+
+    public Map<String, Object> getCustomMetadata() {
+        return customMetadata;
     }
 
     public String getPromptContent() {

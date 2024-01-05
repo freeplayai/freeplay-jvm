@@ -39,7 +39,6 @@ public class AnthropicChatCompletionTest extends HttpClientTestBase {
     @Test
     public void chatCompletionReturnsValue() {
         withMockedClient((HttpClient mockedClient) -> {
-            mockCreateSession(mockedClient);
             mockGetPrompts(mockedClient, templateName, chatPromptContent, Collections.emptyMap(), "anthropic_chat");
             mockAnthropicCall(mockedClient, completionContent);
 
@@ -64,29 +63,23 @@ public class AnthropicChatCompletionTest extends HttpClientTestBase {
                     Map.of("customer_id", 123)
             );
 
-            Map<String, Object> sessionBody = getCapturedBodyAsMap(mockedClient, 4, 0);
-
-            assertEquals(
-                    Map.of("customer_id", 123),
-                    sessionBody.get("metadata"));
-
             // Completion
             assertEquals(completionContent, completion.getContent());
 
             // Record call
-            Map<String, Object> recordBodyMap = getCapturedBodyAsMap(mockedClient, 4, 3);
+            Map<String, Object> recordBodyMap = getCapturedBodyAsMap(mockedClient, 3, 2);
             assertEquals(promptTemplateVersionId, recordBodyMap.get("project_version_id"));
             assertEquals(promptTemplateId, recordBodyMap.get("prompt_template_id"));
             assertEquals("[{\"content\":\"Answer this question: why isn't my sink working?\",\"role\":\"Human\"}]", recordBodyMap.get("prompt_content"));
             assertEquals(" I apologize that your sink isn't working. Can I help you", recordBodyMap.get("return_content"));
             assertNull(recordBodyMap.get("test_run_id"));
+            assertEquals(Map.of("customer_id", 123), recordBodyMap.get("custom_metadata"));
         });
     }
 
     @Test
     public void complexChatCompletionReturnsValue() {
         withMockedClient((HttpClient mockedClient) -> {
-            mockCreateSession(mockedClient);
             mockGetPrompts(mockedClient, templateName, complexChatPromptContent, Collections.emptyMap(), "anthropic_chat");
             mockAnthropicCall(mockedClient, completionContent);
 
@@ -108,7 +101,7 @@ public class AnthropicChatCompletionTest extends HttpClientTestBase {
                     "latest"
             );
 
-            Map<String, Object> anthropicCall = getCapturedBodyAsMap(mockedClient, 4, 2);
+            Map<String, Object> anthropicCall = getCapturedBodyAsMap(mockedClient, 3, 1);
             assertEquals(
                     "\n\nHuman: Something this-is-a-name\n\nAssistant:",
                     anthropicCall.get("prompt"));
@@ -118,7 +111,6 @@ public class AnthropicChatCompletionTest extends HttpClientTestBase {
     @Test
     public void complexListChatCompletionReturnsValue() {
         withMockedClient((HttpClient mockedClient) -> {
-            mockCreateSession(mockedClient);
             mockGetPrompts(mockedClient, templateName, complexListChatPromptContent, Collections.emptyMap(), "anthropic_chat");
             mockAnthropicCall(mockedClient, completionContent);
 
@@ -144,7 +136,7 @@ public class AnthropicChatCompletionTest extends HttpClientTestBase {
                     "latest"
             );
 
-            Map<String, Object> anthropicCall = getCapturedBodyAsMap(mockedClient, 4, 2);
+            Map<String, Object> anthropicCall = getCapturedBodyAsMap(mockedClient, 3, 1);
             assertEquals(
                     "\n\nHuman: Do these things: \n" +
                             "task1\n" +
@@ -158,7 +150,6 @@ public class AnthropicChatCompletionTest extends HttpClientTestBase {
     @Test
     public void chatCompletionHandlesProcessor() {
         withMockedClient((HttpClient mockedClient) -> {
-            mockCreateSession(mockedClient);
             mockGetPrompts(mockedClient, templateName, chatPromptContent, Collections.emptyMap(), "anthropic_chat");
             mockAnthropicCall(mockedClient, completionContent);
 
@@ -180,7 +171,7 @@ public class AnthropicChatCompletionTest extends HttpClientTestBase {
             );
 
             // Modified Anthropic call
-            Map<String, Object> anthropicRequestBody = getCapturedBodyAsMap(mockedClient, 4, 2);
+            Map<String, Object> anthropicRequestBody = getCapturedBodyAsMap(mockedClient, 3, 1);
             assertEquals(
                     "\n\nHuman: Answer this question: why isn't my sink working?\n" +
                             "\n" +
@@ -190,7 +181,7 @@ public class AnthropicChatCompletionTest extends HttpClientTestBase {
                     anthropicRequestBody.get("prompt"));
 
             // Record call
-            Map<String, Object> recordBodyMap = getCapturedBodyAsMap(mockedClient, 4, 3);
+            Map<String, Object> recordBodyMap = getCapturedBodyAsMap(mockedClient, 3, 2);
             assertEquals(
                     "[{\"content\":\"Answer this question: why isn't my sink working?\",\"role\":\"Human\"},{\"content\":\"Inserted Message\",\"role\":\"user\"}]",
                     recordBodyMap.get("prompt_content"));
@@ -200,7 +191,6 @@ public class AnthropicChatCompletionTest extends HttpClientTestBase {
     @Test
     public void requiresRequiredParams() {
         withMockedClient((HttpClient mockedClient) -> {
-            mockCreateSession(mockedClient);
             mockGetPrompts(mockedClient, templateName, chatPromptContent, Collections.emptyMap(), "anthropic_chat");
             mockAnthropicCall(mockedClient, completionContent);
 
@@ -240,7 +230,6 @@ public class AnthropicChatCompletionTest extends HttpClientTestBase {
     @Test
     public void disallowsPromptParam() {
         withMockedClient((HttpClient mockedClient) -> {
-            mockCreateSession(mockedClient);
             mockGetPrompts(mockedClient, templateName, chatPromptContent, Collections.emptyMap(), "anthropic_chat");
             mockAnthropicCall(mockedClient, completionContent);
 
@@ -272,7 +261,6 @@ public class AnthropicChatCompletionTest extends HttpClientTestBase {
     @Test
     public void sendsRequiredHeaders() {
         withMockedClient((HttpClient mockedClient) -> {
-            mockCreateSession(mockedClient);
             mockGetPrompts(mockedClient, templateName, chatPromptContent, Collections.emptyMap(), "anthropic_chat");
             mockAnthropicCall(mockedClient, completionContent);
 
@@ -294,7 +282,7 @@ public class AnthropicChatCompletionTest extends HttpClientTestBase {
             );
 
             // Verify headers were sent
-            HttpRequest anthropicRequest = getCapturedRequest(mockedClient, 4, 2);
+            HttpRequest anthropicRequest = getCapturedRequest(mockedClient, 3, 1);
             assertEquals("application/json", anthropicRequest.headers().firstValue("accept").get());
             assertEquals("application/json", anthropicRequest.headers().firstValue("content-type").get());
             assertEquals("2023-06-01", anthropicRequest.headers().firstValue("anthropic-version").get());
@@ -305,7 +293,6 @@ public class AnthropicChatCompletionTest extends HttpClientTestBase {
     @Test
     public void handlesUnauthorizedCallingAnthropic() {
         withMockedClient((HttpClient mockedClient) -> {
-            mockCreateSession(mockedClient);
             mockGetPrompts(mockedClient, templateName, chatPromptContent, Collections.emptyMap(), "anthropic_chat");
             mockUnauthorizedAnthropicCall(mockedClient);
 
@@ -338,7 +325,6 @@ public class AnthropicChatCompletionTest extends HttpClientTestBase {
         String templateName = "my-prompt";
 
         withMockedClient((HttpClient mockedClient) -> {
-            mockCreateSession(mockedClient);
             mockGetPrompts(mockedClient, templateName, chatPromptContent, Collections.emptyMap(), "anthropic_chat");
             mockAnthropicCallStream(mockedClient);
 
@@ -368,7 +354,7 @@ public class AnthropicChatCompletionTest extends HttpClientTestBase {
             assertEquals(" really", chunks.get(3).getContent());
 
             // Record call
-            Map<String, Object> recordBodyMap = getCapturedBodyAsMap(mockedClient, 4, 3);
+            Map<String, Object> recordBodyMap = getCapturedBodyAsMap(mockedClient, 3, 2);
             assertEquals("[{\"content\":\"Answer this question: why isn't my sink working?\",\"role\":\"Human\"}]", recordBodyMap.get("prompt_content"));
             assertEquals(" Oh dear, really", recordBodyMap.get("return_content"));
         });
@@ -378,7 +364,6 @@ public class AnthropicChatCompletionTest extends HttpClientTestBase {
     public void chatCompletionStreamHandlesProcessor() {
         String templateName = "my-prompt";
         withMockedClient((HttpClient mockedClient) -> {
-            mockCreateSession(mockedClient);
             mockGetPrompts(mockedClient, templateName, chatPromptContent, Collections.emptyMap(), "anthropic_chat");
             mockAnthropicCallStream(mockedClient);
 
@@ -403,13 +388,13 @@ public class AnthropicChatCompletionTest extends HttpClientTestBase {
             List<IndexedChatMessage> chunks = responseStream.collect(Collectors.toList());
 
             // Modified Anthropic call
-            Map<String, Object> anthropicRequest = getCapturedBodyAsMap(mockedClient, 4, 2);
+            Map<String, Object> anthropicRequest = getCapturedBodyAsMap(mockedClient, 3, 1);
             assertEquals(
                     "\n\nHuman: Answer this question: why isn't my sink working?\n\nHuman: Inserted Message\n\nAssistant:",
                     anthropicRequest.get("prompt"));
 
             // Record call
-            Map<String, Object> recordBodyMap = getCapturedBodyAsMap(mockedClient, 4, 3);
+            Map<String, Object> recordBodyMap = getCapturedBodyAsMap(mockedClient, 3, 2);
             assertEquals(
                     "[{\"content\":\"Answer this question: why isn't my sink working?\",\"role\":\"Human\"},{\"content\":\"Inserted Message\",\"role\":\"user\"}]",
                     recordBodyMap.get("prompt_content"));
