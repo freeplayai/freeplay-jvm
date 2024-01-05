@@ -255,6 +255,7 @@ public class OpenAICompletionTest extends HttpClientTestBase {
             mockCreateSession(mockedClient);
             mockGetPrompts(mockedClient, MODEL_GPT_35_TURBO, templateName, getChatPromptContent());
             mockOpenAIChatCalls(mockedClient, chatCompletion1);
+            mockRecord(mockedClient);
 
             Freeplay fpClient = new Freeplay(freeplayApiKey, baseUrl, providerConfigs);
             CompletionSession session = fpClient.createSession(projectId, "latest");

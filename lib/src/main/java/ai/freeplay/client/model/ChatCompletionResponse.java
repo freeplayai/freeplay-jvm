@@ -6,7 +6,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class ChatCompletionResponse {
     private final List<IndexedChatMessage> choices;
-    private AtomicReference<String> completionId;
+    private final AtomicReference<String> completionId = new AtomicReference<>();
 
     public ChatCompletionResponse(List<IndexedChatMessage> choices) {
         this.choices = choices;
