@@ -32,6 +32,16 @@ tasks.register<Jar>("javadocJar") {
     from(sourceSets.main.get().resources)
 }
 
+// Configure the jar task to include manifest information
+jar {
+    manifest {
+        attributes(
+            "Implementation-Title": "Freeplay",
+            "Implementation-Version": version
+        )
+    }
+}
+
 java {
     toolchain {
         languageVersion.set(JavaLanguageVersion.of(11))

@@ -122,6 +122,7 @@ public class Http {
             requestBuilder = HttpRequest
                     .newBuilder(new URI(url))
                     .header("Content-Type", "application/json")
+                    .header("User-Agent", UserAgent.getUserAgent())
                     .headers(headers)
                     .method(method, bodyPublisher);
             if (httpConfig.getRequestTimeout() != null) {
@@ -154,6 +155,8 @@ public class Http {
         if (apiKey != null) {
             requestBuilder.header("Authorization", format("Bearer %s", apiKey));
         }
+
+        // TODO: ADD UA for get path
 
         if (httpConfig.getRequestTimeout() != null) {
             requestBuilder.timeout(httpConfig.getRequestTimeout());
