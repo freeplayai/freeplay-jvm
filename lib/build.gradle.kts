@@ -32,6 +32,16 @@ tasks.register<Jar>("javadocJar") {
     from(sourceSets.main.get().resources)
 }
 
+tasks.jar {
+    // Set the manifest attributes
+    manifest {
+        attributes(
+            "Implementation-Title" to project.name,
+            "Implementation-Version" to project.version
+        )
+    }
+}
+
 java {
     toolchain {
         languageVersion.set(JavaLanguageVersion.of(11))
