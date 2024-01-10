@@ -52,3 +52,4 @@ This step is not required. This will publish the SDK to your local maven reposit
 1. Increment the version in `build.gradle.kts`
 2. `./gradlew publishAll`
 3. Follow the release instructions at https://central.sonatype.org/publish/release/ to close and release the repository
+   1. Note that (surprisingly) closing is a good thing and a prerequisite to releasing. You can drop the staging repository and old repository after release.
