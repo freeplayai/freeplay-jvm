@@ -32,12 +32,12 @@ tasks.register<Jar>("javadocJar") {
     from(sourceSets.main.get().resources)
 }
 
-// Configure the jar task to include manifest information
-jar {
+tasks.jar {
+    // Set the manifest attributes
     manifest {
         attributes(
-            "Implementation-Title": "Freeplay",
-            "Implementation-Version": version
+            "Implementation-Title" to project.name,
+            "Implementation-Version" to project.version
         )
     }
 }
