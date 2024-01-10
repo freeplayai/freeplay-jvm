@@ -156,7 +156,7 @@ public class Http {
             requestBuilder.header("Authorization", format("Bearer %s", apiKey));
         }
 
-        // TODO: ADD UA for get path
+        requestBuilder.header("User-Agent", UserAgent.getUserAgent());
 
         if (httpConfig.getRequestTimeout() != null) {
             requestBuilder.timeout(httpConfig.getRequestTimeout());
