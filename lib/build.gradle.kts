@@ -4,7 +4,7 @@ plugins {
     signing
 }
 
-version = "0.2.31"
+version = "0.2.32"
 group = "ai.freeplay"
 
 repositories {
