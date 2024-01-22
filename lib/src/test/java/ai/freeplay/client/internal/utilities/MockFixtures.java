@@ -8,8 +8,7 @@ import java.net.http.HttpResponse;
 import java.util.*;
 import java.util.stream.Stream;
 
-import static ai.freeplay.client.internal.utilities.MockMethods.request;
-import static ai.freeplay.client.internal.utilities.MockMethods.response;
+import static ai.freeplay.client.internal.utilities.MockMethods.*;
 import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.toList;
 import static org.mockito.Mockito.when;
@@ -87,6 +86,30 @@ public class MockFixtures {
         }
     }
 
+    public static void mockGetPromptsAsync(
+            HttpClient mockedClient,
+            String templateName,
+            String content,
+            Map<String, Object> llmParameters,
+            String flavor
+    ) throws RuntimeException {
+        try {
+            when(requestAsync(mockedClient, "GET", "projects/[^/]*/templates")).thenReturn(
+                    asyncResponse(
+                            200,
+                            getPromptsPayload(
+                                    flavor,
+                                    projectVersionId,
+                                    promptTemplateId,
+                                    promptTemplateVersionId,
+                                    templateName,
+                                    content,
+                                    llmParameters)));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public static void mockGet2Prompts(
             HttpClient mockedClient,
             PromptTemplate... templates
@@ -127,19 +150,19 @@ public class MockFixtures {
         }
     }
 
-    public static void mockUnauthorizedCreateSession(HttpClient mockedClient) throws RuntimeException {
+    public static void mockUnauthorizedGetPrompts(HttpClient mockedClient) throws RuntimeException {
         try {
-            when(request(mockedClient, "POST", "projects/[^/]*/sessions"))
+            when(request(mockedClient, "GET", "projects/[^/]*/templates"))
                     .thenReturn(response(401, ""));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
-    public static void mockUnauthorizedGetPrompts(HttpClient mockedClient) throws RuntimeException {
+    public static void mockUnauthorizedGetPromptsAsync(HttpClient mockedClient) throws RuntimeException {
         try {
-            when(request(mockedClient, "GET", "projects/[^/]*/templates"))
-                    .thenReturn(response(401, ""));
+            when(requestAsync(mockedClient, "GET", "projects/[^/]*/templates"))
+                    .thenReturn(asyncResponse(401, ""));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -206,14 +229,6 @@ public class MockFixtures {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-    }
-
-
-    public static String getSessionRequestPayload(String sessionId) {
-        return JSONUtil.asString(
-                object(
-                        "session_id", sessionId
-                ));
     }
 
     public static String getTestRunResponsePayload(String testRunId) {

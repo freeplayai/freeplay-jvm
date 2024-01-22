@@ -17,7 +17,6 @@ public interface ChatFlavor {
             HttpConfig httpConfig
     ) throws FreeplayException;
 
-
     String getFormatType();
 
     default String getProvider() {
@@ -50,6 +49,5 @@ public interface ChatFlavor {
 
     boolean isComplete(IndexedChatMessage chunk);
 
-    @SuppressWarnings("rawtypes")
     ChatFlavor DEFAULT = null;
 }

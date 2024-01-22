@@ -10,13 +10,15 @@ import java.net.http.HttpResponse;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 import static ai.freeplay.client.internal.utilities.BodyPublisherReader.stringFromBodyPublisher;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 public class MockMethods {
     public static HttpUrlArgumentMatcher requestMatches(String method, String urlPattern) {
@@ -44,8 +46,20 @@ public class MockMethods {
         return mockedClient.send(argThat(requestMatches(host, method, urlRegex)), any());
     }
 
+    public static CompletableFuture<HttpResponse<String>> requestAsync(
+            HttpClient mockedClient,
+            String method,
+            String urlRegex
+    ) {
+        return mockedClient.sendAsync(argThat(requestMatches(method, urlRegex)), any());
+    }
+
     public static <B> HttpResponse<B> response(int statusCode, B body) {
         return new StubHttpResponse<>(statusCode, body);
+    }
+
+    public static <B> CompletableFuture<HttpResponse<B>> asyncResponse(int statusCode, B body) {
+        return CompletableFuture.completedFuture(new StubHttpResponse<>(statusCode, body));
     }
 
     public static Map<String, Object> getCapturedBodyAsMap(HttpClient mockedClient, int totalCalls, int index) throws RuntimeException {

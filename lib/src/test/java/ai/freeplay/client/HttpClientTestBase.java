@@ -5,7 +5,6 @@ import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
 import java.net.http.HttpClient;
-import java.util.function.Consumer;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -20,11 +19,17 @@ public abstract class HttpClientTestBase {
         mockedClientBuilder = mock(HttpClient.Builder.class);
     }
 
-    protected void withMockedClient(Consumer<HttpClient> consumer) {
+    protected void withMockedClient(ThrowingConsumer<HttpClient> consumer) throws RuntimeException {
         try (MockedStatic<HttpClient> httpClientClass = Mockito.mockStatic(HttpClient.class)) {
             httpClientClass.when(HttpClient::newBuilder).thenReturn(mockedClientBuilder);
             when(mockedClientBuilder.build()).thenReturn(mockedClient);
             consumer.accept(mockedClient);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
+    }
+
+    public interface ThrowingConsumer<Value> {
+        void accept(Value value) throws Exception;
     }
 }

@@ -8,9 +8,8 @@ import ai.freeplay.client.exceptions.FreeplayClientException;
 import ai.freeplay.client.exceptions.FreeplayConfigurationException;
 import ai.freeplay.client.exceptions.FreeplayException;
 import ai.freeplay.client.exceptions.FreeplayServerException;
-import ai.freeplay.client.flavor.AnthropicChatFlavor;
 import ai.freeplay.client.flavor.ChatFlavor;
-import ai.freeplay.client.flavor.OpenAIChatFlavor;
+import ai.freeplay.client.flavor.Flavors;
 import ai.freeplay.client.model.*;
 import ai.freeplay.client.processor.ChatPromptProcessor;
 import ai.freeplay.client.processor.LLMCallInfo;
@@ -24,6 +23,7 @@ import java.util.stream.Stream;
 
 import static ai.freeplay.client.internal.Http.authHeaders;
 import static ai.freeplay.client.internal.Http.throwFreeplayIfError;
+import static ai.freeplay.client.internal.PromptUtils.getFinalTag;
 import static java.lang.String.format;
 import static java.lang.String.valueOf;
 import static java.lang.System.currentTimeMillis;
@@ -387,14 +387,7 @@ public class CallSupport {
         if (this.clientFlavor != null) return this.clientFlavor;
 
         String flavorName = prompt.getFlavorName();
-        switch (flavorName) {
-            case "openai_chat":
-                return new OpenAIChatFlavor();
-            case "anthropic_chat":
-                return new AnthropicChatFlavor();
-            default:
-                throw new FreeplayConfigurationException(format("Unable to create Flavor for name '%s'.%n", flavorName));
-        }
+        return Flavors.getFlavorByName(flavorName);
     }
 
     private Map<String, Object> getMergedParameters(
@@ -406,10 +399,6 @@ public class CallSupport {
         merged.putAll(clientLLMParameters);
         merged.putAll(callLLMParameters);
         return merged;
-    }
-
-    private static String getFinalTag(String tag) {
-        return tag != null ? tag : "latest";
     }
 
     private String getUrl(String path, Object... args) {

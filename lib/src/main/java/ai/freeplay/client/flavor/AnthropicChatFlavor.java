@@ -177,17 +177,10 @@ public class AnthropicChatFlavor implements ChatFlavor {
         return chunk.isComplete();
     }
 
-    private static Map<String, Object> getRequestBody(Collection<ChatMessage> messages, Map<String, Object> llmParameters) {
+    private Map<String, Object> getRequestBody(Collection<ChatMessage> messages, Map<String, Object> llmParameters) {
         Map<String, Object> bodyMap = new HashMap<>(llmParameters);
-        List<String> formattedMessages = new ArrayList<>();
-        for (ChatMessage message : messages) {
-            String content = message.getContent();
-            // Anthropic does not support system role for now.
-            String role = message.getRole().equals("assistant") ? "Assistant" : "Human";
-            formattedMessages.add(role + ": " + content);
-        }
-        formattedMessages.add("Assistant:");
-        bodyMap.put("prompt", "\n\n" + String.join("\n\n", formattedMessages));
+        String anthropicSyntax = toLLMSyntax(messages);
+        bodyMap.put("prompt", anthropicSyntax);
         return bodyMap;
     }
 
@@ -202,6 +195,19 @@ public class AnthropicChatFlavor implements ChatFlavor {
             throw new FreeplayException("The 'prompt' parameter cannot be specified. It is populated automatically.");
         }
     }
+
+    private String toLLMSyntax(Collection<ChatMessage> messages) {
+        List<String> formattedMessages = new ArrayList<>();
+        for (ChatMessage message : messages) {
+            String content = message.getContent();
+            // Anthropic does not support system role for now.
+            String role = message.getRole().equals("assistant") ? "Assistant" : "Human";
+            formattedMessages.add(role + ": " + content);
+        }
+        formattedMessages.add("Assistant:");
+        return "\n\n" + String.join("\n\n", formattedMessages);
+    }
+
 
     private CompletionResponse handleLine(String line, StreamState streamState) {
         // We're implementing this spec in this method:

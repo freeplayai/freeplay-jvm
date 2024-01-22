@@ -17,8 +17,8 @@ dependencies {
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.mockito:mockito-core:5.4.0")
 
-    // Don't take a jackson(jr) dependency beyond this, as they pull in more transitive dependencies
-    implementation("com.fasterxml.jackson.jr:jackson-jr-all:2.15.2")
+    implementation("com.fasterxml.jackson.jr:jackson-jr-all:2.16.1")
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.16.1")
     implementation("com.github.spullara.mustache.java:compiler:0.9.11")
 }
 
