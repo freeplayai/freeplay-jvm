@@ -65,6 +65,19 @@ public class PromptInfo {
         return flavorName;
     }
 
+    public CallInfo getCallInfo(
+            long startTime,
+            long endTime
+    ) {
+        return new CallInfo(
+                getProvider(),
+                getModel(),
+                startTime,
+                endTime,
+                getModelParameters()
+        );
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

@@ -62,7 +62,11 @@ public class MockMethods {
         return CompletableFuture.completedFuture(new StubHttpResponse<>(statusCode, body));
     }
 
-    public static Map<String, Object> getCapturedBodyAsMap(HttpClient mockedClient, int totalCalls, int index) throws RuntimeException {
+    public static Map<String, Object> getCapturedBodyAsMap(
+            HttpClient mockedClient,
+            int totalCalls,
+            int index
+    ) throws RuntimeException {
         try {
             return JSON.std.mapFrom(getCapturedBody(mockedClient, totalCalls, index));
         } catch (IOException e) {
@@ -70,7 +74,9 @@ public class MockMethods {
         }
     }
 
-    public static String getCapturedBody(HttpClient mockedClient, int totalCalls, int index) throws RuntimeException {
+    public static String getCapturedBody(
+            HttpClient mockedClient, int totalCalls, int index
+    ) throws RuntimeException {
         ArgumentCaptor<HttpRequest> recordRequestArg = ArgumentCaptor.forClass(HttpRequest.class);
         try {
             verify(mockedClient, times(totalCalls)).send(recordRequestArg.capture(), any());
@@ -87,7 +93,24 @@ public class MockMethods {
         return stringFromBodyPublisher(recordBodyPublisher.get());
     }
 
-    public static boolean routeNotCalled(HttpClient mockedClient, int totalCalls, String urlPart) throws RuntimeException {
+    public static String getCapturedAsyncBody(
+            HttpClient mockedClient, int totalCalls, int index
+    ) throws RuntimeException {
+        ArgumentCaptor<HttpRequest> recordRequestArg = ArgumentCaptor.forClass(HttpRequest.class);
+        verify(mockedClient, times(totalCalls)).sendAsync(recordRequestArg.capture(), any());
+
+        List<HttpRequest> requests = recordRequestArg.getAllValues();
+        assertEquals(totalCalls, requests.size());
+
+        Optional<HttpRequest.BodyPublisher> recordBodyPublisher = requests.get(index).bodyPublisher();
+        assertTrue(recordBodyPublisher.isPresent());
+
+        return stringFromBodyPublisher(recordBodyPublisher.get());
+    }
+
+    public static boolean routeNotCalled(
+            HttpClient mockedClient, int totalCalls, String urlPart
+    ) throws RuntimeException {
         ArgumentCaptor<HttpRequest> recordRequestArg = ArgumentCaptor.forClass(HttpRequest.class);
         try {
             verify(mockedClient, times(totalCalls)).send(recordRequestArg.capture(), any());
@@ -104,7 +127,9 @@ public class MockMethods {
         return true;
     }
 
-    public static HttpRequest getCapturedRequest(HttpClient mockedClient, int totalCalls, int index) throws RuntimeException {
+    public static HttpRequest getCapturedRequest(
+            HttpClient mockedClient, int totalCalls, int index
+    ) throws RuntimeException {
         ArgumentCaptor<HttpRequest> recordRequestArg = ArgumentCaptor.forClass(HttpRequest.class);
         try {
             verify(mockedClient, times(totalCalls)).send(recordRequestArg.capture(), any());

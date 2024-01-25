@@ -2,6 +2,7 @@ package ai.freeplay.client.internal;
 
 import ai.freeplay.client.exceptions.FreeplayException;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.CollectionType;
 import com.fasterxml.jackson.jr.ob.JSON;
@@ -47,6 +48,22 @@ public class JSONUtil {
             return objectMapper.readValue(jsonString, javaType);
         } catch (JsonProcessingException e) {
             throw new FreeplayException("Unable to parse JSON.", e);
+        }
+    }
+
+    public static JsonNode parseDOM(String jsonString) {
+        try {
+            return objectMapper.readTree(jsonString);
+        } catch (JsonProcessingException e) {
+            throw new FreeplayException("Error parsing JSON.", e);
+        }
+    }
+
+    public static String toString(Object thing) {
+        try {
+            return objectMapper.writeValueAsString(thing);
+        } catch (JsonProcessingException e) {
+            throw new FreeplayException("Unable to write JSON.", e);
         }
     }
 }

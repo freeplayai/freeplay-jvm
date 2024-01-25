@@ -1,32 +1,39 @@
 package ai.freeplay.client.thin;
 
 import ai.freeplay.client.HttpConfig;
+import ai.freeplay.client.exceptions.FreeplayClientException;
 import ai.freeplay.client.exceptions.FreeplayConfigurationException;
-import ai.freeplay.client.exceptions.FreeplayException;
+import ai.freeplay.client.internal.AsyncHttp;
+import ai.freeplay.client.internal.JSONUtil;
+import ai.freeplay.client.thin.internal.model.RecordAPIPayload;
 import ai.freeplay.client.thin.internal.model.Template;
 import ai.freeplay.client.thin.internal.model.Templates;
+import com.fasterxml.jackson.databind.JsonNode;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
+import static ai.freeplay.client.internal.Http.throwFreeplayIfError;
 import static ai.freeplay.client.internal.PromptUtils.getFinalTag;
 import static java.lang.String.format;
-import static java.util.UUID.randomUUID;
 
 class ThinCallSupport {
     private final HttpConfig httpConfig;
     private final TemplateResolver templateResolver;
+    private final String baseUrl;
+    private final String freeplayApiKey;
 
     public ThinCallSupport(
             HttpConfig httpConfig,
-            TemplateResolver templateResolver
+            TemplateResolver templateResolver,
+            String baseUrl,
+            String freeplayApiKey
     ) {
         this.httpConfig = httpConfig;
         this.templateResolver = templateResolver;
-    }
-
-    public static String createSessionId() throws FreeplayException {
-        return randomUUID().toString();
+        this.baseUrl = baseUrl;
+        this.freeplayApiKey = freeplayApiKey;
     }
 
     public static String getActiveFlavorName(String callFlavorName, String templateFlavorName) {
@@ -46,6 +53,49 @@ class ThinCallSupport {
                                 )
                         )
                 );
+    }
+
+    public CompletableFuture<RecordResponse> record(RecordPayload recordPayload) {
+
+        if (recordPayload.getAllMessages().isEmpty()) {
+            throw new FreeplayClientException("Messages list must have at least one message. " +
+                    "The last message should be the current response.");
+        }
+        String historyAsString = historyAsString(recordPayload.getAllMessages());
+        ChatMessage completion = recordPayload.getAllMessages().get(recordPayload.getAllMessages().size() - 1);
+
+        RecordAPIPayload payload = new RecordAPIPayload(
+                recordPayload.getSessionId(),
+                recordPayload.getPromptInfo().getPromptTemplateVersionId(),
+                recordPayload.getPromptInfo().getPromptTemplateId(),
+                recordPayload.getCallInfo().getStartTime(),
+                recordPayload.getCallInfo().getEndTime(),
+                recordPayload.getPromptInfo().getEnvironment(),
+                recordPayload.getInputs(),
+                recordPayload.getCallInfo().getCustomMetadata(),
+                historyAsString,
+                completion.getContent(),
+                recordPayload.getResponseInfo().isComplete(),
+                recordPayload.getTestRunInfo().getTestRunId(),
+                recordPayload.getCallInfo().getProvider(),
+                recordPayload.getCallInfo().getModel(),
+                recordPayload.getCallInfo().getModelParameters()
+        );
+        return AsyncHttp.postJson(
+                format("%s/v1/record", baseUrl),
+                freeplayApiKey,
+                httpConfig,
+                payload
+        ).thenApply(httpResponse -> {
+            throwFreeplayIfError(httpResponse, 201);
+            JsonNode responseNode = JSONUtil.parseDOM(httpResponse.body());
+            return new RecordResponse(responseNode.path("completion_id").asText(null));
+        });
+    }
+
+    private static String historyAsString(List<ChatMessage> allMessages) {
+        List<ChatMessage> allButLast = allMessages.subList(0, allMessages.size() - 1);
+        return JSONUtil.toString(allButLast);
     }
 
     private CompletableFuture<Templates> getPrompts(String projectId, String tag) {

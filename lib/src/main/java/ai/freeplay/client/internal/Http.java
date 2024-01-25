@@ -103,7 +103,7 @@ public class Http {
             HttpConfig httpConfig,
             String... headers
     ) throws FreeplayException {
-        return jsonRequest(url, body, responseBodyHandler, httpConfig,"POST", headers);
+        return jsonRequest(url, body, responseBodyHandler, httpConfig, "POST", headers);
     }
 
     public static <R> HttpResponse<R> jsonRequest(

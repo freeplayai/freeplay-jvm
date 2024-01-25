@@ -20,32 +20,10 @@ public class AsyncHttp {
             String apiKey,
             HttpConfig httpConfig
     ) throws FreeplayException {
-        HttpRequest.Builder requestBuilder;
-        try {
-            requestBuilder = HttpRequest.newBuilder(new URI(url));
-        } catch (URISyntaxException e) {
-            throw new FreeplayException("Error in URL during GET request.", e);
-        }
-
-        if (apiKey != null) {
-            requestBuilder.header("Authorization", format("Bearer %s", apiKey));
-        }
-
-        requestBuilder.header("User-Agent", UserAgent.getUserAgent());
-
-        if (httpConfig.getRequestTimeout() != null) {
-            requestBuilder.timeout(httpConfig.getRequestTimeout());
-        }
+        HttpRequest.Builder requestBuilder = request(url, apiKey, httpConfig);
 
         try {
-            HttpClient.Builder clientBuilder = HttpClient.newBuilder();
-            if (httpConfig.getExecutor() != null) {
-                clientBuilder.executor(httpConfig.getExecutor());
-            }
-            if (httpConfig.getProxySelector() != null) {
-                clientBuilder.proxy(httpConfig.getProxySelector());
-            }
-            return clientBuilder
+            return client(httpConfig)
                     .build()
                     .sendAsync(requestBuilder.build(), BodyHandlers.ofString());
         } catch (Exception e) {
@@ -53,4 +31,59 @@ public class AsyncHttp {
         }
     }
 
+    public static CompletableFuture<HttpResponse<String>> postJson(
+            String url,
+            String apiKey,
+            HttpConfig httpConfig,
+            Object body
+    ) throws FreeplayException {
+        HttpRequest.BodyPublisher bodyPublisher = HttpRequest.BodyPublishers.ofString(JSONUtil.toString(body));
+        HttpRequest.Builder request =
+                request(url, apiKey, httpConfig)
+                        .method("POST", bodyPublisher)
+                        .header("Content-Type", "application/json");
+
+        try {
+            return client(httpConfig)
+                    .build()
+                    .sendAsync(request.build(), BodyHandlers.ofString());
+        } catch (Exception e) {
+            throw new FreeplayException("Error sending POST request.", e);
+        }
+    }
+
+    private static HttpClient.Builder client(HttpConfig httpConfig) {
+        HttpClient.Builder clientBuilder = HttpClient.newBuilder();
+        if (httpConfig.getExecutor() != null) {
+            clientBuilder.executor(httpConfig.getExecutor());
+        }
+        if (httpConfig.getProxySelector() != null) {
+            clientBuilder.proxy(httpConfig.getProxySelector());
+        }
+        return clientBuilder;
+    }
+
+    private static HttpRequest.Builder request(
+            String url,
+            String apiKey,
+            HttpConfig httpConfig
+    ) {
+        HttpRequest.Builder requestBuilder;
+        try {
+            requestBuilder = HttpRequest
+                    .newBuilder(new URI(url))
+                    .header("User-Agent", UserAgent.getUserAgent());
+
+            if (apiKey != null) {
+                requestBuilder.header("Authorization", format("Bearer %s", apiKey));
+            }
+
+            if (httpConfig.getRequestTimeout() != null) {
+                requestBuilder.timeout(httpConfig.getRequestTimeout());
+            }
+        } catch (URISyntaxException e) {
+            throw new FreeplayException("Error in URL during GET request.", e);
+        }
+        return requestBuilder;
+    }
 }

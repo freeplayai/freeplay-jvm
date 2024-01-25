@@ -1,15 +1,18 @@
 package ai.freeplay.client.thin;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static java.util.stream.Collectors.toList;
 
 public class FormattedPrompt<LLMFormat> {
     private final PromptInfo promptInfo;
+    private final List<ChatMessage> boundMessages;
     private final LLMFormat formattedPrompt;
 
-    public FormattedPrompt(PromptInfo promptInfo, LLMFormat formattedPrompt) {
+    public FormattedPrompt(PromptInfo promptInfo, List<ChatMessage> messages, LLMFormat formattedPrompt) {
         this.promptInfo = promptInfo;
+        this.boundMessages = messages;
         if (isListOfThickMessages(formattedPrompt)) {
             //noinspection unchecked
             this.formattedPrompt = (LLMFormat) toThinChatMessages((List<ai.freeplay.client.model.ChatMessage>) formattedPrompt);
@@ -22,8 +25,18 @@ public class FormattedPrompt<LLMFormat> {
         return promptInfo;
     }
 
+    public List<ChatMessage> getBoundMessages() {
+        return boundMessages;
+    }
+
     public LLMFormat getFormattedPrompt() {
         return formattedPrompt;
+    }
+
+    public List<ChatMessage> allMessages(ChatMessage message) {
+        List<ChatMessage> newList = new ArrayList<>(boundMessages);
+        newList.add(message);
+        return newList;
     }
 
     private static <LLMFormat> boolean isListOfThickMessages(LLMFormat formattedPrompt) {

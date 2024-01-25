@@ -1,6 +1,5 @@
 package ai.freeplay.client.thin;
 
-import java.util.Collection;
 import java.util.List;
 
 public class BoundPrompt {
@@ -16,14 +15,15 @@ public class BoundPrompt {
         return promptInfo;
     }
 
-    public Collection<ChatMessage> getMessages() {
+    public List<ChatMessage> getMessages() {
         return messages;
     }
 
-    public <Format> Format format(String flavorName) {
+    public <Format> FormattedPrompt<Format> format(String flavorName) {
         String finalFlavor = ThinCallSupport.getActiveFlavorName(flavorName, promptInfo.getFlavorName());
         LLMAdapters.LLMAdapter<?> llmAdapter = LLMAdapters.adapterForFlavor(finalFlavor);
         //noinspection unchecked
-        return (Format) llmAdapter.toLLMSyntax(messages);
+        Format llmSyntax = (Format) llmAdapter.toLLMSyntax(messages);
+        return new FormattedPrompt<>(getPromptInfo(), getMessages(), llmSyntax);
     }
 }

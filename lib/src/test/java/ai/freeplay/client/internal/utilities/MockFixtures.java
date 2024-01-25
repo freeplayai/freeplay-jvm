@@ -140,6 +140,41 @@ public class MockFixtures {
         }
     }
 
+    public static void mockRecordAsync(HttpClient mockedClient) throws RuntimeException {
+        try {
+            when(requestAsync(mockedClient, "POST", "v1/record")).thenReturn(
+                    asyncResponse(
+                            201,
+                            getRecordPayloadWithCompletionId()
+                    )
+            );
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static void mockRecordNoCompletionIdAsync(HttpClient mockedClient) throws RuntimeException {
+        try {
+            when(requestAsync(mockedClient, "POST", "v1/record")).thenReturn(
+                    asyncResponse(
+                            201,
+                            JSONUtil.asString("")
+                    )
+            );
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static void mockUnauthorizedRecordAsync(HttpClient mockedClient) throws RuntimeException {
+        try {
+            when(requestAsync(mockedClient, "POST", "v1/record"))
+                    .thenReturn(asyncResponse(401, ""));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public static void mockCreateTestRun(HttpClient mockedClient) throws RuntimeException {
         try {
             when(request(mockedClient, "POST", "projects/[^/]*/test-runs"))
@@ -263,6 +298,12 @@ public class MockFixtures {
                                 "params", llmParameters
                         )
                 )
+        ));
+    }
+
+    public static String getRecordPayloadWithCompletionId() {
+        return JSONUtil.asString(object(
+                "completion_id", UUID.randomUUID().toString()
         ));
     }
 

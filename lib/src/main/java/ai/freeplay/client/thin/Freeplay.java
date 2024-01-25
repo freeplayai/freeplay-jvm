@@ -16,19 +16,33 @@ import static ai.freeplay.client.internal.JSONUtil.parseListOf;
 public class Freeplay {
     private final ThinCallSupport callSupport;
 
+    private final Sessions sessions;
     private final Prompts prompts;
+    private final Recordings recordings;
 
     public Freeplay(FreeplayConfig config) {
         config.validate();
         this.callSupport = new ThinCallSupport(
-                null,
-                config.templateResolver
+                config.httpConfig,
+                config.templateResolver,
+                config.baseUrl,
+                config.freeplayAPIKey
         );
+        sessions = new Sessions();
         prompts = new Prompts();
+        recordings = new Recordings();
+    }
+
+    public Sessions sessions() {
+        return sessions;
     }
 
     public Prompts prompts() {
         return prompts;
+    }
+
+    public Recordings recordings() {
+        return recordings;
     }
 
     public class Prompts {
@@ -74,12 +88,7 @@ public class Freeplay {
                 String flavorName
         ) {
             return getBound(projectId, templateName, environment, variables)
-                    .thenApply(boundPrompt ->
-                            new FormattedPrompt<>(
-                                    boundPrompt.getPromptInfo(),
-                                    boundPrompt.format(flavorName)
-                            )
-                    );
+                    .thenApply(boundPrompt -> boundPrompt.format(flavorName));
         }
 
         private CompletableFuture<BoundPrompt> getBound(
@@ -101,6 +110,18 @@ public class Freeplay {
                 throw new FreeplayConfigurationException(
                         "Model must be configured in the Freeplay UI. Unable to fulfill request.");
             }
+        }
+    }
+
+    public class Recordings {
+        public CompletableFuture<RecordResponse> create(RecordPayload recordPayload) {
+            return callSupport.record(recordPayload);
+        }
+    }
+
+    public static class Sessions {
+        public Session create() {
+            return new Session();
         }
     }
 
