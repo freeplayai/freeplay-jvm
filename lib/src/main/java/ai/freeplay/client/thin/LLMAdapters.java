@@ -1,6 +1,7 @@
 package ai.freeplay.client.thin;
 
 import ai.freeplay.client.exceptions.FreeplayConfigurationException;
+import ai.freeplay.client.thin.resources.prompts.ChatMessage;
 
 import java.util.ArrayList;
 import java.util.List;

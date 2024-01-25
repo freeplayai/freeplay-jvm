@@ -1,4 +1,4 @@
-package ai.freeplay.client.thin;
+package ai.freeplay.client.thin.resources.recordings;
 
 public class RecordResponse {
     private final String completionId;

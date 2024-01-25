@@ -1,4 +1,4 @@
-package ai.freeplay.client.thin;
+package ai.freeplay.client.thin.resources.prompts;
 
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;

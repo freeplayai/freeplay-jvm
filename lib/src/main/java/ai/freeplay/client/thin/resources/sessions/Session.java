@@ -1,4 +1,4 @@
-package ai.freeplay.client.thin;
+package ai.freeplay.client.thin.resources.sessions;
 
 import java.util.UUID;
 

@@ -6,6 +6,10 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming;
 
 import java.util.Map;
 
+/**
+ * This is a template similar to what we get back from the API, but when we load it locally ('bundled' from the
+ * FilesystemTemplateResolver). It has a little different structure.
+ */
 @SuppressWarnings("unused")
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 @JsonIgnoreProperties({"project_version_id"})

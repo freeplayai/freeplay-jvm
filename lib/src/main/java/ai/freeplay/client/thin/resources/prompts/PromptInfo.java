@@ -1,4 +1,6 @@
-package ai.freeplay.client.thin;
+package ai.freeplay.client.thin.resources.prompts;
+
+import ai.freeplay.client.thin.resources.recordings.CallInfo;
 
 import java.util.Map;
 import java.util.Objects;
@@ -63,19 +65,6 @@ public class PromptInfo {
 
     public String getFlavorName() {
         return flavorName;
-    }
-
-    public CallInfo getCallInfo(
-            long startTime,
-            long endTime
-    ) {
-        return new CallInfo(
-                getProvider(),
-                getModel(),
-                startTime,
-                endTime,
-                getModelParameters()
-        );
     }
 
     @Override

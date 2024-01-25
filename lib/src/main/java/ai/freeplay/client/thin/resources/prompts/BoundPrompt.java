@@ -1,4 +1,7 @@
-package ai.freeplay.client.thin;
+package ai.freeplay.client.thin.resources.prompts;
+
+import ai.freeplay.client.thin.LLMAdapters;
+import ai.freeplay.client.thin.internal.ThinCallSupport;
 
 import java.util.List;
 

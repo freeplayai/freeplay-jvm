@@ -4,6 +4,12 @@ import ai.freeplay.client.HttpClientTestBase;
 import ai.freeplay.client.exceptions.FreeplayConfigurationException;
 import ai.freeplay.client.internal.JSONUtil;
 import ai.freeplay.client.thin.internal.model.RecordAPIPayload;
+import ai.freeplay.client.thin.resources.prompts.*;
+import ai.freeplay.client.thin.resources.recordings.CallInfo;
+import ai.freeplay.client.thin.resources.recordings.RecordInfo;
+import ai.freeplay.client.thin.resources.recordings.RecordResponse;
+import ai.freeplay.client.thin.resources.recordings.ResponseInfo;
+import ai.freeplay.client.thin.resources.sessions.Session;
 import org.junit.Test;
 
 import java.net.http.HttpClient;
@@ -128,7 +134,8 @@ public class ThinClientTest extends HttpClientTestBase {
             );
             FormattedPrompt<String> prompt = future.get();
 
-            CallInfo callInfo = prompt.getPromptInfo().getCallInfo(
+            CallInfo callInfo = CallInfo.from(
+                    prompt.getPromptInfo(),
                     startTime,
                     endTime
             ).customMetadata(customMetadata);
@@ -137,14 +144,13 @@ public class ThinClientTest extends HttpClientTestBase {
 
             Session session = fpClient.sessions().create();
             CompletableFuture<RecordResponse> recordFuture = fpClient.recordings().create(
-                    new RecordPayload(
+                    new RecordInfo(
                             allMessages,
                             variables,
                             session.getSessionId().toString(),
                             prompt.getPromptInfo(),
                             callInfo,
-                            responseInfo,
-                            TestRunInfo.NONE
+                            responseInfo
                     ));
 
             // Assertions
@@ -186,14 +192,13 @@ public class ThinClientTest extends HttpClientTestBase {
 
             Session session = fpClient.sessions().create();
             CompletableFuture<RecordResponse> recordFuture = fpClient.recordings().create(
-                    new RecordPayload(
+                    new RecordInfo(
                             fixtures.getAllMessages(),
                             variables,
                             session.getSessionId().toString(),
                             fixtures.getPromptInfo(),
                             fixtures.getCallInfo(),
-                            fixtures.getResponseInfo(),
-                            fixtures.getTestRunInfo()
+                            fixtures.getResponseInfo()
                     ));
 
             // Assertions
@@ -212,7 +217,7 @@ public class ThinClientTest extends HttpClientTestBase {
                     expected2,
                     fixtures.getCompletion(),
                     true,
-                    fixtures.getTestRunInfo().getTestRunId(),
+                    null,
                     "anthropic",
                     differentModel,
                     fixtures.getModelParameters()
@@ -235,14 +240,13 @@ public class ThinClientTest extends HttpClientTestBase {
 
             Session session = fpClient.sessions().create();
             CompletableFuture<RecordResponse> recordFuture = fpClient.recordings().create(
-                    new RecordPayload(
+                    new RecordInfo(
                             fixtures.getAllMessages(),
                             variables,
                             session.getSessionId().toString(),
                             fixtures.getPromptInfo(),
                             fixtures.getCallInfo(),
-                            fixtures.getResponseInfo(),
-                            fixtures.getTestRunInfo()
+                            fixtures.getResponseInfo()
                     ));
 
             // Assertions
@@ -311,14 +315,13 @@ public class ThinClientTest extends HttpClientTestBase {
             ExecutionException exception = assertThrows(
                     ExecutionException.class,
                     () -> fpClient.recordings().create(
-                            new RecordPayload(
+                            new RecordInfo(
                                     fixtures.getAllMessages(),
                                     variables,
                                     session.getSessionId().toString(),
                                     fixtures.getPromptInfo(),
                                     fixtures.getCallInfo(),
-                                    fixtures.getResponseInfo(),
-                                    fixtures.getTestRunInfo()
+                                    fixtures.getResponseInfo()
                             )).get());
             assertEquals("Error making call [401]", exception.getCause().getMessage());
         });
@@ -331,7 +334,6 @@ public class ThinClientTest extends HttpClientTestBase {
         private final PromptInfo promptInfo;
         private final CallInfo callInfo;
         private final ResponseInfo responseInfo = new ResponseInfo(true);
-        private final TestRunInfo testRunInfo = TestRunInfo.NONE;
         private final Map<String, Object> modelParameters;
 
         public StubbedRecordFixtures(
@@ -386,10 +388,6 @@ public class ThinClientTest extends HttpClientTestBase {
 
         public ResponseInfo getResponseInfo() {
             return responseInfo;
-        }
-
-        public TestRunInfo getTestRunInfo() {
-            return testRunInfo;
         }
 
         public BoundPrompt getBoundPrompt() {

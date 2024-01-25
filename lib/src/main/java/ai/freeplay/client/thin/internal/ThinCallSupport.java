@@ -1,13 +1,17 @@
-package ai.freeplay.client.thin;
+package ai.freeplay.client.thin.internal;
 
 import ai.freeplay.client.HttpConfig;
 import ai.freeplay.client.exceptions.FreeplayClientException;
 import ai.freeplay.client.exceptions.FreeplayConfigurationException;
 import ai.freeplay.client.internal.AsyncHttp;
 import ai.freeplay.client.internal.JSONUtil;
+import ai.freeplay.client.thin.TemplateResolver;
 import ai.freeplay.client.thin.internal.model.RecordAPIPayload;
 import ai.freeplay.client.thin.internal.model.Template;
 import ai.freeplay.client.thin.internal.model.Templates;
+import ai.freeplay.client.thin.resources.prompts.ChatMessage;
+import ai.freeplay.client.thin.resources.recordings.RecordInfo;
+import ai.freeplay.client.thin.resources.recordings.RecordResponse;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import java.util.List;
@@ -18,7 +22,9 @@ import static ai.freeplay.client.internal.Http.throwFreeplayIfError;
 import static ai.freeplay.client.internal.PromptUtils.getFinalTag;
 import static java.lang.String.format;
 
-class ThinCallSupport {
+
+// TODO move to internal
+public class ThinCallSupport {
     private final HttpConfig httpConfig;
     private final TemplateResolver templateResolver;
     private final String baseUrl;
@@ -55,7 +61,7 @@ class ThinCallSupport {
                 );
     }
 
-    public CompletableFuture<RecordResponse> record(RecordPayload recordPayload) {
+    public CompletableFuture<RecordResponse> record(RecordInfo recordPayload) {
 
         if (recordPayload.getAllMessages().isEmpty()) {
             throw new FreeplayClientException("Messages list must have at least one message. " +
@@ -63,6 +69,11 @@ class ThinCallSupport {
         }
         String historyAsString = historyAsString(recordPayload.getAllMessages());
         ChatMessage completion = recordPayload.getAllMessages().get(recordPayload.getAllMessages().size() - 1);
+
+        String testRunId =
+                recordPayload.getTestRunInfo() == null
+                        ? null
+                        : recordPayload.getTestRunInfo().getTestRunId();
 
         RecordAPIPayload payload = new RecordAPIPayload(
                 recordPayload.getSessionId(),
@@ -76,7 +87,7 @@ class ThinCallSupport {
                 historyAsString,
                 completion.getContent(),
                 recordPayload.getResponseInfo().isComplete(),
-                recordPayload.getTestRunInfo().getTestRunId(),
+                testRunId,
                 recordPayload.getCallInfo().getProvider(),
                 recordPayload.getCallInfo().getModel(),
                 recordPayload.getCallInfo().getModelParameters()

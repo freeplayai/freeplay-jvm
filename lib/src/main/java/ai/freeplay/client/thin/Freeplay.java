@@ -2,19 +2,12 @@ package ai.freeplay.client.thin;
 
 import ai.freeplay.client.HttpConfig;
 import ai.freeplay.client.exceptions.FreeplayConfigurationException;
-import ai.freeplay.client.flavor.ChatFlavor;
-import ai.freeplay.client.flavor.Flavors;
-import ai.freeplay.client.thin.internal.model.Template;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-
-import static ai.freeplay.client.internal.JSONUtil.parseListOf;
+import ai.freeplay.client.thin.internal.ThinCallSupport;
+import ai.freeplay.client.thin.resources.prompts.Prompts;
+import ai.freeplay.client.thin.resources.recordings.Recordings;
+import ai.freeplay.client.thin.resources.sessions.Sessions;
 
 public class Freeplay {
-    private final ThinCallSupport callSupport;
 
     private final Sessions sessions;
     private final Prompts prompts;
@@ -22,15 +15,15 @@ public class Freeplay {
 
     public Freeplay(FreeplayConfig config) {
         config.validate();
-        this.callSupport = new ThinCallSupport(
+        ThinCallSupport callSupport = new ThinCallSupport(
                 config.httpConfig,
                 config.templateResolver,
                 config.baseUrl,
                 config.freeplayAPIKey
         );
         sessions = new Sessions();
-        prompts = new Prompts();
-        recordings = new Recordings();
+        prompts = new Prompts(callSupport);
+        recordings = new Recordings(callSupport);
     }
 
     public Sessions sessions() {
@@ -43,86 +36,6 @@ public class Freeplay {
 
     public Recordings recordings() {
         return recordings;
-    }
-
-    public class Prompts {
-
-        public CompletableFuture<TemplatePrompt> get(
-                String projectId,
-                String templateName,
-                String environment
-        ) {
-            return callSupport
-                    .getPrompt(projectId, templateName, environment)
-                    .thenApply((Template template) -> {
-                        validateReturnedTemplate(template);
-
-                        ChatFlavor flavor = Flavors.getFlavorByName(template.getFlavorName());
-                        String model = template.getParams().get("model").toString();
-                        HashMap<String, Object> params = new HashMap<>(template.getParams());
-                        params.remove("model");
-
-                        List<ChatMessage> messages = parseListOf(template.getContent(), ChatMessage.class);
-
-                        return new TemplatePrompt(
-                                new PromptInfo(
-                                        template.getPromptTemplateId(),
-                                        template.getPromptTemplateVersionId(),
-                                        template.getName(),
-                                        environment,
-                                        params,
-                                        flavor.getProvider(),
-                                        model,
-                                        template.getFlavorName()
-                                ),
-                                messages
-                        );
-                    });
-        }
-
-        public <LLMFormat> CompletableFuture<FormattedPrompt<LLMFormat>> getFormatted(
-                String projectId,
-                String templateName,
-                String environment,
-                Map<String, Object> variables,
-                String flavorName
-        ) {
-            return getBound(projectId, templateName, environment, variables)
-                    .thenApply(boundPrompt -> boundPrompt.format(flavorName));
-        }
-
-        private CompletableFuture<BoundPrompt> getBound(
-                String projectId,
-                String templateName,
-                String environment,
-                Map<String, Object> variables
-        ) {
-            return get(projectId, templateName, environment)
-                    .thenApply(templatePrompt -> templatePrompt.bind(variables));
-        }
-
-        private void validateReturnedTemplate(Template template) {
-            if (template.getFlavorName() == null) {
-                throw new FreeplayConfigurationException(
-                        "Flavor must be configured in the Freeplay UI. Unable to fulfill request.");
-            }
-            if (!template.getParams().containsKey("model")) {
-                throw new FreeplayConfigurationException(
-                        "Model must be configured in the Freeplay UI. Unable to fulfill request.");
-            }
-        }
-    }
-
-    public class Recordings {
-        public CompletableFuture<RecordResponse> create(RecordPayload recordPayload) {
-            return callSupport.record(recordPayload);
-        }
-    }
-
-    public static class Sessions {
-        public Session create() {
-            return new Session();
-        }
     }
 
     public static FreeplayConfig Config() {

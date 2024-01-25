@@ -1,4 +1,4 @@
-package ai.freeplay.client.thin;
+package ai.freeplay.client.thin.resources.prompts;
 
 import java.util.ArrayList;
 import java.util.List;

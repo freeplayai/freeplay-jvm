@@ -1,10 +1,12 @@
-package ai.freeplay.client.thin;
+package ai.freeplay.client.thin.resources.recordings;
 
+import ai.freeplay.client.thin.resources.prompts.ChatMessage;
+import ai.freeplay.client.thin.resources.prompts.PromptInfo;
 
 import java.util.List;
 import java.util.Map;
 
-public class RecordPayload {
+public class RecordInfo {
     private final List<ChatMessage> allMessages;
     private final Map<String, Object> inputs;
     private final String sessionId;
@@ -12,16 +14,15 @@ public class RecordPayload {
     private final PromptInfo promptInfo;
     private final CallInfo callInfo;
     private final ResponseInfo responseInfo;
-    private final TestRunInfo testRunInfo;
+    private TestRunInfo testRunInfo;
 
-    public RecordPayload(
+    public RecordInfo(
             List<ChatMessage> allMessages,
             Map<String, Object> inputs,
             String sessionId,
             PromptInfo promptInfo,
             CallInfo callInfo,
-            ResponseInfo responseInfo,
-            TestRunInfo testRunInfo
+            ResponseInfo responseInfo
     ) {
         this.allMessages = allMessages;
         this.inputs = inputs;
@@ -29,7 +30,11 @@ public class RecordPayload {
         this.promptInfo = promptInfo;
         this.callInfo = callInfo;
         this.responseInfo = responseInfo;
+    }
+
+    public RecordInfo testRunInfo(TestRunInfo testRunInfo) {
         this.testRunInfo = testRunInfo;
+        return this;
     }
 
     public List<ChatMessage> getAllMessages() {

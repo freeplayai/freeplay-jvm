@@ -1,4 +1,6 @@
-package ai.freeplay.client.thin;
+package ai.freeplay.client.thin.resources.recordings;
+
+import ai.freeplay.client.thin.resources.prompts.PromptInfo;
 
 import java.time.Instant;
 import java.util.Map;
@@ -12,9 +14,20 @@ public class CallInfo {
     private final Map<String, Object> modelParameters;
     private Map<String, Object> customMetadata;
 
-    static double instantToDouble(Instant instant) {
+    public static double instantToDouble(Instant instant) {
         return Double.parseDouble(instant.getEpochSecond() + "." + instant.getNano());
     }
+
+    public static CallInfo from(PromptInfo promptInfo, long startTime, long endTime) {
+        return new CallInfo(
+                promptInfo.getProvider(),
+                promptInfo.getModel(),
+                startTime,
+                endTime,
+                promptInfo.getModelParameters()
+        );
+    }
+
 
     public CallInfo(
             String provider,

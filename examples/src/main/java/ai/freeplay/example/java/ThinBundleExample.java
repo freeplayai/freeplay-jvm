@@ -1,8 +1,8 @@
 package ai.freeplay.example.java;
 
 import ai.freeplay.client.thin.FilesystemTemplateResolver;
-import ai.freeplay.client.thin.FormattedPrompt;
 import ai.freeplay.client.thin.Freeplay;
+import ai.freeplay.client.thin.resources.prompts.FormattedPrompt;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.net.URI;

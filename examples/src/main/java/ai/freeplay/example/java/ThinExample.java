@@ -1,6 +1,12 @@
 package ai.freeplay.example.java;
 
-import ai.freeplay.client.thin.*;
+import ai.freeplay.client.thin.Freeplay;
+import ai.freeplay.client.thin.resources.prompts.ChatMessage;
+import ai.freeplay.client.thin.resources.prompts.FormattedPrompt;
+import ai.freeplay.client.thin.resources.recordings.CallInfo;
+import ai.freeplay.client.thin.resources.recordings.RecordInfo;
+import ai.freeplay.client.thin.resources.recordings.RecordResponse;
+import ai.freeplay.client.thin.resources.recordings.ResponseInfo;
 import ai.freeplay.example.java.ThinExampleUtils.Tuple3;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -69,8 +75,10 @@ public class ThinExample {
                                     new ChatMessage("Assistant", bodyNode.path("completion").asText())
                             );
 
-                            CallInfo callInfo = formattedPrompt.getPromptInfo().getCallInfo(
-                                    startTime, System.currentTimeMillis()
+                            CallInfo callInfo = CallInfo.from(
+                                    formattedPrompt.getPromptInfo(),
+                                    startTime,
+                                    System.currentTimeMillis()
                             );
                             ResponseInfo responseInfo = new ResponseInfo(
                                     "stop_sequence".equals(bodyNode.path("stop_reason").asText())
@@ -79,14 +87,13 @@ public class ThinExample {
                             System.out.println("Completion: " + bodyNode.path("completion").asText());
 
                             return fpClient.recordings().create(
-                                    new RecordPayload(
+                                    new RecordInfo(
                                             allMessages,
                                             variables,
                                             fpClient.sessions().create().getSessionId().toString(),
                                             formattedPrompt.getPromptInfo(),
                                             callInfo,
-                                            responseInfo,
-                                            TestRunInfo.NONE
+                                            responseInfo
                                     ));
                         }
                 )

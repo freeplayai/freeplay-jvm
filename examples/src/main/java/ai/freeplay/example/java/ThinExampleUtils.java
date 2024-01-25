@@ -1,6 +1,6 @@
 package ai.freeplay.example.java;
 
-import ai.freeplay.client.thin.ChatMessage;
+import ai.freeplay.client.thin.resources.prompts.ChatMessage;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.net.URI;
