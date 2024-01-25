@@ -23,7 +23,6 @@ import static ai.freeplay.client.internal.PromptUtils.getFinalTag;
 import static java.lang.String.format;
 
 
-// TODO move to internal
 public class ThinCallSupport {
     private final HttpConfig httpConfig;
     private final TemplateResolver templateResolver;
