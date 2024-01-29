@@ -10,6 +10,7 @@ import ai.freeplay.client.thin.resources.recordings.RecordInfo;
 import ai.freeplay.client.thin.resources.recordings.RecordResponse;
 import ai.freeplay.client.thin.resources.recordings.ResponseInfo;
 import ai.freeplay.client.thin.resources.sessions.Session;
+import ai.freeplay.client.thin.resources.testruns.TestRun;
 import org.junit.Test;
 
 import java.net.http.HttpClient;
@@ -251,6 +252,44 @@ public class ThinClientTest extends HttpClientTestBase {
 
             // Assertions
             assertNull(recordFuture.get().getCompletionId());
+        });
+    }
+
+    @Test
+    public void testTestRunCreated() {
+        withMockedClient((HttpClient mockedClient) -> {
+            mockCreateTestRunAsync(mockedClient);
+
+            String testListName = "core-tests";
+            Freeplay fpClient = new Freeplay(Config().freeplayAPIKey(freeplayApiKey).baseUrl(baseUrl));
+            TestRun testRun = fpClient.testRuns().create(
+                    projectId,
+                    testListName
+            ).get();
+
+            // Completion
+            assertEquals(2, testRun.getTestCases().size());
+            assertNotNull(testRun.getTestCases().get(0).getTestCaseId());
+            assertEquals("Why isn't my sink working?", testRun.getTestCases().get(0).getVariables().get("question"));
+            assertNotNull(testRun.getTestCases().get(1).getTestCaseId());
+            assertEquals("Why isn't my internet working?", testRun.getTestCases().get(1).getVariables().get("question"));
+        });
+    }
+
+    @Test
+    public void handlesUnauthorizedOnCreateTestRun() {
+        withMockedClient((HttpClient mockedClient) -> {
+            mockUnauthorizedCreateTestRunAsync(mockedClient);
+
+            Freeplay fpClient = new Freeplay(Config().freeplayAPIKey(freeplayApiKey).baseUrl(baseUrl));
+
+            ExecutionException exception = assertThrows(
+                    ExecutionException.class,
+                    () -> fpClient.testRuns().create(
+                            projectId,
+                            "core-tests"
+                    ).get());
+            assertEquals("Error making call [401]", exception.getCause().getMessage());
         });
     }
 

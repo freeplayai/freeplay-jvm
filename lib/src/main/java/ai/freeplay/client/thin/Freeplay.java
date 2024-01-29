@@ -6,12 +6,14 @@ import ai.freeplay.client.thin.internal.ThinCallSupport;
 import ai.freeplay.client.thin.resources.prompts.Prompts;
 import ai.freeplay.client.thin.resources.recordings.Recordings;
 import ai.freeplay.client.thin.resources.sessions.Sessions;
+import ai.freeplay.client.thin.resources.testruns.TestRuns;
 
 public class Freeplay {
 
     private final Sessions sessions;
     private final Prompts prompts;
     private final Recordings recordings;
+    private final TestRuns testRuns;
 
     public Freeplay(FreeplayConfig config) {
         config.validate();
@@ -24,6 +26,7 @@ public class Freeplay {
         sessions = new Sessions();
         prompts = new Prompts(callSupport);
         recordings = new Recordings(callSupport);
+        testRuns = new TestRuns(callSupport);
     }
 
     public Sessions sessions() {
@@ -36,6 +39,10 @@ public class Freeplay {
 
     public Recordings recordings() {
         return recordings;
+    }
+
+    public TestRuns testRuns() {
+        return testRuns;
     }
 
     public static FreeplayConfig Config() {

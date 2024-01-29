@@ -17,6 +17,16 @@ import static java.net.http.HttpRequest.BodyPublishers.ofString;
 
 @SuppressWarnings("unused")
 public class ThinExampleUtils {
+    public static class Tuple2<Type1, Type2> {
+        public final Type1 first;
+        public final Type2 second;
+
+        public Tuple2(Type1 first, Type2 second) {
+            this.first = first;
+            this.second = second;
+        }
+    }
+
     public static class Tuple3<Type1, Type2, Type3> {
         public final Type1 first;
         public final Type2 second;

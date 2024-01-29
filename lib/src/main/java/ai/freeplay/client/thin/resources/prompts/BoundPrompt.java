@@ -22,6 +22,10 @@ public class BoundPrompt {
         return messages;
     }
 
+    public <Format> FormattedPrompt<Format> format() {
+        return format(null);
+    }
+
     public <Format> FormattedPrompt<Format> format(String flavorName) {
         String finalFlavor = ThinCallSupport.getActiveFlavorName(flavorName, promptInfo.getFlavorName());
         LLMAdapters.LLMAdapter<?> llmAdapter = LLMAdapters.adapterForFlavor(finalFlavor);

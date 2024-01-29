@@ -185,6 +185,25 @@ public class MockFixtures {
         }
     }
 
+    public static void mockCreateTestRunAsync(HttpClient mockedClient) throws RuntimeException {
+        try {
+            when(requestAsync(mockedClient, "POST", "projects/[^/]*/test-runs-cases"))
+                    .thenReturn(
+                            asyncResponse(201, getTestRunTestCasesResponsePayload(UUID.randomUUID().toString())));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static void mockUnauthorizedCreateTestRunAsync(HttpClient mockedClient) throws RuntimeException {
+        try {
+            when(requestAsync(mockedClient, "POST", "projects/[^/]*/test-runs-cases"))
+                    .thenReturn(asyncResponse(401, ""));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public static void mockUnauthorizedGetPrompts(HttpClient mockedClient) throws RuntimeException {
         try {
             when(request(mockedClient, "GET", "projects/[^/]*/templates"))
@@ -273,6 +292,27 @@ public class MockFixtures {
                         "inputs", array(
                                 object("question", "Why isn't my sink working?"),
                                 object("question", "Why isn't my internet working?")
+                        )
+                ));
+    }
+
+    public static String getTestRunTestCasesResponsePayload(String testRunId) {
+        return JSONUtil.asString(
+                object(
+                        "test_run_id", testRunId,
+                        "test_cases", array(
+                                object(
+                                        "id", UUID.randomUUID(),
+                                        "variables", object(
+                                                "question", "Why isn't my sink working?"
+                                        )
+                                ),
+                                object(
+                                        "id", UUID.randomUUID(),
+                                        "variables", object(
+                                                "question", "Why isn't my internet working?"
+                                        )
+                                )
                         )
                 ));
     }

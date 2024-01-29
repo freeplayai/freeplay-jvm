@@ -6,12 +6,12 @@ import ai.freeplay.client.exceptions.FreeplayConfigurationException;
 import ai.freeplay.client.internal.AsyncHttp;
 import ai.freeplay.client.internal.JSONUtil;
 import ai.freeplay.client.thin.TemplateResolver;
-import ai.freeplay.client.thin.internal.model.RecordAPIPayload;
-import ai.freeplay.client.thin.internal.model.Template;
-import ai.freeplay.client.thin.internal.model.Templates;
+import ai.freeplay.client.thin.internal.model.*;
 import ai.freeplay.client.thin.resources.prompts.ChatMessage;
 import ai.freeplay.client.thin.resources.recordings.RecordInfo;
 import ai.freeplay.client.thin.resources.recordings.RecordResponse;
+import ai.freeplay.client.thin.resources.testruns.TestCase;
+import ai.freeplay.client.thin.resources.testruns.TestRun;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import java.util.List;
@@ -21,6 +21,7 @@ import java.util.concurrent.CompletableFuture;
 import static ai.freeplay.client.internal.Http.throwFreeplayIfError;
 import static ai.freeplay.client.internal.PromptUtils.getFinalTag;
 import static java.lang.String.format;
+import static java.util.stream.Collectors.toList;
 
 
 public class ThinCallSupport {
@@ -100,6 +101,30 @@ public class ThinCallSupport {
             throwFreeplayIfError(httpResponse, 201);
             JsonNode responseNode = JSONUtil.parseDOM(httpResponse.body());
             return new RecordResponse(responseNode.path("completion_id").asText(null));
+        });
+    }
+
+    public CompletableFuture<TestRun> createTestRun(String projectId, String testList) {
+        String url = String.format("%s/projects/%s/test-runs-cases", baseUrl, projectId);
+        return AsyncHttp.postJson(
+                url,
+                freeplayApiKey,
+                httpConfig,
+                new TestListPayload(testList)
+        ).thenApply(httpResponse -> {
+            throwFreeplayIfError(httpResponse, 201);
+
+            TestRunDTO testRun =
+                    JSONUtil.parse(
+                            httpResponse.body(),
+                            TestRunDTO.class);
+
+            return new TestRun(
+                    testRun.getTestRunId(),
+                    testRun.getTestCases().stream()
+                            .map(testCase -> new TestCase(testCase.getId(), testCase.getVariables()))
+                            .collect(toList())
+            );
         });
     }
 
