@@ -1,4 +1,4 @@
-package ai.freeplay.client.thin.internal.model;
+package ai.freeplay.client.thin.internal.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
@@ -10,7 +10,7 @@ import java.util.Objects;
 @SuppressWarnings("unused")
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 @JsonIgnoreProperties({"project_version_id"})
-public class Template {
+public class TemplateDTO {
     private String name;
     private String content;
     private String flavorName;
@@ -18,10 +18,10 @@ public class Template {
     private String promptTemplateVersionId;
     private Map<String, Object> params;
 
-    public Template() {
+    public TemplateDTO() {
     }
 
-    public Template(
+    public TemplateDTO(
             String name,
             String content,
             String flavorName,
@@ -65,7 +65,7 @@ public class Template {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        Template template = (Template) o;
+        TemplateDTO template = (TemplateDTO) o;
         return Objects.equals(name, template.name) && Objects.equals(content, template.content) && Objects.equals(flavorName, template.flavorName) && Objects.equals(promptTemplateId, template.promptTemplateId) && Objects.equals(promptTemplateVersionId, template.promptTemplateVersionId) && Objects.equals(params, template.params);
     }
 

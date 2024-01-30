@@ -1,4 +1,4 @@
-package ai.freeplay.client.thin.internal.model;
+package ai.freeplay.client.thin.internal.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
@@ -9,7 +9,7 @@ import java.util.Objects;
 
 @SuppressWarnings({"unused", "FieldCanBeLocal"})
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
-public class RecordAPIPayload {
+public class RecordDTO {
 
     private String sessionId;
     private String projectVersionId;
@@ -22,15 +22,17 @@ public class RecordAPIPayload {
     private String promptContent;
     private String returnContent;
     private String testRunId;
+    private String testCaseId;
     private String provider;
     private String model;
     private Map<String, Object> llmParameters;
     private boolean isComplete;
+    private Map<String, String> functionCallResponse;
 
-    public RecordAPIPayload() {
+    public RecordDTO() {
     }
 
-    public RecordAPIPayload(
+    public RecordDTO(
             String sessionId,
             String projectVersionId,
             String promptTemplateId,
@@ -43,9 +45,11 @@ public class RecordAPIPayload {
             String returnContent,
             boolean isComplete,
             String testRunId,
+            String testCaseId,
             String provider,
             String model,
-            Map<String, Object> llmParameters
+            Map<String, Object> llmParameters,
+            Map<String, String> functionCallResponse
     ) {
         this.sessionId = sessionId;
         this.projectVersionId = projectVersionId;
@@ -59,9 +63,11 @@ public class RecordAPIPayload {
         this.returnContent = returnContent;
         this.isComplete = isComplete;
         this.testRunId = testRunId;
+        this.testCaseId = testCaseId;
         this.provider = provider;
         this.model = model;
         this.llmParameters = llmParameters;
+        this.functionCallResponse = functionCallResponse;
     }
 
     public String getSessionId() {
@@ -117,6 +123,10 @@ public class RecordAPIPayload {
         return testRunId;
     }
 
+    public String getTestCaseId() {
+        return testCaseId;
+    }
+
     public String getProvider() {
         return provider;
     }
@@ -129,22 +139,26 @@ public class RecordAPIPayload {
         return llmParameters;
     }
 
+    public Map<String, String> getFunctionCallResponse() {
+        return functionCallResponse;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        RecordAPIPayload payload = (RecordAPIPayload) o;
-        return Double.compare(payload.startTime, startTime) == 0 && Double.compare(payload.endTime, endTime) == 0 && isComplete == payload.isComplete && Objects.equals(sessionId, payload.sessionId) && Objects.equals(projectVersionId, payload.projectVersionId) && Objects.equals(promptTemplateId, payload.promptTemplateId) && Objects.equals(tag, payload.tag) && Objects.equals(inputs, payload.inputs) && Objects.equals(customMetadata, payload.customMetadata) && Objects.equals(promptContent, payload.promptContent) && Objects.equals(returnContent, payload.returnContent) && Objects.equals(testRunId, payload.testRunId) && Objects.equals(provider, payload.provider) && Objects.equals(model, payload.model) && Objects.equals(llmParameters, payload.llmParameters);
+        RecordDTO recordDTO = (RecordDTO) o;
+        return Double.compare(recordDTO.startTime, startTime) == 0 && Double.compare(recordDTO.endTime, endTime) == 0 && isComplete == recordDTO.isComplete && Objects.equals(sessionId, recordDTO.sessionId) && Objects.equals(projectVersionId, recordDTO.projectVersionId) && Objects.equals(promptTemplateId, recordDTO.promptTemplateId) && Objects.equals(tag, recordDTO.tag) && Objects.equals(inputs, recordDTO.inputs) && Objects.equals(customMetadata, recordDTO.customMetadata) && Objects.equals(promptContent, recordDTO.promptContent) && Objects.equals(returnContent, recordDTO.returnContent) && Objects.equals(testRunId, recordDTO.testRunId) && Objects.equals(testCaseId, recordDTO.testCaseId) && Objects.equals(provider, recordDTO.provider) && Objects.equals(model, recordDTO.model) && Objects.equals(llmParameters, recordDTO.llmParameters) && Objects.equals(functionCallResponse, recordDTO.functionCallResponse);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(sessionId, projectVersionId, promptTemplateId, startTime, endTime, tag, inputs, customMetadata, promptContent, returnContent, isComplete, testRunId, provider, model, llmParameters);
+        return Objects.hash(sessionId, projectVersionId, promptTemplateId, startTime, endTime, tag, inputs, customMetadata, promptContent, returnContent, testRunId, testCaseId, provider, model, llmParameters, isComplete, functionCallResponse);
     }
 
     @Override
     public String toString() {
-        return "RecordAPIPayload{" +
+        return "RecordDTO{" +
                 "sessionId='" + sessionId + '\'' +
                 ", projectVersionId='" + projectVersionId + '\'' +
                 ", promptTemplateId='" + promptTemplateId + '\'' +
@@ -155,11 +169,13 @@ public class RecordAPIPayload {
                 ", customMetadata=" + customMetadata +
                 ", promptContent='" + promptContent + '\'' +
                 ", returnContent='" + returnContent + '\'' +
-                ", isComplete=" + isComplete +
                 ", testRunId='" + testRunId + '\'' +
+                ", testCaseId='" + testCaseId + '\'' +
                 ", provider='" + provider + '\'' +
                 ", model='" + model + '\'' +
                 ", llmParameters=" + llmParameters +
+                ", isComplete=" + isComplete +
+                ", functionCallResponse=" + functionCallResponse +
                 '}';
     }
 }

@@ -3,7 +3,7 @@ package ai.freeplay.client.thin;
 import ai.freeplay.client.HttpConfig;
 import ai.freeplay.client.internal.AsyncHttp;
 import ai.freeplay.client.internal.JSONUtil;
-import ai.freeplay.client.thin.internal.model.Templates;
+import ai.freeplay.client.thin.internal.dto.TemplatesDTO;
 
 import java.net.http.HttpResponse;
 import java.util.concurrent.CompletableFuture;
@@ -23,13 +23,13 @@ public class APITemplateResolver implements TemplateResolver {
     }
 
     @Override
-    public CompletableFuture<Templates> getPrompts(String projectId, String environment) {
+    public CompletableFuture<TemplatesDTO> getPrompts(String projectId, String environment) {
         String url = format("%s/projects/%s/templates/all/%s", baseUrl, projectId, environment);
         return AsyncHttp
                 .get(url, freeplayApiKey, httpConfig)
                 .thenApply((HttpResponse<String> response) -> {
                     throwFreeplayIfError(response, 200);
-                    return JSONUtil.parse(response.body(), Templates.class);
+                    return JSONUtil.parse(response.body(), TemplatesDTO.class);
                 });
     }
 }

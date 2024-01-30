@@ -2,8 +2,8 @@ package ai.freeplay.client.thin;
 
 import ai.freeplay.client.HttpClientTestBase;
 import ai.freeplay.client.exceptions.FreeplayConfigurationException;
-import ai.freeplay.client.thin.internal.model.Template;
-import ai.freeplay.client.thin.internal.model.Templates;
+import ai.freeplay.client.thin.internal.dto.TemplateDTO;
+import ai.freeplay.client.thin.internal.dto.TemplatesDTO;
 import org.junit.Test;
 
 import java.nio.file.FileSystems;
@@ -22,13 +22,13 @@ public class FilesystemTemplateResolverTest extends HttpClientTestBase {
     @Test
     public void testResolvesPromptWithParams() throws ExecutionException, InterruptedException {
         FilesystemTemplateResolver resolver = new FilesystemTemplateResolver(getTestFilesDirectory());
-        Templates templates = resolver.getPrompts(projectId, "prod").get();
+        TemplatesDTO templates = resolver.getPrompts(projectId, "prod").get();
 
         assertEquals(3, templates.getTemplates().size());
 
-        Template template = getTemplate(templates, "test-prompt-with-params");
+        TemplateDTO template = getTemplate(templates, "test-prompt-with-params");
 
-        Template expected = new Template(
+        TemplateDTO expected = new TemplateDTO(
                 "test-prompt-with-params",
                 "[{\"role\":\"system\",\"content\":\"You are a support agent\"},{\"role\":\"assistant\",\"content\":\"How can I help you?\"},{\"role\":\"user\",\"content\":\"{{question}}\"}]",
                 "openai_chat",
@@ -46,13 +46,13 @@ public class FilesystemTemplateResolverTest extends HttpClientTestBase {
     @Test
     public void testResolvesPromptWithoutParams() throws ExecutionException, InterruptedException {
         FilesystemTemplateResolver resolver = new FilesystemTemplateResolver(getTestFilesDirectory());
-        Templates templates = resolver.getPrompts(projectId, "prod").get();
+        TemplatesDTO templates = resolver.getPrompts(projectId, "prod").get();
 
         assertEquals(3, templates.getTemplates().size());
 
-        Template template = getTemplate(templates, "test-prompt-no-params");
+        TemplateDTO template = getTemplate(templates, "test-prompt-no-params");
 
-        Template expected = new Template(
+        TemplateDTO expected = new TemplateDTO(
                 "test-prompt-no-params",
                 "[{\"role\":\"Human\",\"content\":\"You are a support agent.\"},{\"role\":\"Assistant\",\"content\":\"How may I help you?\"},{\"role\":\"user\",\"content\":\"{{question}}\"}]",
                 null,
@@ -67,13 +67,13 @@ public class FilesystemTemplateResolverTest extends HttpClientTestBase {
     @Test
     public void testResolvesPromptNotChat() throws ExecutionException, InterruptedException {
         FilesystemTemplateResolver resolver = new FilesystemTemplateResolver(getTestFilesDirectory());
-        Templates templates = resolver.getPrompts(projectId, "prod").get();
+        TemplatesDTO templates = resolver.getPrompts(projectId, "prod").get();
 
         assertEquals(3, templates.getTemplates().size());
 
-        Template template = getTemplate(templates, "test-prompt-not-chat");
+        TemplateDTO template = getTemplate(templates, "test-prompt-not-chat");
 
-        Template expected = new Template(
+        TemplateDTO expected = new TemplateDTO(
                 "test-prompt-not-chat",
                 "Answer this question: {{question}}",
                 null,
@@ -88,13 +88,13 @@ public class FilesystemTemplateResolverTest extends HttpClientTestBase {
     @Test
     public void testResolvesPromptInOtherEnvironment() throws ExecutionException, InterruptedException {
         FilesystemTemplateResolver resolver = new FilesystemTemplateResolver(getTestFilesDirectory());
-        Templates templates = resolver.getPrompts(projectId, "qa").get();
+        TemplatesDTO templates = resolver.getPrompts(projectId, "qa").get();
 
         assertEquals(1, templates.getTemplates().size());
 
-        Template template = getTemplate(templates, "test-prompt-with-params");
+        TemplateDTO template = getTemplate(templates, "test-prompt-with-params");
 
-        Template expected = new Template(
+        TemplateDTO expected = new TemplateDTO(
                 "test-prompt-with-params",
                 "[{\"role\":\"system\",\"content\":\"You are a support agent\"},{\"role\":\"assistant\",\"content\":\"How can I help you?\"},{\"role\":\"user\",\"content\":\"{{question}}\"}]",
                 "openai_chat",
@@ -161,14 +161,14 @@ public class FilesystemTemplateResolverTest extends HttpClientTestBase {
         }
     }
 
-    private Template getTemplate(Templates templates, String name) {
-        Optional<Template> maybeTemplate = getTemplateWithName(templates, name);
+    private TemplateDTO getTemplate(TemplatesDTO templates, String name) {
+        Optional<TemplateDTO> maybeTemplate = getTemplateWithName(templates, name);
         assertTrue(maybeTemplate.isPresent());
         return maybeTemplate.get();
     }
 
-    private Optional<Template> getTemplateWithName(
-            Templates templates,
+    private Optional<TemplateDTO> getTemplateWithName(
+            TemplatesDTO templates,
             String name
     ) {
         return templates.getTemplates().stream()

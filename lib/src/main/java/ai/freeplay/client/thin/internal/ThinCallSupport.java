@@ -6,7 +6,7 @@ import ai.freeplay.client.exceptions.FreeplayConfigurationException;
 import ai.freeplay.client.internal.AsyncHttp;
 import ai.freeplay.client.internal.JSONUtil;
 import ai.freeplay.client.thin.TemplateResolver;
-import ai.freeplay.client.thin.internal.model.*;
+import ai.freeplay.client.thin.internal.dto.*;
 import ai.freeplay.client.thin.resources.prompts.ChatMessage;
 import ai.freeplay.client.thin.resources.recordings.RecordInfo;
 import ai.freeplay.client.thin.resources.recordings.RecordResponse;
@@ -46,13 +46,13 @@ public class ThinCallSupport {
         return callFlavorName != null ? callFlavorName : templateFlavorName;
     }
 
-    public CompletableFuture<Template> getPrompt(
+    public CompletableFuture<TemplateDTO> getPrompt(
             String projectId,
             String templateName,
             String environment
     ) {
         return getPrompts(projectId, environment)
-                .thenApply((Templates templates) ->
+                .thenApply((TemplatesDTO templates) ->
                         findPrompt(templates, templateName).orElseThrow(
                                 () -> new FreeplayConfigurationException(
                                         format("Could not find template %s in environment %s.%n", templateName, environment)
@@ -74,8 +74,12 @@ public class ThinCallSupport {
                 recordPayload.getTestRunInfo() == null
                         ? null
                         : recordPayload.getTestRunInfo().getTestRunId();
+        String testCaseId =
+                recordPayload.getTestRunInfo() == null
+                        ? null
+                        : recordPayload.getTestRunInfo().getTestCaseId();
 
-        RecordAPIPayload payload = new RecordAPIPayload(
+        RecordDTO payload = new RecordDTO(
                 recordPayload.getSessionId(),
                 recordPayload.getPromptInfo().getPromptTemplateVersionId(),
                 recordPayload.getPromptInfo().getPromptTemplateId(),
@@ -88,9 +92,11 @@ public class ThinCallSupport {
                 completion.getContent(),
                 recordPayload.getResponseInfo().isComplete(),
                 testRunId,
+                testCaseId,
                 recordPayload.getCallInfo().getProvider(),
                 recordPayload.getCallInfo().getModel(),
-                recordPayload.getCallInfo().getModelParameters()
+                recordPayload.getCallInfo().getModelParameters(),
+                recordPayload.getResponseInfo().getFunctionCallMap()
         );
         return AsyncHttp.postJson(
                 format("%s/v1/record", baseUrl),
@@ -110,7 +116,7 @@ public class ThinCallSupport {
                 url,
                 freeplayApiKey,
                 httpConfig,
-                new TestListPayload(testList)
+                new TestListDTO(testList)
         ).thenApply(httpResponse -> {
             throwFreeplayIfError(httpResponse, 201);
 
@@ -133,12 +139,12 @@ public class ThinCallSupport {
         return JSONUtil.toString(allButLast);
     }
 
-    private CompletableFuture<Templates> getPrompts(String projectId, String tag) {
+    private CompletableFuture<TemplatesDTO> getPrompts(String projectId, String tag) {
         String finalTag = getFinalTag(tag);
         return templateResolver.getPrompts(projectId, finalTag);
     }
 
-    private Optional<Template> findPrompt(Templates templates, String templateName) {
+    private Optional<TemplateDTO> findPrompt(TemplatesDTO templates, String templateName) {
         return templates
                 .getTemplates()
                 .stream()

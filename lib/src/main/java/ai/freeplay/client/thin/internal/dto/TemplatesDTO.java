@@ -1,4 +1,4 @@
-package ai.freeplay.client.thin.internal.model;
+package ai.freeplay.client.thin.internal.dto;
 
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
@@ -6,17 +6,18 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import java.util.Collection;
 
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
-public class Templates {
-    private Collection<Template> templates;
+public class TemplatesDTO {
+    private Collection<TemplateDTO> templates;
 
-    public Templates() {
+    @SuppressWarnings("unused")
+    public TemplatesDTO() {
     }
 
-    public Templates(Collection<Template> templates) {
+    public TemplatesDTO(Collection<TemplateDTO> templates) {
         this.templates = templates;
     }
 
-    public Collection<Template> getTemplates() {
+    public Collection<TemplateDTO> getTemplates() {
         return templates;
     }
 }

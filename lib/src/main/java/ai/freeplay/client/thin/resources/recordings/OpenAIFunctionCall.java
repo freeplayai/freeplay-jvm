@@ -1,5 +1,7 @@
 package ai.freeplay.client.thin.resources.recordings;
 
+import java.util.Map;
+
 @SuppressWarnings({"FieldCanBeLocal", "unused"})
 public class OpenAIFunctionCall {
     private final String name;
@@ -8,5 +10,12 @@ public class OpenAIFunctionCall {
     public OpenAIFunctionCall(String name, String arguments) {
         this.name = name;
         this.arguments = arguments;
+    }
+
+    public Map<String, String> asMap() {
+        return Map.of(
+                "name", name,
+                "arguments", arguments
+        );
     }
 }

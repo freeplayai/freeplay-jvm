@@ -1,11 +1,11 @@
-package ai.freeplay.client.thin.internal.model;
+package ai.freeplay.client.thin.internal.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class TestListPayload {
+public class TestListDTO {
     private final String testListName;
 
-    public TestListPayload(String testListName) {
+    public TestListDTO(String testListName) {
         this.testListName = testListName;
     }
 

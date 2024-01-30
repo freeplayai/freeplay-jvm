@@ -1,4 +1,4 @@
-package ai.freeplay.client.thin.internal.model;
+package ai.freeplay.client.thin.internal.dto;
 
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
@@ -6,7 +6,6 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import java.util.List;
 import java.util.Map;
 
-// TODO should we adopt the DTO naming across the board?
 @SuppressWarnings("unused")
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public class TestRunDTO {

@@ -4,13 +4,16 @@ import ai.freeplay.client.exceptions.FreeplayConfigurationException;
 import ai.freeplay.client.flavor.ChatFlavor;
 import ai.freeplay.client.flavor.Flavors;
 import ai.freeplay.client.thin.internal.ThinCallSupport;
-import ai.freeplay.client.thin.internal.model.Template;
+import ai.freeplay.client.thin.internal.dto.TemplateDTO;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import static ai.freeplay.client.internal.JSONUtil.parseListOf;
 
+@SuppressWarnings("unused")
 public class Prompts {
 
     private final ThinCallSupport callSupport;
@@ -26,7 +29,7 @@ public class Prompts {
     ) {
         return callSupport
                 .getPrompt(projectId, templateName, environment)
-                .thenApply((Template template) -> {
+                .thenApply((TemplateDTO template) -> {
                     validateReturnedTemplate(template);
 
                     ChatFlavor flavor = Flavors.getFlavorByName(template.getFlavorName());
@@ -63,6 +66,16 @@ public class Prompts {
                 .thenApply(boundPrompt -> boundPrompt.format(flavorName));
     }
 
+    public <LLMFormat> CompletableFuture<FormattedPrompt<LLMFormat>> getFormatted(
+            String projectId,
+            String templateName,
+            String environment,
+            Map<String, Object> variables
+    ) {
+        return getBound(projectId, templateName, environment, variables)
+                .thenApply(BoundPrompt::format);
+    }
+
     private CompletableFuture<BoundPrompt> getBound(
             String projectId,
             String templateName,
@@ -73,7 +86,7 @@ public class Prompts {
                 .thenApply(templatePrompt -> templatePrompt.bind(variables));
     }
 
-    private void validateReturnedTemplate(Template template) {
+    private void validateReturnedTemplate(TemplateDTO template) {
         if (template.getFlavorName() == null) {
             throw new FreeplayConfigurationException(
                     "Flavor must be configured in the Freeplay UI. Unable to fulfill request.");

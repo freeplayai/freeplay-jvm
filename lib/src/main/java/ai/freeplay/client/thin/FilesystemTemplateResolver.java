@@ -2,9 +2,9 @@ package ai.freeplay.client.thin;
 
 import ai.freeplay.client.exceptions.FreeplayConfigurationException;
 import ai.freeplay.client.internal.JSONUtil;
-import ai.freeplay.client.thin.internal.model.LocalTemplate;
-import ai.freeplay.client.thin.internal.model.Template;
-import ai.freeplay.client.thin.internal.model.Templates;
+import ai.freeplay.client.thin.internal.dto.LocalTemplateDTO;
+import ai.freeplay.client.thin.internal.dto.TemplateDTO;
+import ai.freeplay.client.thin.internal.dto.TemplatesDTO;
 
 import java.io.File;
 import java.io.IOException;
@@ -36,28 +36,28 @@ public class FilesystemTemplateResolver implements TemplateResolver {
     }
 
     @Override
-    public CompletableFuture<Templates> getPrompts(String projectId, String environment) {
+    public CompletableFuture<TemplatesDTO> getPrompts(String projectId, String environment) {
         Path environmentDir = promptsDirectory.resolve(projectId + "/" + environment);
         if (!Files.exists(environmentDir)) {
             throw new FreeplayConfigurationException(format(
                     "Could not find directory for project %s and environment %s.%n",
                     projectId, environment));
         }
-        List<Template> templateList = Arrays.stream(
+        List<TemplateDTO> templateList = Arrays.stream(
                         requireNonNull(
                                 environmentDir.toFile().listFiles((dir, name) -> name.endsWith(".json"))
                         )).map(this::toTemplate)
                 .collect(Collectors.toList());
 
-        return CompletableFuture.completedFuture(new Templates(templateList));
+        return CompletableFuture.completedFuture(new TemplatesDTO(templateList));
     }
 
-    private Template toTemplate(File templateFile) {
+    private TemplateDTO toTemplate(File templateFile) {
         File promptAbsoluteFile = templateFile.getAbsoluteFile();
 
         try {
-            LocalTemplate localTemplate = JSONUtil.parse(Files.readString(promptAbsoluteFile.toPath()), LocalTemplate.class);
-            return new Template(
+            LocalTemplateDTO localTemplate = JSONUtil.parse(Files.readString(promptAbsoluteFile.toPath()), LocalTemplateDTO.class);
+            return new TemplateDTO(
                     localTemplate.getName(),
                     localTemplate.getContent(),
                     localTemplate.getMetadata().getFlavorName(),

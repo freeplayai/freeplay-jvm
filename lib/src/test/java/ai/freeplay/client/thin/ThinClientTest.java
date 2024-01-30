@@ -3,12 +3,9 @@ package ai.freeplay.client.thin;
 import ai.freeplay.client.HttpClientTestBase;
 import ai.freeplay.client.exceptions.FreeplayConfigurationException;
 import ai.freeplay.client.internal.JSONUtil;
-import ai.freeplay.client.thin.internal.model.RecordAPIPayload;
+import ai.freeplay.client.thin.internal.dto.RecordDTO;
 import ai.freeplay.client.thin.resources.prompts.*;
-import ai.freeplay.client.thin.resources.recordings.CallInfo;
-import ai.freeplay.client.thin.resources.recordings.RecordInfo;
-import ai.freeplay.client.thin.resources.recordings.RecordResponse;
-import ai.freeplay.client.thin.resources.recordings.ResponseInfo;
+import ai.freeplay.client.thin.resources.recordings.*;
 import ai.freeplay.client.thin.resources.sessions.Session;
 import ai.freeplay.client.thin.resources.testruns.TestRun;
 import org.junit.Test;
@@ -17,6 +14,7 @@ import java.net.http.HttpClient;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
@@ -158,7 +156,7 @@ public class ThinClientTest extends HttpClientTestBase {
             assertNotNull(recordFuture.get().getCompletionId());
 
             String requestBody = getCapturedAsyncBody(mockedClient, 2, 1);
-            RecordAPIPayload expectedPayload = new RecordAPIPayload(
+            RecordDTO expectedPayload = new RecordDTO(
                     session.getSessionId().toString(),
                     promptTemplateVersionId,
                     promptTemplateId,
@@ -171,11 +169,13 @@ public class ThinClientTest extends HttpClientTestBase {
                     "I'd like to help you...",
                     true,
                     null,
+                    null,
                     "anthropic",
                     MODEL_CLAUDE_2,
-                    Map.of("max_tokens", 256)
+                    Map.of("max_tokens", 256),
+                    null
             );
-            RecordAPIPayload apiPayload = JSONUtil.parse(requestBody, RecordAPIPayload.class);
+            RecordDTO apiPayload = JSONUtil.parse(requestBody, RecordDTO.class);
             assertEquals(expectedPayload, apiPayload);
         });
     }
@@ -189,7 +189,9 @@ public class ThinClientTest extends HttpClientTestBase {
             String completion = "I'd like to help you...";
             String differentModel = "different-claude";
 
-            StubbedRecordFixtures fixtures = new StubbedRecordFixtures(differentModel, completion);
+            StubbedRecordFixtures fixtures = new StubbedRecordFixtures(
+                    "anthropic", differentModel, "anthropic_chat", completion
+            );
 
             Session session = fpClient.sessions().create();
             CompletableFuture<RecordResponse> recordFuture = fpClient.recordings().create(
@@ -206,7 +208,7 @@ public class ThinClientTest extends HttpClientTestBase {
             assertNotNull(recordFuture.get().getCompletionId());
 
             String expected2 = JSONUtil.toString(fixtures.getBoundPrompt().getMessages());
-            RecordAPIPayload expectedPayload = new RecordAPIPayload(
+            RecordDTO expectedPayload = new RecordDTO(
                     session.getSessionId().toString(),
                     promptTemplateVersionId,
                     promptTemplateId,
@@ -219,12 +221,70 @@ public class ThinClientTest extends HttpClientTestBase {
                     fixtures.getCompletion(),
                     true,
                     null,
+                    null,
                     "anthropic",
                     differentModel,
-                    fixtures.getModelParameters()
+                    fixtures.getModelParameters(),
+                    null
             );
-            RecordAPIPayload actualPayload = JSONUtil.parse(
-                    getCapturedAsyncBody(mockedClient, 1, 0), RecordAPIPayload.class
+            RecordDTO actualPayload = JSONUtil.parse(
+                    getCapturedAsyncBody(mockedClient, 1, 0), RecordDTO.class
+            );
+            assertEquals(expectedPayload, actualPayload);
+        });
+    }
+
+    @Test
+    public void testRecordTestRunId() {
+        withMockedClient((HttpClient mockedClient) -> {
+            mockRecordAsync(mockedClient);
+            Freeplay fpClient = new Freeplay(Config().freeplayAPIKey(freeplayApiKey).baseUrl(baseUrl));
+
+            String testRunId = UUID.randomUUID().toString();
+            String testCaseId = UUID.randomUUID().toString();
+            String completion = "I'd like to help you...";
+            String differentModel = "different-claude";
+
+            StubbedRecordFixtures fixtures = new StubbedRecordFixtures(
+                    "anthropic", differentModel, "anthropic_chat", completion
+            );
+
+            Session session = fpClient.sessions().create();
+            CompletableFuture<RecordResponse> recordFuture = fpClient.recordings().create(
+                    new RecordInfo(
+                            fixtures.getAllMessages(),
+                            variables,
+                            session.getSessionId().toString(),
+                            fixtures.getPromptInfo(),
+                            fixtures.getCallInfo(),
+                            fixtures.getResponseInfo()
+                    ).testRunInfo(new TestRunInfo(testRunId, testCaseId)));
+
+            // Assertions
+            assertNotNull(recordFuture.get().getCompletionId());
+
+            String expected2 = JSONUtil.toString(fixtures.getBoundPrompt().getMessages());
+            RecordDTO expectedPayload = new RecordDTO(
+                    session.getSessionId().toString(),
+                    promptTemplateVersionId,
+                    promptTemplateId,
+                    fixtures.getCallInfo().getStartTime(),
+                    fixtures.getCallInfo().getEndTime(),
+                    "prod",
+                    variables,
+                    null,
+                    expected2,
+                    fixtures.getCompletion(),
+                    true,
+                    testRunId,
+                    testCaseId,
+                    "anthropic",
+                    differentModel,
+                    fixtures.getModelParameters(),
+                    null
+            );
+            RecordDTO actualPayload = JSONUtil.parse(
+                    getCapturedAsyncBody(mockedClient, 1, 0), RecordDTO.class
             );
             assertEquals(expectedPayload, actualPayload);
         });
@@ -237,7 +297,9 @@ public class ThinClientTest extends HttpClientTestBase {
             Freeplay fpClient = new Freeplay(Config().freeplayAPIKey(freeplayApiKey).baseUrl(baseUrl));
 
             String completion = "I'd like to help you...";
-            StubbedRecordFixtures fixtures = new StubbedRecordFixtures(MODEL_CLAUDE_2, completion);
+            StubbedRecordFixtures fixtures = new StubbedRecordFixtures(
+                    "anthropic", MODEL_CLAUDE_2, "anthropic_chat", completion
+            );
 
             Session session = fpClient.sessions().create();
             CompletableFuture<RecordResponse> recordFuture = fpClient.recordings().create(
@@ -252,6 +314,62 @@ public class ThinClientTest extends HttpClientTestBase {
 
             // Assertions
             assertNull(recordFuture.get().getCompletionId());
+        });
+    }
+
+    @Test
+    public void testRecordFunctionCall() {
+        withMockedClient((HttpClient mockedClient) -> {
+            mockRecordAsync(mockedClient);
+            Freeplay fpClient = new Freeplay(Config().freeplayAPIKey(freeplayApiKey).baseUrl(baseUrl));
+
+            // No completion response on function calls
+            StubbedRecordFixtures fixtures = new StubbedRecordFixtures(
+                    "openai", MODEL_GPT_35_TURBO, "openai_chat", null
+            );
+
+            Session session = fpClient.sessions().create();
+            String functionName = "function_name";
+            String arguments = "{\"location\": \"San Francisco, CA\", \"format\": \"celsius\"}";
+            ResponseInfo responseInfo = new ResponseInfo(true)
+                    .functionCall(new OpenAIFunctionCall(functionName, arguments));
+            CompletableFuture<RecordResponse> recordFuture = fpClient.recordings().create(
+                    new RecordInfo(
+                            fixtures.getAllMessages(),
+                            variables,
+                            session.getSessionId().toString(),
+                            fixtures.getPromptInfo(),
+                            fixtures.getCallInfo(),
+                            responseInfo
+                    ));
+
+            // Assertions
+            assertNotNull(recordFuture.get().getCompletionId());
+
+            String expected = JSONUtil.toString(fixtures.getBoundPrompt().getMessages());
+            RecordDTO expectedPayload = new RecordDTO(
+                    session.getSessionId().toString(),
+                    promptTemplateVersionId,
+                    promptTemplateId,
+                    fixtures.getCallInfo().getStartTime(),
+                    fixtures.getCallInfo().getEndTime(),
+                    "prod",
+                    variables,
+                    null,
+                    expected,
+                    null,
+                    true,
+                    null,
+                    null,
+                    "openai",
+                    MODEL_GPT_35_TURBO,
+                    fixtures.getModelParameters(),
+                    Map.of("name", functionName, "arguments", arguments)
+            );
+            RecordDTO actualPayload = JSONUtil.parse(
+                    getCapturedAsyncBody(mockedClient, 1, 0), RecordDTO.class
+            );
+            assertEquals(expectedPayload, actualPayload);
         });
     }
 
@@ -348,7 +466,7 @@ public class ThinClientTest extends HttpClientTestBase {
             mockUnauthorizedRecordAsync(mockedClient);
 
             Freeplay fpClient = new Freeplay(Config().freeplayAPIKey(freeplayApiKey).baseUrl(baseUrl));
-            StubbedRecordFixtures fixtures = new StubbedRecordFixtures(MODEL_CLAUDE_2, "Some completion");
+            StubbedRecordFixtures fixtures = new StubbedRecordFixtures("anthropic", MODEL_CLAUDE_2, "anthropic_chat", "Some completion");
 
             Session session = fpClient.sessions().create();
             ExecutionException exception = assertThrows(
@@ -376,7 +494,9 @@ public class ThinClientTest extends HttpClientTestBase {
         private final Map<String, Object> modelParameters;
 
         public StubbedRecordFixtures(
+                String provider,
                 String model,
+                String flavorName,
                 String completion
         ) {
             modelParameters = Map.of("max_tokens", 256);
@@ -386,14 +506,14 @@ public class ThinClientTest extends HttpClientTestBase {
                     templateName,
                     "prod",
                     modelParameters,
-                    "anthropic",
-                    MODEL_CLAUDE_2,
-                    "anthropic_chat"
+                    provider,
+                    model,
+                    flavorName
             );
             this.completion = completion;
 
             callInfo = new CallInfo(
-                    "anthropic",
+                    provider,
                     model,
                     System.currentTimeMillis() - 10,
                     System.currentTimeMillis(),
@@ -435,7 +555,7 @@ public class ThinClientTest extends HttpClientTestBase {
 
         public List<ChatMessage> getAllMessages() {
             return getBoundPrompt()
-                    .format("anthropic_chat")
+                    .format(promptInfo.getFlavorName())
                     .allMessages(new ChatMessage("Assistant", completion));
         }
     }

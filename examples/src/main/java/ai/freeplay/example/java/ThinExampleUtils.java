@@ -2,11 +2,14 @@ package ai.freeplay.example.java;
 
 import ai.freeplay.client.thin.resources.prompts.ChatMessage;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
+import com.fasterxml.jackson.databind.annotation.JsonNaming;
 
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,12 +42,23 @@ public class ThinExampleUtils {
         }
     }
 
-    private static CompletableFuture<HttpResponse<String>> callOpenAI(
+    public static CompletableFuture<HttpResponse<String>> callOpenAI(
             ObjectMapper objectMapper,
             String openAIApiKey,
             String model,
             Map<String, Object> llmParameters,
             List<ChatMessage> messages
+    ) {
+        return callOpenAI(objectMapper, openAIApiKey, model, llmParameters, messages, Collections.emptyList());
+    }
+
+    public static CompletableFuture<HttpResponse<String>> callOpenAI(
+            ObjectMapper objectMapper,
+            String openAIApiKey,
+            String model,
+            Map<String, Object> llmParameters,
+            List<ChatMessage> messages,
+            List<OpenAIFunctionCallDTO> functionCalls
     ) {
         try {
             String openAIChatURL = "https://api.openai.com/v1/chat/completions";
@@ -52,6 +66,9 @@ public class ThinExampleUtils {
             Map<String, Object> bodyMap = new LinkedHashMap<>();
             bodyMap.put("model", model);
             bodyMap.put("messages", messages);
+            if (!functionCalls.isEmpty()) {
+                bodyMap.put("functions", functionCalls);
+            }
             bodyMap.putAll(llmParameters);
             String body = objectMapper.writeValueAsString(bodyMap);
 
@@ -97,6 +114,69 @@ public class ThinExampleUtils {
                     .sendAsync(requestBuilder.build(), HttpResponse.BodyHandlers.ofString());
         } catch (Exception e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
+    public static class OpenAIFunctionCallDTO {
+        private final String name;
+        private final String description;
+        private final Parameters parameters;
+
+        public OpenAIFunctionCallDTO(String name, String description, Parameters parameters) {
+            this.name = name;
+            this.description = description;
+            this.parameters = parameters;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public String getDescription() {
+            return description;
+        }
+
+        public Parameters getParameters() {
+            return parameters;
+        }
+
+        @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
+        public static class Parameters {
+            private final String type;
+            private final Map<String, Property> properties;
+
+            public Parameters(String type, Map<String, Property> properties) {
+                this.type = type;
+                this.properties = properties;
+            }
+
+            public String getType() {
+                return type;
+            }
+
+            public Map<String, Property> getProperties() {
+                return properties;
+            }
+        }
+
+        @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
+        public static class Property {
+            private final String type;
+            private final String description;
+
+            public Property(String type, String description) {
+                this.type = type;
+                this.description = description;
+            }
+
+            public String getType() {
+                return type;
+            }
+
+            public String getDescription() {
+                return description;
+            }
         }
     }
 }

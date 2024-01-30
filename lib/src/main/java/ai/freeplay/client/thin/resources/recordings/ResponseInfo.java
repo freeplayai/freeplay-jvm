@@ -1,5 +1,7 @@
 package ai.freeplay.client.thin.resources.recordings;
 
+import java.util.Map;
+
 @SuppressWarnings({"FieldCanBeLocal", "unused"})
 public class ResponseInfo {
     private final boolean isComplete;
@@ -44,6 +46,13 @@ public class ResponseInfo {
 
     public OpenAIFunctionCall getFunctionCall() {
         return functionCall;
+    }
+
+    public Map<String, String> getFunctionCallMap() {
+        if (functionCall == null) {
+            return null;
+        }
+        return functionCall.asMap();
     }
 
     public int getPromptTokens() {

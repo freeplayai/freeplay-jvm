@@ -3,10 +3,9 @@ package ai.freeplay.example.java;
 import ai.freeplay.client.thin.Freeplay;
 import ai.freeplay.client.thin.resources.prompts.ChatMessage;
 import ai.freeplay.client.thin.resources.prompts.FormattedPrompt;
-import ai.freeplay.client.thin.resources.recordings.CallInfo;
-import ai.freeplay.client.thin.resources.recordings.RecordInfo;
-import ai.freeplay.client.thin.resources.recordings.RecordResponse;
-import ai.freeplay.client.thin.resources.recordings.ResponseInfo;
+import ai.freeplay.client.thin.resources.recordings.*;
+import ai.freeplay.example.java.ThinExampleUtils.OpenAIFunctionCallDTO;
+import ai.freeplay.example.java.ThinExampleUtils.OpenAIFunctionCallDTO.Parameters;
 import ai.freeplay.example.java.ThinExampleUtils.Tuple3;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -18,45 +17,58 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 import static ai.freeplay.client.thin.Freeplay.Config;
-import static ai.freeplay.example.java.ThinExampleUtils.callAnthropic;
+import static ai.freeplay.example.java.ThinExampleUtils.OpenAIFunctionCallDTO.Property;
+import static ai.freeplay.example.java.ThinExampleUtils.callOpenAI;
 
-public class ThinExample {
+public class ThinFunctionCallExample {
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
-    public static void main(String[] args) throws ExecutionException, InterruptedException {
+    public static void main(String[] args) throws ExecutionException, InterruptedException, JsonProcessingException {
         String freeplayApiKey = System.getenv("FREEPLAY_API_KEY");
         String projectId = System.getenv("FREEPLAY_PROJECT_ID");
         String customerDomain = System.getenv("FREEPLAY_CUSTOMER_NAME");
-        String anthropicApiKey = System.getenv("ANTHROPIC_API_KEY");
+        String openAIApiKey = System.getenv("OPENAI_API_KEY");
 
         Freeplay fpClient = new Freeplay(Config()
                 .freeplayAPIKey(freeplayApiKey)
                 .customerDomain(customerDomain)
         );
 
-        Map<String, Object> variables = Map.of("question", "Why isn't my window working?");
+        Map<String, Object> variables = Map.of("pop_star", "Bruno Mars");
+
+        OpenAIFunctionCallDTO functionDefinition = new OpenAIFunctionCallDTO(
+                "get_album_tracklist",
+                "Given an album name and genre, return a list of songs.",
+                new Parameters(
+                        "object",
+                        Map.of(
+                                "album_name", new Property("string", "Name of album from which to retrieve tracklist."),
+                                "genre", new Property("string", "Album genre")
+                        )
+                )
+        );
 
         fpClient.prompts()
-                .<String>getFormatted(
+                .<List<ChatMessage>>getFormatted(
                         projectId,
-                        "my-prompt-anthropic",
+                        "album_bot",
                         "prod",
-                        variables,
-                        null
-                ).thenCompose((FormattedPrompt<String> formattedPrompt) -> {
+                        variables
+                ).thenCompose((FormattedPrompt<List<ChatMessage>> formattedPrompt) -> {
                             long startTime = System.currentTimeMillis();
-                            return callAnthropic(
+                            return callOpenAI(
                                     objectMapper,
-                                    anthropicApiKey,
+                                    openAIApiKey,
                                     formattedPrompt.getPromptInfo().getModel(),
                                     formattedPrompt.getPromptInfo().getModelParameters(),
-                                    formattedPrompt.getFormattedPrompt()
+                                    formattedPrompt.getFormattedPrompt(),
+                                    List.of(functionDefinition)
                             ).thenApply((HttpResponse<String> response) ->
                                     new Tuple3<>(formattedPrompt, response, startTime)
                             );
                         }
-                ).thenCompose((Tuple3<FormattedPrompt<String>, HttpResponse<String>, Long> promptAndResponse) -> {
-                            FormattedPrompt<String> formattedPrompt = promptAndResponse.first;
+                ).thenCompose((Tuple3<FormattedPrompt<List<ChatMessage>>, HttpResponse<String>, Long> promptAndResponse) -> {
+                            FormattedPrompt<List<ChatMessage>> formattedPrompt = promptAndResponse.first;
                             HttpResponse<String> response = promptAndResponse.second;
                             long startTime = promptAndResponse.third;
 
@@ -66,10 +78,9 @@ public class ThinExample {
                             } catch (JsonProcessingException e) {
                                 throw new RuntimeException("Unable to parse response body.", e);
                             }
-
-                            List<ChatMessage> allMessages = formattedPrompt.allMessages(
-                                    new ChatMessage("Assistant", bodyNode.path("completion").asText())
-                            );
+                            JsonNode functionNode = bodyNode.path("choices").get(0).path("message").path("function_call");
+                            String functionName = functionNode.path("name").asText();
+                            String functionArgs = functionNode.path("arguments").asText();
 
                             CallInfo callInfo = CallInfo.from(
                                     formattedPrompt.getPromptInfo(),
@@ -77,14 +88,14 @@ public class ThinExample {
                                     System.currentTimeMillis()
                             );
                             ResponseInfo responseInfo = new ResponseInfo(
-                                    "stop_sequence".equals(bodyNode.path("stop_reason").asText())
-                            );
+                                    "stop".equals(bodyNode.path("finish_reason").asText())
+                            ).functionCall(new OpenAIFunctionCall(functionName, functionArgs));
 
-                            System.out.println("Completion: " + bodyNode.path("completion").asText());
+                            System.out.printf("Function call: %s(%s)%n", functionName, functionArgs);
 
                             return fpClient.recordings().create(
                                     new RecordInfo(
-                                            allMessages,
+                                            formattedPrompt.getBoundMessages(),
                                             variables,
                                             fpClient.sessions().create().getSessionId().toString(),
                                             formattedPrompt.getPromptInfo(),

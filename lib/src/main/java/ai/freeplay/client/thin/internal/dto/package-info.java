@@ -3,5 +3,5 @@
  * of exposing more specific domain classes that we can shape for the SDK. Find them in the various sub-packages
  * of the 'resources' package.
  */
-package ai.freeplay.client.thin.internal.model;
+package ai.freeplay.client.thin.internal.dto;
 

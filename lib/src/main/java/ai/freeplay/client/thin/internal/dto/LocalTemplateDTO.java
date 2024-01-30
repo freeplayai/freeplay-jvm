@@ -1,4 +1,4 @@
-package ai.freeplay.client.thin.internal.model;
+package ai.freeplay.client.thin.internal.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
@@ -13,17 +13,17 @@ import java.util.Map;
 @SuppressWarnings("unused")
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 @JsonIgnoreProperties({"project_version_id"})
-public class LocalTemplate {
+public class LocalTemplateDTO {
     private String promptTemplateId;
     private String promptTemplateVersionId;
     private String name;
     private String content;
     private Metadata metadata;
 
-    public LocalTemplate() {
+    public LocalTemplateDTO() {
     }
 
-    public LocalTemplate(
+    public LocalTemplateDTO(
             String name,
             String content,
 

@@ -2,7 +2,7 @@ package ai.freeplay.client.processor;
 
 import ai.freeplay.client.exceptions.FreeplayConfigurationException;
 import ai.freeplay.client.model.PromptTemplate;
-import ai.freeplay.client.thin.internal.model.Templates;
+import ai.freeplay.client.thin.internal.dto.TemplatesDTO;
 
 import java.nio.file.Path;
 import java.util.Collection;
@@ -22,7 +22,7 @@ public class FilesystemTemplateResolver implements TemplateResolver {
     @Override
     public Collection<PromptTemplate> getPrompts(String projectId, String environment) {
         try {
-            Templates prompts = thinResolver.getPrompts(projectId, environment).get();
+            TemplatesDTO prompts = thinResolver.getPrompts(projectId, environment).get();
             return prompts.getTemplates().stream().map(template -> new PromptTemplate(
                     template.getName(),
                     template.getContent(),
