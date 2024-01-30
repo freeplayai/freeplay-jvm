@@ -1,7 +1,5 @@
 package ai.freeplay.client.thin.resources.prompts;
 
-import ai.freeplay.client.thin.resources.recordings.CallInfo;
-
 import java.util.Map;
 import java.util.Objects;
 
