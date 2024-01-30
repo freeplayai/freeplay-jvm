@@ -1,15 +1,30 @@
 package ai.freeplay.client.thin.resources.sessions;
 
+import java.util.Map;
 import java.util.UUID;
 
 public class Session {
     private final UUID sessionId;
+    private Map<String, Object> customMetadata;
 
     public Session() {
         sessionId = UUID.randomUUID();
     }
 
-    public UUID getSessionId() {
-        return sessionId;
+    public Session customMetadata(Map<String, Object> customMetadata) {
+        this.customMetadata = customMetadata;
+        return this;
+    }
+
+    public String getSessionId() {
+        return sessionId.toString();
+    }
+
+    public Map<String, Object> getCustomMetadata() {
+        return customMetadata;
+    }
+
+    public SessionInfo getSessionInfo() {
+        return new SessionInfo(sessionId.toString(), customMetadata);
     }
 }

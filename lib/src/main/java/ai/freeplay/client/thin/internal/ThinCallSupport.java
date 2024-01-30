@@ -80,14 +80,14 @@ public class ThinCallSupport {
                         : recordPayload.getTestRunInfo().getTestCaseId();
 
         RecordDTO payload = new RecordDTO(
-                recordPayload.getSessionId(),
+                recordPayload.getSessionInfo().getSessionId(),
                 recordPayload.getPromptInfo().getPromptTemplateVersionId(),
                 recordPayload.getPromptInfo().getPromptTemplateId(),
                 recordPayload.getCallInfo().getStartTime(),
                 recordPayload.getCallInfo().getEndTime(),
                 recordPayload.getPromptInfo().getEnvironment(),
                 recordPayload.getInputs(),
-                recordPayload.getCallInfo().getCustomMetadata(),
+                recordPayload.getSessionInfo().getCustomMetadata(),
                 historyAsString,
                 completion.getContent(),
                 recordPayload.getResponseInfo().isComplete(),

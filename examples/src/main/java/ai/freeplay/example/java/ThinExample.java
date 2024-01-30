@@ -7,6 +7,7 @@ import ai.freeplay.client.thin.resources.recordings.CallInfo;
 import ai.freeplay.client.thin.resources.recordings.RecordInfo;
 import ai.freeplay.client.thin.resources.recordings.RecordResponse;
 import ai.freeplay.client.thin.resources.recordings.ResponseInfo;
+import ai.freeplay.client.thin.resources.sessions.SessionInfo;
 import ai.freeplay.example.java.ThinExampleUtils.Tuple3;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -79,6 +80,9 @@ public class ThinExample {
                             ResponseInfo responseInfo = new ResponseInfo(
                                     "stop_sequence".equals(bodyNode.path("stop_reason").asText())
                             );
+                            SessionInfo sessionInfo = fpClient.sessions().create()
+                                    .customMetadata(Map.of("custom_field", "custom_value"))
+                                    .getSessionInfo();
 
                             System.out.println("Completion: " + bodyNode.path("completion").asText());
 
@@ -86,7 +90,7 @@ public class ThinExample {
                                     new RecordInfo(
                                             allMessages,
                                             variables,
-                                            fpClient.sessions().create().getSessionId().toString(),
+                                            sessionInfo,
                                             formattedPrompt.getPromptInfo(),
                                             callInfo,
                                             responseInfo

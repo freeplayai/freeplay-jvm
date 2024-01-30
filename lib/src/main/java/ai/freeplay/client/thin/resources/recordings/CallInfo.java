@@ -12,7 +12,6 @@ public class CallInfo {
     private final double startTime;
     private final double endTime;
     private final Map<String, Object> modelParameters;
-    private Map<String, Object> customMetadata;
 
     public static double instantToDouble(Instant instant) {
         return Double.parseDouble(instant.getEpochSecond() + "." + instant.getNano());
@@ -28,7 +27,6 @@ public class CallInfo {
         );
     }
 
-
     public CallInfo(
             String provider,
             String model,
@@ -41,12 +39,6 @@ public class CallInfo {
         this.startTime = instantToDouble(Instant.ofEpochMilli(startTime));
         this.endTime = instantToDouble(Instant.ofEpochMilli(endTime));
         this.modelParameters = modelParameters;
-    }
-
-    @SuppressWarnings("unused")
-    public CallInfo customMetadata(Map<String, Object> customMetadata) {
-        this.customMetadata = customMetadata;
-        return this;
     }
 
     public String getProvider() {
@@ -67,9 +59,5 @@ public class CallInfo {
 
     public Map<String, Object> getModelParameters() {
         return modelParameters;
-    }
-
-    public Map<String, Object> getCustomMetadata() {
-        return customMetadata;
     }
 }

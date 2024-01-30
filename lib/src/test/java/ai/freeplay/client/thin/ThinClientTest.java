@@ -137,16 +137,18 @@ public class ThinClientTest extends HttpClientTestBase {
                     prompt.getPromptInfo(),
                     startTime,
                     endTime
-            ).customMetadata(customMetadata);
+            );
             ResponseInfo responseInfo = new ResponseInfo(true);
             List<ChatMessage> allMessages = prompt.allMessages(new ChatMessage("Assistant", completion));
 
-            Session session = fpClient.sessions().create();
+            Session session = fpClient.sessions().create()
+                    .customMetadata(customMetadata);
+
             CompletableFuture<RecordResponse> recordFuture = fpClient.recordings().create(
                     new RecordInfo(
                             allMessages,
                             variables,
-                            session.getSessionId().toString(),
+                            session.getSessionInfo(),
                             prompt.getPromptInfo(),
                             callInfo,
                             responseInfo
@@ -157,7 +159,7 @@ public class ThinClientTest extends HttpClientTestBase {
 
             String requestBody = getCapturedAsyncBody(mockedClient, 2, 1);
             RecordDTO expectedPayload = new RecordDTO(
-                    session.getSessionId().toString(),
+                    session.getSessionId(),
                     promptTemplateVersionId,
                     promptTemplateId,
                     CallInfo.instantToDouble(Instant.ofEpochMilli(startTime)),
@@ -198,7 +200,7 @@ public class ThinClientTest extends HttpClientTestBase {
                     new RecordInfo(
                             fixtures.getAllMessages(),
                             variables,
-                            session.getSessionId().toString(),
+                            session.getSessionInfo(),
                             fixtures.getPromptInfo(),
                             fixtures.getCallInfo(),
                             fixtures.getResponseInfo()
@@ -209,7 +211,7 @@ public class ThinClientTest extends HttpClientTestBase {
 
             String expected2 = JSONUtil.toString(fixtures.getBoundPrompt().getMessages());
             RecordDTO expectedPayload = new RecordDTO(
-                    session.getSessionId().toString(),
+                    session.getSessionId(),
                     promptTemplateVersionId,
                     promptTemplateId,
                     fixtures.getCallInfo().getStartTime(),
@@ -254,7 +256,7 @@ public class ThinClientTest extends HttpClientTestBase {
                     new RecordInfo(
                             fixtures.getAllMessages(),
                             variables,
-                            session.getSessionId().toString(),
+                            session.getSessionInfo(),
                             fixtures.getPromptInfo(),
                             fixtures.getCallInfo(),
                             fixtures.getResponseInfo()
@@ -265,7 +267,7 @@ public class ThinClientTest extends HttpClientTestBase {
 
             String expected2 = JSONUtil.toString(fixtures.getBoundPrompt().getMessages());
             RecordDTO expectedPayload = new RecordDTO(
-                    session.getSessionId().toString(),
+                    session.getSessionId(),
                     promptTemplateVersionId,
                     promptTemplateId,
                     fixtures.getCallInfo().getStartTime(),
@@ -306,7 +308,7 @@ public class ThinClientTest extends HttpClientTestBase {
                     new RecordInfo(
                             fixtures.getAllMessages(),
                             variables,
-                            session.getSessionId().toString(),
+                            session.getSessionInfo(),
                             fixtures.getPromptInfo(),
                             fixtures.getCallInfo(),
                             fixtures.getResponseInfo()
@@ -337,7 +339,7 @@ public class ThinClientTest extends HttpClientTestBase {
                     new RecordInfo(
                             fixtures.getAllMessages(),
                             variables,
-                            session.getSessionId().toString(),
+                            session.getSessionInfo(),
                             fixtures.getPromptInfo(),
                             fixtures.getCallInfo(),
                             responseInfo
@@ -348,7 +350,7 @@ public class ThinClientTest extends HttpClientTestBase {
 
             String expected = JSONUtil.toString(fixtures.getBoundPrompt().getMessages());
             RecordDTO expectedPayload = new RecordDTO(
-                    session.getSessionId().toString(),
+                    session.getSessionId(),
                     promptTemplateVersionId,
                     promptTemplateId,
                     fixtures.getCallInfo().getStartTime(),
@@ -475,7 +477,7 @@ public class ThinClientTest extends HttpClientTestBase {
                             new RecordInfo(
                                     fixtures.getAllMessages(),
                                     variables,
-                                    session.getSessionId().toString(),
+                                    session.getSessionInfo(),
                                     fixtures.getPromptInfo(),
                                     fixtures.getCallInfo(),
                                     fixtures.getResponseInfo()

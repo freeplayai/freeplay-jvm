@@ -4,6 +4,7 @@ import ai.freeplay.client.thin.Freeplay;
 import ai.freeplay.client.thin.resources.prompts.ChatMessage;
 import ai.freeplay.client.thin.resources.prompts.FormattedPrompt;
 import ai.freeplay.client.thin.resources.recordings.*;
+import ai.freeplay.client.thin.resources.sessions.SessionInfo;
 import ai.freeplay.example.java.ThinExampleUtils.OpenAIFunctionCallDTO;
 import ai.freeplay.example.java.ThinExampleUtils.OpenAIFunctionCallDTO.Parameters;
 import ai.freeplay.example.java.ThinExampleUtils.Tuple3;
@@ -90,6 +91,7 @@ public class ThinFunctionCallExample {
                             ResponseInfo responseInfo = new ResponseInfo(
                                     "stop".equals(bodyNode.path("finish_reason").asText())
                             ).functionCall(new OpenAIFunctionCall(functionName, functionArgs));
+                            SessionInfo sessionInfo = fpClient.sessions().create().getSessionInfo();
 
                             System.out.printf("Function call: %s(%s)%n", functionName, functionArgs);
 
@@ -97,7 +99,7 @@ public class ThinFunctionCallExample {
                                     new RecordInfo(
                                             formattedPrompt.getBoundMessages(),
                                             variables,
-                                            fpClient.sessions().create().getSessionId().toString(),
+                                            sessionInfo,
                                             formattedPrompt.getPromptInfo(),
                                             callInfo,
                                             responseInfo
