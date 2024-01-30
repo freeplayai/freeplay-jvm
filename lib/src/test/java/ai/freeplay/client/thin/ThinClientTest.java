@@ -328,9 +328,6 @@ public class ThinClientTest extends HttpClientTestBase {
             Freeplay fpClient = new Freeplay(Config().freeplayAPIKey(freeplayApiKey).baseUrl(baseUrl));
 
             String completion = "I'd like to help you...";
-            StubbedRecordFixtures fixtures = new StubbedRecordFixtures(
-                    "anthropic", MODEL_CLAUDE_2, "anthropic_chat", completion
-            );
 
             FreeplayClientException exception = assertThrows(
                     FreeplayClientException.class,
