@@ -1,9 +1,11 @@
 package ai.freeplay.client.thin;
 
 import ai.freeplay.client.HttpClientTestBase;
+import ai.freeplay.client.exceptions.FreeplayClientException;
 import ai.freeplay.client.exceptions.FreeplayConfigurationException;
 import ai.freeplay.client.internal.JSONUtil;
 import ai.freeplay.client.thin.internal.dto.RecordDTO;
+import ai.freeplay.client.thin.resources.feedback.CustomerFeedbackResponse;
 import ai.freeplay.client.thin.resources.prompts.*;
 import ai.freeplay.client.thin.resources.recordings.*;
 import ai.freeplay.client.thin.resources.sessions.Session;
@@ -320,6 +322,31 @@ public class ThinClientTest extends HttpClientTestBase {
     }
 
     @Test
+    public void testRecordWithInvalidCustomMetadata() {
+        withMockedClient((HttpClient mockedClient) -> {
+            mockRecordAsync(mockedClient);
+            Freeplay fpClient = new Freeplay(Config().freeplayAPIKey(freeplayApiKey).baseUrl(baseUrl));
+
+            String completion = "I'd like to help you...";
+            StubbedRecordFixtures fixtures = new StubbedRecordFixtures(
+                    "anthropic", MODEL_CLAUDE_2, "anthropic_chat", completion
+            );
+
+            FreeplayClientException exception = assertThrows(
+                    FreeplayClientException.class,
+                    () -> fpClient.sessions().create().customMetadata(
+                            Map.of("not_allowed", new Object())
+                    )
+            );
+
+            assertEquals(
+                    "Invalid value for key 'not_allowed': Value must be a string, number, or boolean.",
+                    exception.getMessage()
+            );
+        });
+    }
+
+    @Test
     public void testRecordFunctionCall() {
         withMockedClient((HttpClient mockedClient) -> {
             mockRecordAsync(mockedClient);
@@ -393,6 +420,74 @@ public class ThinClientTest extends HttpClientTestBase {
             assertEquals("Why isn't my sink working?", testRun.getTestCases().get(0).getVariables().get("question"));
             assertNotNull(testRun.getTestCases().get(1).getTestCaseId());
             assertEquals("Why isn't my internet working?", testRun.getTestCases().get(1).getVariables().get("question"));
+        });
+    }
+
+    @Test
+    public void testCustomerFeedback() {
+        withMockedClient((HttpClient mockedClient) -> {
+            mockUpdateCustomerFeedbackAsync(mockedClient);
+            String completionId = UUID.randomUUID().toString();
+            Map<String, Object> feedback = Map.of(
+                    "helpful", "thumbsup",
+                    "intkey", 1234,
+                    "floatkey", 12.34,
+                    "booleankey", false
+            );
+
+            Freeplay fpClient = new Freeplay(Config().freeplayAPIKey(freeplayApiKey).baseUrl(baseUrl));
+
+            CustomerFeedbackResponse response = fpClient.customerFeedback().update(completionId, feedback).get();
+
+            assertNotNull(response);
+
+            Map<String, Object> requestBody = JSONUtil.parseMap(getCapturedAsyncBody(mockedClient, 1, 0));
+            assertEquals(feedback, requestBody);
+        });
+    }
+
+    @Test
+    public void handlesUnauthorizedOnCustomerFeedback() {
+        withMockedClient((HttpClient mockedClient) -> {
+            mockUnauthorizedUpdateCustomerFeedbackAsync(mockedClient);
+
+            String completionId = UUID.randomUUID().toString();
+            Map<String, Object> feedback = Map.of(
+                    "helpful", "thumbsup",
+                    "intkey", 1234,
+                    "floatkey", 12.34,
+                    "booleankey", false
+            );
+
+            Freeplay fpClient = new Freeplay(Config().freeplayAPIKey(freeplayApiKey).baseUrl(baseUrl));
+
+            ExecutionException exception = assertThrows(
+                    ExecutionException.class,
+                    () -> fpClient.customerFeedback().update(completionId, feedback).get()
+            );
+            assertEquals("Error making call [401]", exception.getCause().getMessage());
+        });
+    }
+
+    @Test
+    public void testInvalidCustomerFeedback() {
+        withMockedClient((HttpClient mockedClient) -> {
+            String completionId = UUID.randomUUID().toString();
+            Map<String, Object> feedback = Map.of(
+                    "helpful", "thumbsup",
+                    "not_allowed", new Object()
+            );
+
+            Freeplay fpClient = new Freeplay(Config().freeplayAPIKey(freeplayApiKey).baseUrl(baseUrl));
+
+            FreeplayClientException exception = assertThrows(
+                    FreeplayClientException.class,
+                    () -> fpClient.customerFeedback().update(completionId, feedback).get()
+            );
+            assertEquals(
+                    "Invalid value for key 'not_allowed': Value must be a string, number, or boolean.",
+                    exception.getMessage()
+            );
         });
     }
 

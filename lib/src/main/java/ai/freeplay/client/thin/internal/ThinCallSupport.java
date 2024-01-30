@@ -7,6 +7,7 @@ import ai.freeplay.client.internal.AsyncHttp;
 import ai.freeplay.client.internal.JSONUtil;
 import ai.freeplay.client.thin.TemplateResolver;
 import ai.freeplay.client.thin.internal.dto.*;
+import ai.freeplay.client.thin.resources.feedback.CustomerFeedbackResponse;
 import ai.freeplay.client.thin.resources.prompts.ChatMessage;
 import ai.freeplay.client.thin.resources.recordings.RecordInfo;
 import ai.freeplay.client.thin.resources.recordings.RecordResponse;
@@ -15,10 +16,12 @@ import ai.freeplay.client.thin.resources.testruns.TestRun;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import static ai.freeplay.client.internal.Http.throwFreeplayIfError;
+import static ai.freeplay.client.internal.ParameterUtils.validateBasicMap;
 import static ai.freeplay.client.internal.PromptUtils.getFinalTag;
 import static java.lang.String.format;
 import static java.util.stream.Collectors.toList;
@@ -131,6 +134,24 @@ public class ThinCallSupport {
                             .map(testCase -> new TestCase(testCase.getId(), testCase.getVariables()))
                             .collect(toList())
             );
+        });
+    }
+
+    public CompletableFuture<CustomerFeedbackResponse> updateCustomerFeedback(
+            String completionId,
+            Map<String, Object> feedback
+    ) {
+        validateBasicMap(feedback);
+        String url = String.format("%s/v1/completion_feedback/%s", baseUrl, completionId);
+        return AsyncHttp.putJson(
+                url,
+                freeplayApiKey,
+                httpConfig,
+                feedback
+        ).thenApply(httpResponse -> {
+            throwFreeplayIfError(httpResponse, 201);
+
+            return new CustomerFeedbackResponse();
         });
     }
 

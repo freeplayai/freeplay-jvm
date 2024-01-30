@@ -4,7 +4,6 @@ import ai.freeplay.client.Freeplay;
 import ai.freeplay.client.HttpConfig;
 import ai.freeplay.client.ProviderConfigs;
 import ai.freeplay.client.RecordProcessor;
-import ai.freeplay.client.exceptions.FreeplayClientException;
 import ai.freeplay.client.exceptions.FreeplayConfigurationException;
 import ai.freeplay.client.exceptions.FreeplayException;
 import ai.freeplay.client.exceptions.FreeplayServerException;
@@ -66,15 +65,6 @@ public class CallSupport {
 
     public static String createSessionId() throws FreeplayException {
         return randomUUID().toString();
-    }
-
-    public static void validateBasicMap(Map<String, Object> metadata) {
-        for (Map.Entry<String, Object> entry : metadata.entrySet()) {
-            if (!(entry.getValue() instanceof String || entry.getValue() instanceof Number || entry.getValue() instanceof Boolean)) {
-                throw new FreeplayClientException("Invalid value for key '" + entry.getKey() +
-                        "': Value must be a string or number.");
-            }
-        }
     }
 
     public Collection<PromptTemplate> getPrompts(String projectId, String tag) throws FreeplayException {
@@ -440,7 +430,7 @@ public class CallSupport {
     }
 
     public void recordCompletionFeedback(String completionId, Map<String, Object> feedback) throws FreeplayException {
-        validateBasicMap(feedback);
+        ParameterUtils.validateBasicMap(feedback);
 
         String url = getUrl("v1/completion_feedback/%s", completionId);
         try {

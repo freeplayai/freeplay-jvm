@@ -4,6 +4,7 @@ import ai.freeplay.client.exceptions.FreeplayConfigurationException;
 import ai.freeplay.client.exceptions.FreeplayException;
 import ai.freeplay.client.flavor.ChatFlavor;
 import ai.freeplay.client.internal.CallSupport;
+import ai.freeplay.client.internal.ParameterUtils;
 import ai.freeplay.client.model.*;
 import ai.freeplay.client.processor.APITemplateResolver;
 import ai.freeplay.client.processor.ChatPromptProcessor;
@@ -161,7 +162,7 @@ public class Freeplay {
 
     public CompletionSession createSession(String projectId, String environment, Map<String, Object> metadata) {
         String sessionId = CallSupport.createSessionId();
-        CallSupport.validateBasicMap(metadata);
+        ParameterUtils.validateBasicMap(metadata);
         Collection<PromptTemplate> prompts = callSupport.getPrompts(projectId, environment);
 
         return new CompletionSession(callSupport, sessionId, prompts, environment, null, metadata);
@@ -255,7 +256,7 @@ public class Freeplay {
             Map<String, Object> metadata
     ) throws FreeplayException {
         String sessionId = CallSupport.createSessionId();
-        CallSupport.validateBasicMap(metadata);
+        ParameterUtils.validateBasicMap(metadata);
         Collection<PromptTemplate> prompts = callSupport.getPrompts(projectId, environment);
         return callSupport.prepareAndMakeCall(
                 sessionId,
@@ -312,7 +313,7 @@ public class Freeplay {
             Map<String, Object> metadata
     ) throws FreeplayException {
         String sessionId = CallSupport.createSessionId();
-        CallSupport.validateBasicMap(metadata);
+        ParameterUtils.validateBasicMap(metadata);
         Collection<PromptTemplate> prompts = callSupport.getPrompts(projectId, environment);
         ChatSession chatSession =
                 new ChatSession(
@@ -361,7 +362,7 @@ public class Freeplay {
             Map<String, Object> metadata
     ) throws FreeplayException {
         String sessionId = CallSupport.createSessionId();
-        CallSupport.validateBasicMap(metadata);
+        ParameterUtils.validateBasicMap(metadata);
         Collection<PromptTemplate> prompts = callSupport.getPrompts(projectId, environment);
         ChatSession chatSession = new ChatSession(callSupport, sessionId, prompts, templateName, environment, metadata);
         return new ChatStart<>(

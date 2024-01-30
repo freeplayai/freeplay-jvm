@@ -195,6 +195,24 @@ public class MockFixtures {
         }
     }
 
+    public static void mockUpdateCustomerFeedbackAsync(HttpClient mockedClient) throws RuntimeException {
+        try {
+            when(requestAsync(mockedClient, "PUT", "v1/completion_feedback/[^/]*"))
+                    .thenReturn(asyncResponse(201, ""));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static void mockUnauthorizedUpdateCustomerFeedbackAsync(HttpClient mockedClient) throws RuntimeException {
+        try {
+            when(requestAsync(mockedClient, "PUT", "v1/completion_feedback/[^/]*"))
+                    .thenReturn(asyncResponse(401, ""));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public static void mockUnauthorizedCreateTestRunAsync(HttpClient mockedClient) throws RuntimeException {
         try {
             when(requestAsync(mockedClient, "POST", "projects/[^/]*/test-runs-cases"))

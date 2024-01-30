@@ -3,6 +3,7 @@ package ai.freeplay.client.thin;
 import ai.freeplay.client.HttpConfig;
 import ai.freeplay.client.exceptions.FreeplayConfigurationException;
 import ai.freeplay.client.thin.internal.ThinCallSupport;
+import ai.freeplay.client.thin.resources.feedback.CustomerFeedback;
 import ai.freeplay.client.thin.resources.prompts.Prompts;
 import ai.freeplay.client.thin.resources.recordings.Recordings;
 import ai.freeplay.client.thin.resources.sessions.Sessions;
@@ -14,6 +15,7 @@ public class Freeplay {
     private final Prompts prompts;
     private final Recordings recordings;
     private final TestRuns testRuns;
+    private final CustomerFeedback customerFeedback;
 
     public Freeplay(FreeplayConfig config) {
         config.validate();
@@ -27,6 +29,7 @@ public class Freeplay {
         prompts = new Prompts(callSupport);
         recordings = new Recordings(callSupport);
         testRuns = new TestRuns(callSupport);
+        customerFeedback = new CustomerFeedback(callSupport);
     }
 
     public Sessions sessions() {
@@ -43,6 +46,10 @@ public class Freeplay {
 
     public TestRuns testRuns() {
         return testRuns;
+    }
+
+    public CustomerFeedback customerFeedback() {
+        return customerFeedback;
     }
 
     public static FreeplayConfig Config() {

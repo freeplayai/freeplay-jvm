@@ -37,10 +37,29 @@ public class AsyncHttp {
             HttpConfig httpConfig,
             Object body
     ) throws FreeplayException {
+        return sendJson(url, apiKey, httpConfig, "POST", body);
+    }
+
+    public static CompletableFuture<HttpResponse<String>> putJson(
+            String url,
+            String apiKey,
+            HttpConfig httpConfig,
+            Object body
+    ) throws FreeplayException {
+        return sendJson(url, apiKey, httpConfig, "PUT", body);
+    }
+
+    private static CompletableFuture<HttpResponse<String>> sendJson(
+            String url,
+            String apiKey,
+            HttpConfig httpConfig,
+            String method,
+            Object body
+    ) throws FreeplayException {
         HttpRequest.BodyPublisher bodyPublisher = HttpRequest.BodyPublishers.ofString(JSONUtil.toString(body));
         HttpRequest.Builder request =
                 request(url, apiKey, httpConfig)
-                        .method("POST", bodyPublisher)
+                        .method(method, bodyPublisher)
                         .header("Content-Type", "application/json");
 
         try {
@@ -48,7 +67,7 @@ public class AsyncHttp {
                     .build()
                     .sendAsync(request.build(), BodyHandlers.ofString());
         } catch (Exception e) {
-            throw new FreeplayException("Error sending POST request.", e);
+            throw new FreeplayException(format("Error sending %s request.", method), e);
         }
     }
 

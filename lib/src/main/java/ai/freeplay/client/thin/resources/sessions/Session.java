@@ -3,6 +3,8 @@ package ai.freeplay.client.thin.resources.sessions;
 import java.util.Map;
 import java.util.UUID;
 
+import static ai.freeplay.client.internal.ParameterUtils.validateBasicMap;
+
 public class Session {
     private final UUID sessionId;
     private Map<String, Object> customMetadata;
@@ -12,6 +14,7 @@ public class Session {
     }
 
     public Session customMetadata(Map<String, Object> customMetadata) {
+        validateBasicMap(customMetadata);
         this.customMetadata = customMetadata;
         return this;
     }

@@ -50,7 +50,7 @@ public class ThinTestRunExample {
                                                     .map(testCase -> handleTestCase(fpClient, anthropicApiKey, templatePrompt, testCase))
                                                     .collect(toList());
 
-                                    // It's not obvious why we have to go over the futures again after calling CompletableFuture.allOf()
+                                    // It's not obvious why we have to go over the futures again after calling CompletableFuture.allOf().
                                     // The allOf call can only return Void, so it is only telling us when the futures have completed, not
                                     // what their result is. The join() call gets their result. It should not block or take a long time,
                                     // because it is only called after we've gotten the callback that all the futures completed.
