@@ -10,6 +10,7 @@ import ai.freeplay.client.thin.resources.recordings.RecordResponse;
 import ai.freeplay.client.thin.resources.recordings.ResponseInfo;
 import ai.freeplay.client.thin.resources.sessions.SessionInfo;
 import ai.freeplay.client.thin.resources.testruns.TestCase;
+import ai.freeplay.client.thin.resources.testruns.TestRun;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -45,9 +46,15 @@ public class ThinTestRunExample {
                         fpClient.prompts().get(projectId, "my-prompt-anthropic", "prod")
                                 .thenCompose(templatePrompt -> {
 
-                                    List<CompletableFuture<RecordResponse>> futures =
+                                    var futures =
                                             testRun.getTestCases().stream()
-                                                    .map(testCase -> handleTestCase(fpClient, anthropicApiKey, templatePrompt, testCase))
+                                                    .map(testCase ->
+                                                            handleTestCase(
+                                                                    fpClient,
+                                                                    anthropicApiKey,
+                                                                    templatePrompt,
+                                                                    testRun,
+                                                                    testCase))
                                                     .collect(toList());
 
                                     // It's not obvious why we have to go over the futures again after calling CompletableFuture.allOf().
@@ -66,6 +73,7 @@ public class ThinTestRunExample {
             Freeplay fpClient,
             String anthropicApiKey,
             TemplatePrompt templatePrompt,
+            TestRun testRun,
             TestCase testCase
     ) {
         FormattedPrompt<String> formattedPrompt =
@@ -79,12 +87,13 @@ public class ThinTestRunExample {
                 formattedPrompt.getPromptInfo().getModelParameters(),
                 formattedPrompt.getFormattedPrompt()
         ).thenCompose((HttpResponse<String> response) ->
-                recordAnthropic(fpClient, testCase, formattedPrompt, startTime, response)
+                recordAnthropic(fpClient, testRun, testCase, formattedPrompt, startTime, response)
         );
     }
 
     private static CompletableFuture<RecordResponse> recordAnthropic(
             Freeplay fpClient,
+            TestRun testRun,
             TestCase testCase,
             FormattedPrompt<String> formattedPrompt,
             long startTime,
@@ -120,6 +129,6 @@ public class ThinTestRunExample {
                         formattedPrompt.getPromptInfo(),
                         callInfo,
                         responseInfo
-                ));
+                ).testRunInfo(testRun.getTestRunInfo(testCase.getTestCaseId())));
     }
 }

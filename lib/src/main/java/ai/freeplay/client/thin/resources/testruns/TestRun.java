@@ -1,5 +1,7 @@
 package ai.freeplay.client.thin.resources.testruns;
 
+import ai.freeplay.client.thin.resources.recordings.TestRunInfo;
+
 import java.util.List;
 
 public class TestRun {
@@ -17,6 +19,10 @@ public class TestRun {
 
     public List<TestCase> getTestCases() {
         return testCases;
+    }
+
+    public TestRunInfo getTestRunInfo(String testCaseId) {
+        return new TestRunInfo(testRunId, testCaseId);
     }
 
     @Override

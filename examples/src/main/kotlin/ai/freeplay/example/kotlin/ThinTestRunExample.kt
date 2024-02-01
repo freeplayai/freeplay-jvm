@@ -1,0 +1,70 @@
+package ai.freeplay.example.kotlin
+
+import ai.freeplay.client.thin.Freeplay
+import ai.freeplay.client.thin.resources.prompts.ChatMessage
+import ai.freeplay.client.thin.resources.recordings.CallInfo
+import ai.freeplay.client.thin.resources.recordings.RecordInfo
+import ai.freeplay.client.thin.resources.recordings.ResponseInfo
+import ai.freeplay.example.java.ThinExampleUtils.callAnthropic
+import com.fasterxml.jackson.databind.ObjectMapper
+import kotlinx.coroutines.future.await
+import kotlinx.coroutines.runBlocking
+
+private val objectMapper = ObjectMapper()
+
+fun main(): Unit = runBlocking {
+    val freeplayApiKey = System.getenv("FREEPLAY_API_KEY")
+    val projectId = System.getenv("FREEPLAY_PROJECT_ID")
+    val customerDomain = System.getenv("FREEPLAY_CUSTOMER_NAME")
+    val anthropicApiKey = System.getenv("ANTHROPIC_API_KEY")
+
+    val fpClient = Freeplay(
+        Freeplay.Config()
+            .freeplayAPIKey(freeplayApiKey)
+            .customerDomain(customerDomain)
+    )
+
+    val templatePrompt = fpClient.prompts().get(projectId, "my-prompt-anthropic", "prod").await()
+    val testRun = fpClient.testRuns().create(projectId, "core-tests").await()
+
+    for (testCase in testRun.testCases) {
+        val formattedPrompt = templatePrompt.bind(testCase.variables).format<String>()
+
+        val startTime = System.currentTimeMillis()
+        val llmResponse = callAnthropic(
+            objectMapper,
+            anthropicApiKey,
+            formattedPrompt.promptInfo.model,
+            formattedPrompt.promptInfo.modelParameters,
+            formattedPrompt.formattedPrompt
+        ).await()
+
+        val bodyNode = objectMapper.readTree(llmResponse.body())
+
+        println("Recording the result")
+        val allMessages = formattedPrompt.allMessages(
+            ChatMessage("Assistant", bodyNode.path("completion").asText())
+        )
+        val callInfo = CallInfo.from(
+            formattedPrompt.getPromptInfo(),
+            startTime,
+            System.currentTimeMillis()
+        )
+        val responseInfo = ResponseInfo("stop_sequence" == bodyNode.path("stop_reason").asText())
+        val sessionInfo = fpClient.sessions().create()
+            .customMetadata(mapOf("custom_field" to "custom_value"))
+            .sessionInfo
+
+        val recordResponse = fpClient.recordings().create(
+            RecordInfo(
+                allMessages,
+                testCase.variables,
+                sessionInfo,
+                formattedPrompt.getPromptInfo(),
+                callInfo,
+                responseInfo
+            ).testRunInfo(testRun.getTestRunInfo(testCase.testCaseId))
+        ).await()
+        println("Recorded with completionId ${recordResponse.completionId}")
+    }
+}

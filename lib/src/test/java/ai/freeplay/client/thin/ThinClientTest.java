@@ -327,8 +327,6 @@ public class ThinClientTest extends HttpClientTestBase {
             mockRecordAsync(mockedClient);
             Freeplay fpClient = new Freeplay(Config().freeplayAPIKey(freeplayApiKey).baseUrl(baseUrl));
 
-            String completion = "I'd like to help you...";
-
             FreeplayClientException exception = assertThrows(
                     FreeplayClientException.class,
                     () -> fpClient.sessions().create().customMetadata(
