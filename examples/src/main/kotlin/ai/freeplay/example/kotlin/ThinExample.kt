@@ -2,7 +2,6 @@ package ai.freeplay.example.kotlin
 
 import ai.freeplay.client.thin.Freeplay
 import ai.freeplay.client.thin.resources.prompts.ChatMessage
-import ai.freeplay.client.thin.resources.prompts.FormattedPrompt
 import ai.freeplay.client.thin.resources.recordings.CallInfo
 import ai.freeplay.client.thin.resources.recordings.RecordInfo
 import ai.freeplay.client.thin.resources.recordings.ResponseInfo
