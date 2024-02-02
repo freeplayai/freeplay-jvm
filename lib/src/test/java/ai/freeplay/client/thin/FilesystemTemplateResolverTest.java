@@ -99,7 +99,7 @@ public class FilesystemTemplateResolverTest extends HttpClientTestBase {
                 "[{\"role\":\"system\",\"content\":\"You are a support agent\"},{\"role\":\"assistant\",\"content\":\"How can I help you?\"},{\"role\":\"user\",\"content\":\"{{question}}\"}]",
                 "openai_chat",
                 "a8b91d92-e063-4c3e-bb44-0d570793856b",
-                "6fe8af2e-defe-41b8-bdf2-7b2ec23592f5",
+                "5a0fa56d-add1-41e2-b376-8c820bf95903",
                 Map.of("max_tokens", 56,
                         "model", "gpt-3.5-turbo-1106",
                         "temperature", 0.1
