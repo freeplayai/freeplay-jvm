@@ -58,7 +58,8 @@ public class ThinCallSupport {
                 .thenApply((TemplatesDTO templates) ->
                         findPrompt(templates, templateName).orElseThrow(
                                 () -> new FreeplayConfigurationException(
-                                        format("Could not find template %s in environment %s.%n", templateName, environment)
+                                        format("Could not find template %s in project %s " +
+                                                "in environment %s.%n", projectId, templateName, environment)
                                 )
                         )
                 );
