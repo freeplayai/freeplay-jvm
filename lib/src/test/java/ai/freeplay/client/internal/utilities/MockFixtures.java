@@ -189,7 +189,7 @@ public class MockFixtures {
         try {
             when(requestAsync(mockedClient, "POST", "projects/[^/]*/test-runs-cases"))
                     .thenReturn(
-                            asyncResponse(201, getTestRunTestCasesResponsePayload(UUID.randomUUID().toString())));
+                            asyncResponse(201, getTestRunTestCasesResponsePayload(UUID.randomUUID().toString(), true)));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -314,7 +314,7 @@ public class MockFixtures {
                 ));
     }
 
-    public static String getTestRunTestCasesResponsePayload(String testRunId) {
+    public static String getTestRunTestCasesResponsePayload(String testRunId, boolean includeOutputs) {
         return JSONUtil.asString(
                 object(
                         "test_run_id", testRunId,
@@ -323,13 +323,15 @@ public class MockFixtures {
                                         "id", UUID.randomUUID(),
                                         "variables", object(
                                                 "question", "Why isn't my sink working?"
-                                        )
+                                        ),
+                                        "output", includeOutputs ? "It took PTO today" : null
                                 ),
                                 object(
                                         "id", UUID.randomUUID(),
                                         "variables", object(
                                                 "question", "Why isn't my internet working?"
-                                        )
+                                        ),
+                                        "output", includeOutputs ? "It's playing golf with the sink" : null
                                 )
                         )
                 ));

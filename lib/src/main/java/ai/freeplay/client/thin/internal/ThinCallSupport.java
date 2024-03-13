@@ -114,13 +114,13 @@ public class ThinCallSupport {
         });
     }
 
-    public CompletableFuture<TestRun> createTestRun(String projectId, String testList) {
+    public CompletableFuture<TestRun> createTestRun(String projectId, String testList, boolean includeOutputs) {
         String url = String.format("%s/projects/%s/test-runs-cases", baseUrl, projectId);
         return AsyncHttp.postJson(
                 url,
                 freeplayApiKey,
                 httpConfig,
-                new TestListDTO(testList)
+                new TestListDTO(testList, includeOutputs)
         ).thenApply(httpResponse -> {
             throwFreeplayIfError(httpResponse, 201);
 
@@ -132,7 +132,11 @@ public class ThinCallSupport {
             return new TestRun(
                     testRun.getTestRunId(),
                     testRun.getTestCases().stream()
-                            .map(testCase -> new TestCase(testCase.getId(), testCase.getVariables()))
+                            .map(testCase -> new TestCase(
+                                    testCase.getId(),
+                                    testCase.getVariables(),
+                                    testCase.getOutput()
+                                ))
                             .collect(toList())
             );
         });

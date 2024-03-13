@@ -406,15 +406,18 @@ public class ThinClientTest extends HttpClientTestBase {
             Freeplay fpClient = new Freeplay(Config().freeplayAPIKey(freeplayApiKey).baseUrl(baseUrl));
             TestRun testRun = fpClient.testRuns().create(
                     projectId,
-                    testListName
+                    testListName,
+                    true
             ).get();
 
             // Completion
             assertEquals(2, testRun.getTestCases().size());
             assertNotNull(testRun.getTestCases().get(0).getTestCaseId());
             assertEquals("Why isn't my sink working?", testRun.getTestCases().get(0).getVariables().get("question"));
+            assertEquals("It took PTO today", testRun.getTestCases().get(0).getOutput());
             assertNotNull(testRun.getTestCases().get(1).getTestCaseId());
             assertEquals("Why isn't my internet working?", testRun.getTestCases().get(1).getVariables().get("question"));
+            assertEquals("It's playing golf with the sink", testRun.getTestCases().get(1).getOutput());
         });
     }
 
