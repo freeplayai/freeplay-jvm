@@ -22,7 +22,7 @@ import java.util.stream.Stream;
 
 import static ai.freeplay.client.internal.Http.authHeaders;
 import static ai.freeplay.client.internal.Http.throwFreeplayIfError;
-import static ai.freeplay.client.internal.PromptUtils.getFinalTag;
+import static ai.freeplay.client.internal.PromptUtils.getFinalEnvironment;
 import static java.lang.String.format;
 import static java.lang.String.valueOf;
 import static java.lang.System.currentTimeMillis;
@@ -68,8 +68,8 @@ public class CallSupport {
     }
 
     public Collection<PromptTemplate> getPrompts(String projectId, String tag) throws FreeplayException {
-        String finalTag = getFinalTag(tag);
-        return templateResolver.getPrompts(projectId, finalTag);
+        String finalEnvironment = getFinalEnvironment(tag);
+        return templateResolver.getPrompts(projectId, finalEnvironment);
     }
 
     public Optional<PromptTemplate> findPrompt(Collection<PromptTemplate> templates, String templateName) {

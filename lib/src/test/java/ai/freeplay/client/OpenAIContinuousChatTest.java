@@ -32,7 +32,7 @@ public class OpenAIContinuousChatTest extends HttpClientTestBase {
         String formattedPrompt2Expected = "[{\"content\":\"You are a support agent.\",\"role\":\"system\"},{\"content\":\"How may I help you?\",\"role\":\"assistant\"},{\"content\":\"why isn't my sink working?\",\"role\":\"user\"},{\"content\":\"\\n\\nSorry, I will try to help\",\"role\":\"assistant\"},{\"content\":\"Now in Italian!\",\"role\":\"user\"}]";
 
         withMockedClient((HttpClient mockedClient) -> {
-            mockGetPrompts(mockedClient, MODEL_GPT_35_TURBO, templateName, getChatPromptContent());
+            mockGetPromptsV2(mockedClient, MODEL_GPT_35_TURBO, templateName, getChatPromptContentObjects());
             mock2OpenAICalls(mockedClient, completion1, completion2);
             mockRecord(mockedClient);
 
@@ -89,30 +89,9 @@ public class OpenAIContinuousChatTest extends HttpClientTestBase {
     }
 
     @Test
-    public void requiresModelParam() {
-        withMockedClient((HttpClient mockedClient) -> {
-            mockGetPrompts(mockedClient, null, templateName, getChatPromptContent());   // null model
-
-            try {
-                Freeplay fpClient = new Freeplay(freeplayApiKey, baseUrl, new OpenAIProviderConfig(openaiApiKey));
-                fpClient.startChat(
-                        projectId,
-                        templateName,
-                        Map.of("question", "why isn't my sink working?"),
-                        Collections.emptyMap(),
-                        "latest"
-                );
-                fail("Should have gotten an exception requiring the model parameter");
-            } catch (FreeplayException fpe) {
-                assertEquals("The 'model' parameter is required when calling OpenAI", fpe.getMessage());
-            }
-        });
-    }
-
-    @Test
     public void disallowsMessagesParam() {
         withMockedClient((HttpClient mockedClient) -> {
-            mockGetPrompts(mockedClient, MODEL_GPT_35_TURBO, templateName, getChatPromptContent());
+            mockGetPromptsV2(mockedClient, MODEL_GPT_35_TURBO, templateName, getChatPromptContentObjects());
 
             try {
                 Freeplay fpClient = new Freeplay(freeplayApiKey, baseUrl, new OpenAIProviderConfig(openaiApiKey));
@@ -138,7 +117,7 @@ public class OpenAIContinuousChatTest extends HttpClientTestBase {
     @Test
     public void handlesUnauthorizedCallingOpenAI() {
         withMockedClient((HttpClient mockedClient) -> {
-            mockGetPrompts(mockedClient, MODEL_GPT_35_TURBO, templateName, getChatPromptContent());
+            mockGetPromptsV2(mockedClient, MODEL_GPT_35_TURBO, templateName, getChatPromptContentObjects());
             mockUnauthorizedOpenAIChatCall(mockedClient);
 
             try {
@@ -161,10 +140,10 @@ public class OpenAIContinuousChatTest extends HttpClientTestBase {
     @SuppressWarnings("unchecked")
     public void handlesLLMParameterMergePrecedence() {
         withMockedClient((HttpClient mockedClient) -> {
-            MockFixtures.mockGetPrompts(
+            mockGetPromptsV2(
                     mockedClient,
                     templateName,
-                    getChatPromptContent(),
+                    getChatPromptContentObjects(),
                     Map.of(
                             "model", "gpt-3.5-turbo",
                             "max_tokens", "11",
@@ -207,7 +186,7 @@ public class OpenAIContinuousChatTest extends HttpClientTestBase {
         String completion1Expected = "\n\nSorry, I will try to help";
 
         withMockedClient((HttpClient mockedClient) -> {
-            mockGetPrompts(mockedClient, MODEL_GPT_35_TURBO, templateName, getChatPromptContent());
+            mockGetPromptsV2(mockedClient, MODEL_GPT_35_TURBO, templateName, getChatPromptContentObjects());
             mockOpenAIChatCalls(mockedClient, completion1);
 
             Freeplay fpClient = new Freeplay(

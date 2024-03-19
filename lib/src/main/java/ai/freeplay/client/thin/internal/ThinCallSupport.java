@@ -2,11 +2,13 @@ package ai.freeplay.client.thin.internal;
 
 import ai.freeplay.client.HttpConfig;
 import ai.freeplay.client.exceptions.FreeplayClientException;
-import ai.freeplay.client.exceptions.FreeplayConfigurationException;
 import ai.freeplay.client.internal.AsyncHttp;
 import ai.freeplay.client.internal.JSONUtil;
 import ai.freeplay.client.thin.TemplateResolver;
-import ai.freeplay.client.thin.internal.dto.*;
+import ai.freeplay.client.thin.internal.dto.RecordDTO;
+import ai.freeplay.client.thin.internal.dto.TestListDTO;
+import ai.freeplay.client.thin.internal.dto.TestRunDTO;
+import ai.freeplay.client.thin.internal.v2dto.TemplateDTO;
 import ai.freeplay.client.thin.resources.feedback.CustomerFeedbackResponse;
 import ai.freeplay.client.thin.resources.prompts.ChatMessage;
 import ai.freeplay.client.thin.resources.recordings.RecordInfo;
@@ -17,12 +19,11 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import static ai.freeplay.client.internal.Http.throwFreeplayIfError;
 import static ai.freeplay.client.internal.ParameterUtils.validateBasicMap;
-import static ai.freeplay.client.internal.PromptUtils.getFinalTag;
+import static ai.freeplay.client.internal.PromptUtils.getFinalEnvironment;
 import static java.lang.String.format;
 import static java.util.stream.Collectors.toList;
 
@@ -54,15 +55,7 @@ public class ThinCallSupport {
             String templateName,
             String environment
     ) {
-        return getPrompts(projectId, environment)
-                .thenApply((TemplatesDTO templates) ->
-                        findPrompt(templates, templateName).orElseThrow(
-                                () -> new FreeplayConfigurationException(
-                                        format("Could not find template %s in project %s " +
-                                                "in environment %s.%n", projectId, templateName, environment)
-                                )
-                        )
-                );
+        return templateResolver.getPrompt(projectId, templateName, getFinalEnvironment(environment));
     }
 
     public CompletableFuture<RecordResponse> record(RecordInfo recordPayload) {
@@ -136,7 +129,7 @@ public class ThinCallSupport {
                                     testCase.getId(),
                                     testCase.getVariables(),
                                     testCase.getOutput()
-                                ))
+                            ))
                             .collect(toList())
             );
         });
@@ -163,18 +156,5 @@ public class ThinCallSupport {
     private static String historyAsString(List<ChatMessage> allMessages) {
         List<ChatMessage> allButLast = allMessages.subList(0, allMessages.size() - 1);
         return JSONUtil.toString(allButLast);
-    }
-
-    private CompletableFuture<TemplatesDTO> getPrompts(String projectId, String tag) {
-        String finalTag = getFinalTag(tag);
-        return templateResolver.getPrompts(projectId, finalTag);
-    }
-
-    private Optional<TemplateDTO> findPrompt(TemplatesDTO templates, String templateName) {
-        return templates
-                .getTemplates()
-                .stream()
-                .filter(template -> template.getName().equals(templateName))
-                .findFirst();
     }
 }

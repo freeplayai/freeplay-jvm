@@ -31,15 +31,31 @@ public class AnthropicChatCompletionTest extends HttpClientTestBase {
 
     private final String templateName = "my-prompt";
 
-    private final String chatPromptContent = "[{\"role\": \"user\", \"content\": \"Answer this question: {{question}}\"}]";
+    private final List<Object> chatPromptContentObjects = array(
+            object(
+                    "role", "user",
+                    "content", "Answer this question: {{question}}"
+            )
+    );
+    private final List<Object> complexChatPromptContentObjects = array(
+            object(
+                    "role", "user",
+                    "content", "Something {{#value}}{{name}}{{/value}}{{> post_run_messages}}"
+            )
+    );
+    private final List<Object> complexListChatPromptContentObjects = array(
+            object(
+                    "role", "user",
+                    "content", "Do these things: {{#tasks}}{{name}}{{/tasks}}"
+            )
+    );
+
     private final String completionContent = " I apologize that your sink isn't working. Can I help you";
-    private final String complexChatPromptContent = "[{\"role\": \"user\", \"content\": \"Something {{#value}}{{name}}{{/value}}{{> post_run_messages}}\"}]";
-    private final String complexListChatPromptContent = "[{\"role\": \"user\", \"content\": \"Do these things: {{#tasks}}{{name}}{{/tasks}}\"}]";
 
     @Test
     public void chatCompletionReturnsValue() {
         withMockedClient((HttpClient mockedClient) -> {
-            mockGetPrompts(mockedClient, templateName, chatPromptContent, Collections.emptyMap(), "anthropic_chat");
+            mockGetPromptsV2(mockedClient, templateName, chatPromptContentObjects, Collections.emptyMap(), "anthropic_chat");
             mockAnthropicCall(mockedClient, completionContent);
 
             CompletionResponse completion;
@@ -80,7 +96,9 @@ public class AnthropicChatCompletionTest extends HttpClientTestBase {
     @Test
     public void complexChatCompletionReturnsValue() {
         withMockedClient((HttpClient mockedClient) -> {
-            mockGetPrompts(mockedClient, templateName, complexChatPromptContent, Collections.emptyMap(), "anthropic_chat");
+            mockGetPromptsV2(
+                    mockedClient, templateName, complexChatPromptContentObjects, Collections.emptyMap(), "anthropic_chat"
+            );
             mockAnthropicCall(mockedClient, completionContent);
 
             Freeplay fpClient = new Freeplay(
@@ -111,7 +129,9 @@ public class AnthropicChatCompletionTest extends HttpClientTestBase {
     @Test
     public void complexListChatCompletionReturnsValue() {
         withMockedClient((HttpClient mockedClient) -> {
-            mockGetPrompts(mockedClient, templateName, complexListChatPromptContent, Collections.emptyMap(), "anthropic_chat");
+            mockGetPromptsV2(
+                    mockedClient, templateName, complexListChatPromptContentObjects, Collections.emptyMap(), "anthropic_chat"
+            );
             mockAnthropicCall(mockedClient, completionContent);
 
             Freeplay fpClient = new Freeplay(
@@ -150,7 +170,9 @@ public class AnthropicChatCompletionTest extends HttpClientTestBase {
     @Test
     public void chatCompletionHandlesProcessor() {
         withMockedClient((HttpClient mockedClient) -> {
-            mockGetPrompts(mockedClient, templateName, chatPromptContent, Collections.emptyMap(), "anthropic_chat");
+            mockGetPromptsV2(
+                    mockedClient, templateName, chatPromptContentObjects, Collections.emptyMap(), "anthropic_chat"
+            );
             mockAnthropicCall(mockedClient, completionContent);
 
             Freeplay fpClient = new Freeplay(
@@ -191,10 +213,10 @@ public class AnthropicChatCompletionTest extends HttpClientTestBase {
     @Test
     public void requiresRequiredParams() {
         withMockedClient((HttpClient mockedClient) -> {
-            mockGetPrompts(mockedClient, templateName, chatPromptContent, Collections.emptyMap(), "anthropic_chat");
+            mockGetPromptsV2(mockedClient, templateName, chatPromptContentObjects, Collections.emptyMap(), "anthropic_chat");
             mockAnthropicCall(mockedClient, completionContent);
 
-            Stream<String> requiredParameters = Stream.of("model", "max_tokens_to_sample");
+            Stream<String> requiredParameters = Stream.of("max_tokens_to_sample");
 
             Map<String, Object> llmParameters = Map.of(
                     "model", MODEL_CLAUDE_2,
@@ -230,7 +252,7 @@ public class AnthropicChatCompletionTest extends HttpClientTestBase {
     @Test
     public void disallowsPromptParam() {
         withMockedClient((HttpClient mockedClient) -> {
-            mockGetPrompts(mockedClient, templateName, chatPromptContent, Collections.emptyMap(), "anthropic_chat");
+            mockGetPromptsV2(mockedClient, templateName, chatPromptContentObjects, Collections.emptyMap(), "anthropic_chat");
             mockAnthropicCall(mockedClient, completionContent);
 
             try {
@@ -261,7 +283,9 @@ public class AnthropicChatCompletionTest extends HttpClientTestBase {
     @Test
     public void sendsRequiredHeaders() {
         withMockedClient((HttpClient mockedClient) -> {
-            mockGetPrompts(mockedClient, templateName, chatPromptContent, Collections.emptyMap(), "anthropic_chat");
+            mockGetPromptsV2(
+                    mockedClient, templateName, chatPromptContentObjects, Collections.emptyMap(), "anthropic_chat"
+            );
             mockAnthropicCall(mockedClient, completionContent);
 
             Freeplay fpClient = new Freeplay(
@@ -293,7 +317,9 @@ public class AnthropicChatCompletionTest extends HttpClientTestBase {
     @Test
     public void handlesUnauthorizedCallingAnthropic() {
         withMockedClient((HttpClient mockedClient) -> {
-            mockGetPrompts(mockedClient, templateName, chatPromptContent, Collections.emptyMap(), "anthropic_chat");
+            mockGetPromptsV2(
+                    mockedClient, templateName, chatPromptContentObjects, Collections.emptyMap(), "anthropic_chat"
+            );
             mockUnauthorizedAnthropicCall(mockedClient);
 
             try {
@@ -325,7 +351,9 @@ public class AnthropicChatCompletionTest extends HttpClientTestBase {
         String templateName = "my-prompt";
 
         withMockedClient((HttpClient mockedClient) -> {
-            mockGetPrompts(mockedClient, templateName, chatPromptContent, Collections.emptyMap(), "anthropic_chat");
+            mockGetPromptsV2(
+                    mockedClient, templateName, chatPromptContentObjects, Collections.emptyMap(), "anthropic_chat"
+            );
             mockAnthropicCallStream(mockedClient);
 
             Freeplay fpClient = new Freeplay(
@@ -364,7 +392,9 @@ public class AnthropicChatCompletionTest extends HttpClientTestBase {
     public void chatCompletionStreamHandlesProcessor() {
         String templateName = "my-prompt";
         withMockedClient((HttpClient mockedClient) -> {
-            mockGetPrompts(mockedClient, templateName, chatPromptContent, Collections.emptyMap(), "anthropic_chat");
+            mockGetPromptsV2(
+                    mockedClient, templateName, chatPromptContentObjects, Collections.emptyMap(), "anthropic_chat"
+            );
             mockAnthropicCallStream(mockedClient);
 
             Freeplay fpClient = new Freeplay(

@@ -51,7 +51,7 @@ public class OpenAITestRunTest extends HttpClientTestBase {
         String chatCompletion1 = "\\n\\nSorry, I will try to help";
         withMockedClient((HttpClient mockedClient) -> {
             mockCreateTestRun(mockedClient);
-            mockGetPrompts(mockedClient, MODEL_GPT_35_TURBO, templateName, getChatPromptContent());
+            mockGetPromptsV2(mockedClient, MODEL_GPT_35_TURBO, templateName, getChatPromptContentObjects());
             mockOpenAIChatCalls(mockedClient, chatCompletion1);
 
             String environment = "prod";
@@ -85,7 +85,7 @@ public class OpenAITestRunTest extends HttpClientTestBase {
         String chatCompletion1 = "\\n\\nSorry, I will try to help";
         withMockedClient((HttpClient mockedClient) -> {
             mockCreateTestRun(mockedClient);
-            mockGetPrompts(mockedClient, MODEL_GPT_35_TURBO, templateName, getChatPromptContent());
+            mockGetPromptsV2(mockedClient, MODEL_GPT_35_TURBO, templateName, getChatPromptContentObjects());
             mockOpenAIChatCalls(mockedClient, chatCompletion1);
 
             String environment = "prod";

@@ -77,4 +77,18 @@ public class PromptInfo {
     public int hashCode() {
         return Objects.hash(promptTemplateId, promptTemplateVersionId, templateName, environment, modelParameters, provider, model, flavorName);
     }
+
+    @Override
+    public String toString() {
+        return "PromptInfo{" +
+                "promptTemplateId='" + promptTemplateId + '\'' +
+                ", promptTemplateVersionId='" + promptTemplateVersionId + '\'' +
+                ", templateName='" + templateName + '\'' +
+                ", environment='" + environment + '\'' +
+                ", modelParameters=" + modelParameters +
+                ", provider='" + provider + '\'' +
+                ", model='" + model + '\'' +
+                ", flavorName='" + flavorName + '\'' +
+                '}';
+    }
 }

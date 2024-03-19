@@ -1,7 +1,7 @@
 package ai.freeplay.client.internal;
 
 public class PromptUtils {
-    public static String getFinalTag(String tag) {
-        return tag != null ? tag : "latest";
+    public static String getFinalEnvironment(String environment) {
+        return environment != null ? environment : "latest";
     }
 }

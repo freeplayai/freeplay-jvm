@@ -33,7 +33,7 @@ public class OpenAIContinuousChatStreamTest extends HttpClientTestBase {
         Map<String, Object> customMetadata = Map.of("chat_type", "automated");
 
         withMockedClient((HttpClient mockedClient) -> {
-            mockGetPrompts(mockedClient, MODEL_GPT_35_TURBO, templateName, getChatPromptContent());
+            mockGetPromptsV2(mockedClient, MODEL_GPT_35_TURBO, templateName, getChatPromptContentObjects());
             mock2OpenAIChatStreamCalls(mockedClient);
 
             Freeplay fpClient = new Freeplay(
@@ -98,34 +98,9 @@ public class OpenAIContinuousChatStreamTest extends HttpClientTestBase {
     }
 
     @Test
-    public void requiresModelParam() {
-        withMockedClient((HttpClient mockedClient) -> {
-            mockGetPrompts(mockedClient, null, templateName, getChatPromptContent());   // null model
-
-            try {
-                Freeplay fpClient = new Freeplay(
-                        freeplayApiKey,
-                        baseUrl,
-                        new ProviderConfigs(new OpenAIProviderConfig(openaiApiKey))
-                );
-                fpClient.startChatStream(
-                        projectId,
-                        templateName,
-                        Map.of("question", "why isn't my sink working?"),
-                        Collections.emptyMap(),
-                        "latest"
-                );
-                fail("Should have gotten an exception requiring the model parameter");
-            } catch (FreeplayException fpe) {
-                assertEquals("The 'model' parameter is required when calling OpenAI", fpe.getMessage());
-            }
-        });
-    }
-
-    @Test
     public void chatDoesNotRecordWhenAskedNotTo() {
         withMockedClient((HttpClient mockedClient) -> {
-            mockGetPrompts(mockedClient, MODEL_GPT_35_TURBO, templateName, getChatPromptContent());
+            mockGetPromptsV2(mockedClient, MODEL_GPT_35_TURBO, templateName, getChatPromptContentObjects());
             mock2OpenAIChatStreamCalls(mockedClient);
 
             Freeplay fpClient = new Freeplay(
@@ -163,7 +138,7 @@ public class OpenAIContinuousChatStreamTest extends HttpClientTestBase {
     @Test
     public void disallowsMessagesParam() {
         withMockedClient((HttpClient mockedClient) -> {
-            mockGetPrompts(mockedClient, MODEL_GPT_35_TURBO, templateName, getChatPromptContent());
+            mockGetPromptsV2(mockedClient, MODEL_GPT_35_TURBO, templateName, getChatPromptContentObjects());
 
             try {
                 Freeplay fpClient = new Freeplay(

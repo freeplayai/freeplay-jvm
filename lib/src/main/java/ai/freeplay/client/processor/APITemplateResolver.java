@@ -4,6 +4,7 @@ import ai.freeplay.client.HttpConfig;
 import ai.freeplay.client.exceptions.FreeplayException;
 import ai.freeplay.client.exceptions.FreeplayServerException;
 import ai.freeplay.client.internal.Http;
+import ai.freeplay.client.internal.JSONUtil;
 import ai.freeplay.client.model.PromptTemplate;
 
 import java.net.http.HttpResponse;
@@ -30,7 +31,7 @@ public class APITemplateResolver implements TemplateResolver {
     @Override
     @SuppressWarnings("unchecked")
     public Collection<PromptTemplate> getPrompts(String projectId, String environment) {
-        String url = format("%s/projects/%s/templates/all/%s", baseUrl, projectId, environment);
+        String url = format("%s/v2/projects/%s/prompt-templates/all/%s", baseUrl, projectId, environment);
         HttpResponse<String> response = Http.get(url, freeplayApiKey, httpConfig);
         throwFreeplayIfError(response, 200);
 
@@ -40,17 +41,21 @@ public class APITemplateResolver implements TemplateResolver {
         } catch (FreeplayException e) {
             throw new FreeplayServerException("Error getting prompts.", e);
         }
-        List<Map<String, Object>> templates = (List<Map<String, Object>>) templatesMap.get("templates");
+        List<Map<String, Object>> templates = (List<Map<String, Object>>) templatesMap.get("prompt_templates");
         return templates.stream().map((Object template) -> {
             Map<String, Object> templateMap = (Map<String, Object>) template;
+            Map<String, Object> metadataMap = (Map<String, Object>) templateMap.get("metadata");
+            Map<String, Object> paramsMap = (Map<String, Object>) metadataMap.get("params");
+            paramsMap.put("model", metadataMap.get("model"));
             return new PromptTemplate(
-                    valueOf(templateMap.get("name")),
-                    valueOf(templateMap.get("content")),
-                    valueOf(templateMap.get("flavor_name")),
-                    valueOf(templateMap.get("project_version_id")),
+                    valueOf(templateMap.get("prompt_template_name")),
+                    valueOf(JSONUtil.toString(templateMap.get("content"))),
+                    valueOf(metadataMap.get("flavor")),
+                    valueOf(templateMap.get("prompt_template_version_id")),
                     valueOf(templateMap.get("prompt_template_id")),
                     valueOf(templateMap.get("prompt_template_version_id")),
-                    (Map<String, Object>) templateMap.get("params"));
+                    paramsMap
+            );
         }).collect(toList());
     }
 }

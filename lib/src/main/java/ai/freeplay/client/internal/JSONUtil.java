@@ -2,9 +2,9 @@ package ai.freeplay.client.internal;
 
 import ai.freeplay.client.exceptions.FreeplayException;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.type.CollectionType;
 import com.fasterxml.jackson.jr.ob.JSON;
 
 import java.io.IOException;
@@ -18,6 +18,15 @@ public class JSONUtil {
         try {
             return JSON.std
                     .mapFrom(json);
+        } catch (IOException e) {
+            throw new FreeplayException("Error parsing JSON.", e);
+        }
+    }
+
+    public static List<Object> parseList(String json) {
+        try {
+            return JSON.std
+                    .listFrom(json);
         } catch (IOException e) {
             throw new FreeplayException("Error parsing JSON.", e);
         }
@@ -41,16 +50,6 @@ public class JSONUtil {
         }
     }
 
-    public static <T> List<T> parseListOf(String jsonString, Class<T> targetClass) {
-        try {
-            CollectionType javaType = objectMapper.getTypeFactory()
-                    .constructCollectionType(List.class, targetClass);
-            return objectMapper.readValue(jsonString, javaType);
-        } catch (JsonProcessingException e) {
-            throw new FreeplayException("Unable to parse JSON.", e);
-        }
-    }
-
     public static JsonNode parseDOM(String jsonString) {
         try {
             return objectMapper.readTree(jsonString);
@@ -65,5 +64,10 @@ public class JSONUtil {
         } catch (JsonProcessingException e) {
             throw new FreeplayException("Unable to write JSON.", e);
         }
+    }
+
+    public static Map<String, Object> nodeToMap(JsonNode paramsNode) {
+        return objectMapper.convertValue(paramsNode, new TypeReference<>() {
+        });
     }
 }

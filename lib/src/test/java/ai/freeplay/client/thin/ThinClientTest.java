@@ -40,7 +40,9 @@ public class ThinClientTest extends HttpClientTestBase {
     @Test
     public void testGetPrompts() {
         withMockedClient((HttpClient mockedClient) -> {
-            mockGetPromptsAsync(mockedClient, templateName, getChatPromptContent(), openAILLMParameters, "openai_chat");
+            mockGetPromptV2Async(
+                    mockedClient, templateName, "prod", getChatPromptContentObjects(), openAILLMParameters, "openai_chat"
+            );
 
             Freeplay fpClient = new Freeplay(Config().freeplayAPIKey(freeplayApiKey).baseUrl(baseUrl));
 
@@ -70,9 +72,8 @@ public class ThinClientTest extends HttpClientTestBase {
     @Test
     public void testSyntax() {
         withMockedClient((HttpClient mockedClient) -> {
-
-            mockGetPromptsAsync(
-                    mockedClient, templateName, getChatPromptContent(), anthropicLLMParameters, "anthropic_chat"
+            mockGetPromptV2Async(
+                    mockedClient, templateName, "prod", getChatPromptContentObjects(), anthropicLLMParameters, "anthropic_chat"
             );
 
             Freeplay fpClient = new Freeplay(Config().freeplayAPIKey(freeplayApiKey).baseUrl(baseUrl));
@@ -125,7 +126,9 @@ public class ThinClientTest extends HttpClientTestBase {
             long endTime = System.currentTimeMillis() + 5;
             Map<String, Object> customMetadata = Map.of("customer_id", 123);
 
-            mockGetPromptsAsync(mockedClient, templateName, getChatPromptContent(), anthropicLLMParameters, "anthropic_chat");
+            mockGetPromptV2Async(
+                    mockedClient, templateName, "prod", getChatPromptContentObjects(), anthropicLLMParameters, "anthropic_chat"
+            );
             mockRecordAsync(mockedClient);
 
             Freeplay fpClient = new Freeplay(Config().freeplayAPIKey(freeplayApiKey).baseUrl(baseUrl));
@@ -445,7 +448,7 @@ public class ThinClientTest extends HttpClientTestBase {
     }
 
     @Test
-    public void handlesUnauthorizedOnCustomerFeedback() {
+    public void testHandlesUnauthorizedOnCustomerFeedback() {
         withMockedClient((HttpClient mockedClient) -> {
             mockUnauthorizedUpdateCustomerFeedbackAsync(mockedClient);
 
@@ -490,7 +493,7 @@ public class ThinClientTest extends HttpClientTestBase {
     }
 
     @Test
-    public void handlesUnauthorizedOnCreateTestRun() {
+    public void testHandlesUnauthorizedOnCreateTestRun() {
         withMockedClient((HttpClient mockedClient) -> {
             mockUnauthorizedCreateTestRunAsync(mockedClient);
 
@@ -509,8 +512,8 @@ public class ThinClientTest extends HttpClientTestBase {
     @Test
     public void testInvalidFlavorName() {
         withMockedClient((HttpClient mockedClient) -> {
-            mockGetPromptsAsync(
-                    mockedClient, templateName, getChatPromptContent(), anthropicLLMParameters, "anthropic_chat"
+            mockGetPromptV2Async(
+                    mockedClient, templateName, "prod", getChatPromptContentObjects(), anthropicLLMParameters, "anthropic_chat"
             );
 
             Freeplay fpClient = new Freeplay(Config().freeplayAPIKey(freeplayApiKey).baseUrl(baseUrl));
@@ -538,9 +541,9 @@ public class ThinClientTest extends HttpClientTestBase {
     }
 
     @Test
-    public void handlesUnauthorizedOnGetPrompts() {
+    public void testHandlesUnauthorizedOnGetPrompts() {
         withMockedClient((HttpClient mockedClient) -> {
-            mockUnauthorizedGetPromptsAsync(mockedClient);
+            mockUnauthorizedGetPromptsV2Async(mockedClient);
 
             Freeplay fpClient = new Freeplay(Config().freeplayAPIKey(freeplayApiKey).baseUrl(baseUrl));
 
@@ -556,7 +559,7 @@ public class ThinClientTest extends HttpClientTestBase {
     }
 
     @Test
-    public void handlesUnauthorizedOnRecord() {
+    public void testHandlesUnauthorizedOnRecord() {
         withMockedClient((HttpClient mockedClient) -> {
             mockUnauthorizedRecordAsync(mockedClient);
 

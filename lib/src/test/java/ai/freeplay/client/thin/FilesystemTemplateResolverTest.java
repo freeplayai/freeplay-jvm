@@ -2,13 +2,14 @@ package ai.freeplay.client.thin;
 
 import ai.freeplay.client.HttpClientTestBase;
 import ai.freeplay.client.exceptions.FreeplayConfigurationException;
-import ai.freeplay.client.thin.internal.dto.TemplateDTO;
-import ai.freeplay.client.thin.internal.dto.TemplatesDTO;
+import ai.freeplay.client.thin.internal.v2dto.TemplateDTO;
+import ai.freeplay.client.thin.internal.v2dto.TemplatesDTO;
 import org.junit.Test;
 
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
@@ -24,20 +25,58 @@ public class FilesystemTemplateResolverTest extends HttpClientTestBase {
         FilesystemTemplateResolver resolver = new FilesystemTemplateResolver(getTestFilesDirectory());
         TemplatesDTO templates = resolver.getPrompts(projectId, "prod").get();
 
-        assertEquals(3, templates.getTemplates().size());
+        assertEquals(2, templates.getPromptTemplates().size());
 
         TemplateDTO template = getTemplate(templates, "test-prompt-with-params");
 
         TemplateDTO expected = new TemplateDTO(
-                "test-prompt-with-params",
-                "[{\"role\":\"system\",\"content\":\"You are a support agent\"},{\"role\":\"assistant\",\"content\":\"How can I help you?\"},{\"role\":\"user\",\"content\":\"{{question}}\"}]",
-                "openai_chat",
                 "a8b91d92-e063-4c3e-bb44-0d570793856b",
                 "6fe8af2e-defe-41b8-bdf2-7b2ec23592f5",
-                Map.of("max_tokens", 56,
-                        "model", "gpt-3.5-turbo-1106",
-                        "temperature", 0.1
-                )
+                "test-prompt-with-params",
+                List.of(
+                        new TemplateDTO.Message("system", "You are a support agent"),
+                        new TemplateDTO.Message("assistant", "How can I help you?"),
+                        new TemplateDTO.Message("user", "{{question}}")
+                ),
+                new TemplateDTO.Metadata(
+                        "openai",
+                        "gpt-3.5-turbo-1106",
+                        "openai_chat",
+                        Map.of("max_tokens", 56,
+                                "temperature", 0.1
+                        ),
+                        Collections.emptyMap()
+                ),
+                0
+        );
+
+        assertEquals(expected, template);
+    }
+
+    @Test
+    public void testResolvesPrompt() throws ExecutionException, InterruptedException {
+        FilesystemTemplateResolver resolver = new FilesystemTemplateResolver(getTestFilesDirectory());
+        TemplateDTO template = resolver.getPrompt(projectId, "test-prompt-with-params", "prod").get();
+
+        TemplateDTO expected = new TemplateDTO(
+                "a8b91d92-e063-4c3e-bb44-0d570793856b",
+                "6fe8af2e-defe-41b8-bdf2-7b2ec23592f5",
+                "test-prompt-with-params",
+                List.of(
+                        new TemplateDTO.Message("system", "You are a support agent"),
+                        new TemplateDTO.Message("assistant", "How can I help you?"),
+                        new TemplateDTO.Message("user", "{{question}}")
+                ),
+                new TemplateDTO.Metadata(
+                        "openai",
+                        "gpt-3.5-turbo-1106",
+                        "openai_chat",
+                        Map.of("max_tokens", 56,
+                                "temperature", 0.1
+                        ),
+                        Collections.emptyMap()
+                ),
+                0
         );
 
         assertEquals(expected, template);
@@ -48,38 +87,27 @@ public class FilesystemTemplateResolverTest extends HttpClientTestBase {
         FilesystemTemplateResolver resolver = new FilesystemTemplateResolver(getTestFilesDirectory());
         TemplatesDTO templates = resolver.getPrompts(projectId, "prod").get();
 
-        assertEquals(3, templates.getTemplates().size());
+        assertEquals(2, templates.getPromptTemplates().size());
 
         TemplateDTO template = getTemplate(templates, "test-prompt-no-params");
 
         TemplateDTO expected = new TemplateDTO(
-                "test-prompt-no-params",
-                "[{\"role\":\"Human\",\"content\":\"You are a support agent.\"},{\"role\":\"Assistant\",\"content\":\"How may I help you?\"},{\"role\":\"user\",\"content\":\"{{question}}\"}]",
-                null,
                 "5985c6bb-115c-4ca2-99bd-0ffeb917fca4",
                 "11e12956-d8d4-448a-af92-66b1dc2155e0",
-                Collections.emptyMap()
-        );
-
-        assertEquals(expected, template);
-    }
-
-    @Test
-    public void testResolvesPromptNotChat() throws ExecutionException, InterruptedException {
-        FilesystemTemplateResolver resolver = new FilesystemTemplateResolver(getTestFilesDirectory());
-        TemplatesDTO templates = resolver.getPrompts(projectId, "prod").get();
-
-        assertEquals(3, templates.getTemplates().size());
-
-        TemplateDTO template = getTemplate(templates, "test-prompt-not-chat");
-
-        TemplateDTO expected = new TemplateDTO(
-                "test-prompt-not-chat",
-                "Answer this question: {{question}}",
-                null,
-                "7f6507a8-fd6a-4925-a985-c77d37dcef96",
-                "786293b6-4209-4d2c-9a50-4aadb932be22",
-                Collections.emptyMap()
+                "test-prompt-no-params",
+                List.of(
+                        new TemplateDTO.Message("user", "You are a support agent."),
+                        new TemplateDTO.Message("assistant", "How may I help you?"),
+                        new TemplateDTO.Message("user", "{{question}}")
+                ),
+                new TemplateDTO.Metadata(
+                        "anthropic",
+                        "claude-2.1",
+                        "anthropic_chat",
+                        Collections.emptyMap(),
+                        Collections.emptyMap()
+                ),
+                0
         );
 
         assertEquals(expected, template);
@@ -90,20 +118,63 @@ public class FilesystemTemplateResolverTest extends HttpClientTestBase {
         FilesystemTemplateResolver resolver = new FilesystemTemplateResolver(getTestFilesDirectory());
         TemplatesDTO templates = resolver.getPrompts(projectId, "qa").get();
 
-        assertEquals(1, templates.getTemplates().size());
+        assertEquals(1, templates.getPromptTemplates().size());
 
         TemplateDTO template = getTemplate(templates, "test-prompt-with-params");
 
         TemplateDTO expected = new TemplateDTO(
-                "test-prompt-with-params",
-                "[{\"role\":\"system\",\"content\":\"You are a support agent\"},{\"role\":\"assistant\",\"content\":\"How can I help you?\"},{\"role\":\"user\",\"content\":\"{{question}}\"}]",
-                "openai_chat",
                 "a8b91d92-e063-4c3e-bb44-0d570793856b",
                 "5a0fa56d-add1-41e2-b376-8c820bf95903",
-                Map.of("max_tokens", 56,
-                        "model", "gpt-3.5-turbo-1106",
-                        "temperature", 0.1
-                )
+                "test-prompt-with-params",
+                List.of(
+                        new TemplateDTO.Message("system", "You are a support agent"),
+                        new TemplateDTO.Message("assistant", "How can I help you?"),
+                        new TemplateDTO.Message("user", "{{question}}")
+                ),
+                new TemplateDTO.Metadata(
+                        "openai",
+                        "gpt-3.5-turbo-1106",
+                        "openai_chat",
+                        Map.of("max_tokens", 56,
+                                "temperature", 0.1
+                        ),
+                        Collections.emptyMap()
+                ),
+                0
+        );
+
+        assertEquals(expected, template);
+    }
+
+    @Test
+    public void testResolvesV2Prompt() throws ExecutionException, InterruptedException {
+        FilesystemTemplateResolver resolver = new FilesystemTemplateResolver(getV2TestFilesDirectory());
+        TemplatesDTO templates = resolver.getPrompts(projectId, "prod").get();
+
+        assertEquals(1, templates.getPromptTemplates().size());
+
+        TemplateDTO template = getTemplate(templates, "test-prompt");
+
+        TemplateDTO expected = new TemplateDTO(
+                "f4758834-9e93-448f-97a4-1cb126f7e328",
+                "f4811249-4384-4d71-a1e9-1e8390d5501d",
+                "test-prompt",
+                List.of(
+                        new TemplateDTO.Message("user", "Answer the question to the best of your ability with truthful information, while being entertaining."),
+                        new TemplateDTO.Message("assistant", "How may I help you?"),
+                        new TemplateDTO.Message("user", "{{question}}")
+                ),
+                new TemplateDTO.Metadata(
+                        "anthropic",
+                        "claude-2.1",
+                        "anthropic_chat",
+                        Map.of(
+                                "max_tokens_to_sample", 12,
+                                "temperature", 0.15
+                        ),
+                        Collections.emptyMap()
+                ),
+                2
         );
 
         assertEquals(expected, template);
@@ -126,12 +197,12 @@ public class FilesystemTemplateResolverTest extends HttpClientTestBase {
         try {
             new FilesystemTemplateResolver(
                     getTestFilesDirectory().resolve(
-                            "freeplay/prompts/475516c8-7be4-4d55-9388-535cef042981/prod/test-prompt-not-chat.json"));
+                            "freeplay/prompts/475516c8-7be4-4d55-9388-535cef042981/prod/test-prompt-with-params.json"));
             fail("Should have gotten an exception");
         } catch (Exception e) {
             assertEquals(e.getClass(), FreeplayConfigurationException.class);
             assertTrue(e.getMessage().contains("Path for templates is not a directory"));
-            assertTrue(e.getMessage().contains("test-prompt-not-chat.json"));
+            assertTrue(e.getMessage().contains("test-prompt-with-params.json"));
         }
     }
 
@@ -152,12 +223,12 @@ public class FilesystemTemplateResolverTest extends HttpClientTestBase {
     public void testHandlesEnvironmentNotFound() {
         try {
             FilesystemTemplateResolver resolver = new FilesystemTemplateResolver(getTestFilesDirectory());
-            resolver.getPrompts(projectId, "notanenvironment");
+            resolver.getPrompts(projectId, "not_an_environment");
             fail("Should have gotten an exception");
         } catch (Exception e) {
             assertEquals(e.getClass(), FreeplayConfigurationException.class);
             assertTrue(e.getMessage().contains(
-                    "Could not find directory for project 475516c8-7be4-4d55-9388-535cef042981 and environment notanenvironment"));
+                    "Could not find directory for project 475516c8-7be4-4d55-9388-535cef042981 and environment not_an_environment"));
         }
     }
 
@@ -171,13 +242,19 @@ public class FilesystemTemplateResolverTest extends HttpClientTestBase {
             TemplatesDTO templates,
             String name
     ) {
-        return templates.getTemplates().stream()
-                .filter((template -> name.equals(template.getName())))
+        return templates.getPromptTemplates().stream()
+                .filter((template -> name.equals(template.getPromptTemplateName())))
                 .findFirst();
     }
 
     private Path getTestFilesDirectory() {
         Path path = FileSystems.getDefault().getPath("src", "test", "testfiles", "prompts");
+        assertTrue(path.toFile().exists());
+        return path;
+    }
+
+    private Path getV2TestFilesDirectory() {
+        Path path = FileSystems.getDefault().getPath("src", "test", "testfiles", "prompts_v2_format");
         assertTrue(path.toFile().exists());
         return path;
     }

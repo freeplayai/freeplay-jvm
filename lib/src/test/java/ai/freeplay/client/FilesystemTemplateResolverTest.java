@@ -27,7 +27,7 @@ public class FilesystemTemplateResolverTest extends HttpClientTestBase {
         FilesystemTemplateResolver resolver = new FilesystemTemplateResolver(getTestFilesDirectory());
         Collection<PromptTemplate> templates = resolver.getPrompts(projectId, "prod");
 
-        assertEquals(3, templates.size());
+        assertEquals(2, templates.size());
 
         PromptTemplate template = getTemplate(templates, "test-prompt-with-params");
 

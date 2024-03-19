@@ -1,7 +1,8 @@
 {
     "content": "[{\"role\":\"Human\",\"content\":\"You are a support agent.\"},{\"role\":\"Assistant\",\"content\":\"How may I help you?\"},{\"role\":\"user\",\"content\":\"{{question}}\"}]",
     "metadata": {
-        "params": {}
+        "flavor_name": "anthropic_chat",
+        "params": {"model": "claude-2.1"}
     },
     "name": "test-prompt-no-params",
     "prompt_template_id": "5985c6bb-115c-4ca2-99bd-0ffeb917fca4",

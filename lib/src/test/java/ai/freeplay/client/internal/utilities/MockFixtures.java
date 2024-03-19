@@ -9,6 +9,7 @@ import java.util.*;
 import java.util.stream.Stream;
 
 import static ai.freeplay.client.internal.utilities.MockMethods.*;
+import static java.lang.String.valueOf;
 import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.toList;
 import static org.mockito.Mockito.when;
@@ -25,7 +26,6 @@ public class MockFixtures {
     public static final String anthropicApiKey = "<anthropic-api-key>";
     public static final String projectId = UUID.randomUUID().toString();
 
-    public static final String projectVersionId = UUID.randomUUID().toString();
     public static final String promptTemplateId = UUID.randomUUID().toString();
     public static final String promptTemplateVersionId = UUID.randomUUID().toString();
 
@@ -44,38 +44,35 @@ public class MockFixtures {
         }
     }
 
-    public static void mockGetPrompts(
+    public static void mockGetPromptsV2(
             HttpClient mockedClient,
             String model,
             String templateName,
-            String templateContent
+            List<Object> templateContent
     ) throws RuntimeException {
         Map<String, Object> llmParameters = new HashMap<>();
-        if (model != null)
-            llmParameters.put("model", model);
 
         try {
-            mockGetPrompts(mockedClient, templateName, templateContent, llmParameters, "openai_chat");
+            mockGetPromptsV2(mockedClient, templateName, templateContent, llmParameters, "openai_chat");
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
-    public static void mockGetPrompts(
+    public static void mockGetPromptsV2(
             HttpClient mockedClient,
             String templateName,
-            String content,
+            List<Object> content,
             Map<String, Object> llmParameters,
             String flavor
     ) throws RuntimeException {
         try {
-            when(request(mockedClient, "GET", "projects/[^/]*/templates"))
+            when(request(mockedClient, "GET", "v2/projects/[^/]*/prompt-templates"))
                     .thenReturn(
                             response(
                                     200,
-                                    getPromptsPayload(
+                                    getPromptsPayloadV2(
                                             flavor,
-                                            projectVersionId,
                                             promptTemplateId,
                                             promptTemplateVersionId,
                                             templateName,
@@ -86,20 +83,21 @@ public class MockFixtures {
         }
     }
 
-    public static void mockGetPromptsAsync(
+    public static void mockGetPromptV2Async(
             HttpClient mockedClient,
             String templateName,
-            String content,
+            String environment,
+            List<Object> content,
             Map<String, Object> llmParameters,
             String flavor
     ) throws RuntimeException {
         try {
-            when(requestAsync(mockedClient, "GET", "projects/[^/]*/templates")).thenReturn(
+            String matchUrl = String.format("v2/projects/[^/]*/prompt-templates/name/%s\\?environment=%s", templateName, environment);
+            when(requestAsync(mockedClient, "GET", matchUrl)).thenReturn(
                     asyncResponse(
                             200,
-                            getPromptsPayload(
+                            getPromptPayloadV2(
                                     flavor,
-                                    projectVersionId,
                                     promptTemplateId,
                                     promptTemplateVersionId,
                                     templateName,
@@ -110,30 +108,34 @@ public class MockFixtures {
         }
     }
 
-    public static void mockGet2Prompts(
+    public static void mockGet2PromptsV2(
             HttpClient mockedClient,
             PromptTemplate... templates
     ) throws RuntimeException {
-
-        List<Map<String, Object>> templateObjects = stream(templates).map((PromptTemplate template) ->
-                object(
-                        "project_version_id", template.getProjectVersionId(),
-                        "prompt_template_id", template.getPromptTemplateId(),
-                        "prompt_template_version_id", template.getPromptTemplateVersionId(),
-                        "flavor_name", template.getFlavorName(),
-                        "name", template.getName(),
-                        "content", template.getContent(),
-                        "params", template.getLLMParameters()
-                )).collect(toList());
+        List<Map<String, Object>> templateObjects = stream(templates).map((PromptTemplate template) -> {
+            Map<String, Object> params = new HashMap<>(template.getLLMParameters());
+            String model = String.valueOf(params.remove("model"));
+            return object(
+                    "prompt_template_id", template.getPromptTemplateId(),
+                    "prompt_template_version_id", template.getPromptTemplateVersionId(),
+                    "prompt_template_name", template.getName(),
+                    "metadata", object(
+                            "model", model,
+                            "flavor", template.getFlavorName(),
+                            "params", params
+                    ),
+                    "content", JSONUtil.parseList(template.getContent())
+            );
+        }).collect(toList());
 
         Map<String, Object> payload = object(
-                "templates", array(
+                "prompt_templates", array(
                         (Object[]) templateObjects.toArray(new Map[]{})
                 )
         );
 
         try {
-            when(request(mockedClient, "GET", "projects/[^/]*/templates"))
+            when(request(mockedClient, "GET", "v2/projects/[^/]*/prompt-templates"))
                     .thenReturn(response(200, JSONUtil.asString(payload)));
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -224,16 +226,16 @@ public class MockFixtures {
 
     public static void mockUnauthorizedGetPrompts(HttpClient mockedClient) throws RuntimeException {
         try {
-            when(request(mockedClient, "GET", "projects/[^/]*/templates"))
+            when(request(mockedClient, "GET", "v2/projects/[^/]*/prompt-templates"))
                     .thenReturn(response(401, ""));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
-    public static void mockUnauthorizedGetPromptsAsync(HttpClient mockedClient) throws RuntimeException {
+    public static void mockUnauthorizedGetPromptsV2Async(HttpClient mockedClient) throws RuntimeException {
         try {
-            when(requestAsync(mockedClient, "GET", "projects/[^/]*/templates"))
+            when(requestAsync(mockedClient, "GET", "v2/projects/[^/]*/prompt-templates"))
                     .thenReturn(asyncResponse(401, ""));
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -337,36 +339,6 @@ public class MockFixtures {
                 ));
     }
 
-    public static String getPromptsPayload(
-            String flavorName,
-            String projectVersionId,
-            String promptTemplateId,
-            String promptTemplateVersionId,
-            String templateName,
-            String content,
-            Map<String, Object> llmParameters
-    ) {
-        return JSONUtil.asString(object(
-                "templates", array(
-                        object(
-                                "project_version_id", projectVersionId,
-                                "prompt_template_id", promptTemplateId,
-                                "prompt_template_version_id", promptTemplateVersionId,
-                                "flavor_name", flavorName,
-                                "name", templateName,
-                                "content", content,
-                                "params", llmParameters
-                        )
-                )
-        ));
-    }
-
-    public static String getRecordPayloadWithCompletionId() {
-        return JSONUtil.asString(object(
-                "completion_id", UUID.randomUUID().toString()
-        ));
-    }
-
     public static String getChatPromptContent() {
         return JSONUtil.asString(array(
                 object(
@@ -382,6 +354,23 @@ public class MockFixtures {
                         "content", "{{question}}"
                 )
         ));
+    }
+
+    public static List<Object> getChatPromptContentObjects() {
+        return array(
+                object(
+                        "role", "system",
+                        "content", "You are a support agent."
+                ),
+                object(
+                        "role", "assistant",
+                        "content", "How may I help you?"
+                ),
+                object(
+                        "role", "user",
+                        "content", "{{question}}"
+                )
+        );
     }
 
     public static String getOpenAIChatResponse(String response) {
@@ -487,7 +476,7 @@ public class MockFixtures {
         Map<String, Object> object = new HashMap<>(keysAndValues.length);
 
         for (int i = 0; i < keysAndValues.length; i += 2) {
-            object.put(String.valueOf(keysAndValues[i]), keysAndValues[i + 1]);
+            object.put(valueOf(keysAndValues[i]), keysAndValues[i + 1]);
         }
         return object;
     }
@@ -509,4 +498,70 @@ public class MockFixtures {
         return (List<Object>) openAiRequestBody;
     }
 
+
+    @SuppressWarnings("SameParameterValue")
+    private static String getPromptsPayloadV2(
+            String flavorName,
+            String promptTemplateId,
+            String promptTemplateVersionId,
+            String templateName,
+            List<Object> content,
+            Map<String, Object> llmParameters
+    ) {
+        HashMap<String, Object> params = new HashMap<>(llmParameters);
+        String model = params.containsKey("model") ? valueOf(params.remove("model")) : MODEL_GPT_35_TURBO;
+        return JSONUtil.asString(object(
+                "prompt_templates", array(
+                        object(
+                                "prompt_template_id", promptTemplateId,
+                                "prompt_template_version_id", promptTemplateVersionId,
+                                "prompt_template_name", templateName,
+                                "content", content,
+                                "format_version", 2,
+                                "metadata", object(
+                                        "provider", "openai",
+                                        "model", model,
+                                        "flavor", flavorName,
+                                        "params", params,
+                                        "provider_info", Collections.emptyMap()
+                                )
+                        )
+                )
+        ));
+    }
+
+    @SuppressWarnings("SameParameterValue")
+    private static String getPromptPayloadV2(
+            String flavorName,
+            String promptTemplateId,
+            String promptTemplateVersionId,
+            String templateName,
+            List<Object> content,
+            Map<String, Object> llmParameters
+    ) {
+        HashMap<String, Object> params = new HashMap<>(llmParameters);
+        String model = params.containsKey("model") ? valueOf(params.get("model")) : MODEL_GPT_35_TURBO;
+        return JSONUtil.asString(
+                object(
+                        "prompt_template_id", promptTemplateId,
+                        "prompt_template_version_id", promptTemplateVersionId,
+                        "prompt_template_name", templateName,
+                        "content", content,
+                        "format_version", 2,
+                        "metadata", object(
+                                "provider", "openai",
+                                "model", model,
+                                "flavor", flavorName,
+                                "params", params,
+                                "provider_info", Collections.emptyMap()
+                        )
+                )
+        );
+    }
+
+    private static String getRecordPayloadWithCompletionId() {
+        return JSONUtil.asString(object(
+                "completion_id", UUID.randomUUID().toString()
+        ));
+    }
 }

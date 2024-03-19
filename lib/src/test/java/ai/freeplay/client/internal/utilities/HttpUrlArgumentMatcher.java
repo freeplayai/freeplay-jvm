@@ -29,6 +29,6 @@ public final class HttpUrlArgumentMatcher implements ArgumentMatcher<HttpRequest
             return false;
         }
         return argument.method().equalsIgnoreCase(method) &&
-                urlPattern.matcher(argument.uri().getPath()).find();
+                urlPattern.matcher(argument.uri().toString()).find();
     }
 }

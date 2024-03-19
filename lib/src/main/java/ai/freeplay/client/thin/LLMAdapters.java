@@ -10,6 +10,7 @@ import static java.lang.String.format;
 
 public class LLMAdapters {
     public interface LLMAdapter<LLMFormat> {
+        String getProvider();
         LLMFormat toLLMSyntax(List<ChatMessage> messages);
     }
 
@@ -26,6 +27,11 @@ public class LLMAdapters {
 
     public static class AnthropicLLMAdapter implements LLMAdapter<String> {
         @Override
+        public String getProvider() {
+            return "anthropic";
+        }
+
+        @Override
         public String toLLMSyntax(List<ChatMessage> messages) {
             List<String> formattedMessages = new ArrayList<>();
             for (ChatMessage message : messages) {
@@ -40,6 +46,11 @@ public class LLMAdapters {
     }
 
     public static class OpenAILLMAdapter implements LLMAdapter<List<ChatMessage>> {
+        @Override
+        public String getProvider() {
+            return "openai";
+        }
+
         @Override
         public List<ChatMessage> toLLMSyntax(List<ChatMessage> messages) {
             return messages;

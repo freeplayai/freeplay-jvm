@@ -32,7 +32,7 @@ public class OpenAICompletionStreamTest extends HttpClientTestBase {
     @Test
     public void chatReturnsFromCompletionCall() {
         withMockedClient((HttpClient mockedClient) -> {
-            mockGetPrompts(mockedClient, MODEL_GPT_35_TURBO, templateName, getChatPromptContent());
+            mockGetPromptsV2(mockedClient, MODEL_GPT_35_TURBO, templateName, getChatPromptContentObjects());
             mockOpenAIChatCallStream(mockedClient);
 
             Freeplay fpClient = new Freeplay(
@@ -67,7 +67,7 @@ public class OpenAICompletionStreamTest extends HttpClientTestBase {
     public void completionStreamCustomMetadata() {
         Map<String, Object> customMetadata = Map.of("customer_id", "123", "batch_size", 456);
         withMockedClient((HttpClient mockedClient) -> {
-            mockGetPrompts(mockedClient, MODEL_GPT_35_TURBO, templateName, getChatPromptContent());
+            mockGetPromptsV2(mockedClient, MODEL_GPT_35_TURBO, templateName, getChatPromptContentObjects());
             mockOpenAIChatCallStream(mockedClient);
 
             Freeplay fpClient = new Freeplay(
@@ -84,6 +84,7 @@ public class OpenAICompletionStreamTest extends HttpClientTestBase {
                     null,
                     null
             );
+            //noinspection unused
             List<IndexedChatMessage> chunks = responseStream.collect(Collectors.toList());
 
             // Record call
@@ -96,7 +97,7 @@ public class OpenAICompletionStreamTest extends HttpClientTestBase {
     @Test
     public void chatStreamHandlesProcessor() {
         withMockedClient((HttpClient mockedClient) -> {
-            mockGetPrompts(mockedClient, MODEL_GPT_35_TURBO, templateName, getChatPromptContent());
+            mockGetPromptsV2(mockedClient, MODEL_GPT_35_TURBO, templateName, getChatPromptContentObjects());
             mockOpenAIChatCallStream(mockedClient);
 
             Freeplay fpClient = new Freeplay(
@@ -140,7 +141,7 @@ public class OpenAICompletionStreamTest extends HttpClientTestBase {
     @Test
     public void chatDoesNotRecordWhenAskedNotTo() {
         withMockedClient((HttpClient mockedClient) -> {
-            mockGetPrompts(mockedClient, MODEL_GPT_35_TURBO, templateName, getChatPromptContent());
+            mockGetPromptsV2(mockedClient, MODEL_GPT_35_TURBO, templateName, getChatPromptContentObjects());
             mockOpenAIChatCallStream(mockedClient);
 
             Freeplay fpClient = new Freeplay(
