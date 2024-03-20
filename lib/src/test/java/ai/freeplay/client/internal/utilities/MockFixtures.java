@@ -46,21 +46,6 @@ public class MockFixtures {
 
     public static void mockGetPromptsV2(
             HttpClient mockedClient,
-            String model,
-            String templateName,
-            List<Object> templateContent
-    ) throws RuntimeException {
-        Map<String, Object> llmParameters = new HashMap<>();
-
-        try {
-            mockGetPromptsV2(mockedClient, templateName, templateContent, llmParameters, "openai_chat");
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public static void mockGetPromptsV2(
-            HttpClient mockedClient,
             String templateName,
             List<Object> content,
             Map<String, Object> llmParameters,

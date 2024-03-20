@@ -33,7 +33,7 @@ public class OpenAIContinuousChatStreamTest extends HttpClientTestBase {
         Map<String, Object> customMetadata = Map.of("chat_type", "automated");
 
         withMockedClient((HttpClient mockedClient) -> {
-            mockGetPromptsV2(mockedClient, MODEL_GPT_35_TURBO, templateName, getChatPromptContentObjects());
+            mockGetPromptsV2(mockedClient, templateName, getChatPromptContentObjects(), Collections.emptyMap(), "openai_chat");
             mock2OpenAIChatStreamCalls(mockedClient);
 
             Freeplay fpClient = new Freeplay(
@@ -100,7 +100,7 @@ public class OpenAIContinuousChatStreamTest extends HttpClientTestBase {
     @Test
     public void chatDoesNotRecordWhenAskedNotTo() {
         withMockedClient((HttpClient mockedClient) -> {
-            mockGetPromptsV2(mockedClient, MODEL_GPT_35_TURBO, templateName, getChatPromptContentObjects());
+            mockGetPromptsV2(mockedClient, templateName, getChatPromptContentObjects(), Collections.emptyMap(), "openai_chat");
             mock2OpenAIChatStreamCalls(mockedClient);
 
             Freeplay fpClient = new Freeplay(
@@ -138,7 +138,7 @@ public class OpenAIContinuousChatStreamTest extends HttpClientTestBase {
     @Test
     public void disallowsMessagesParam() {
         withMockedClient((HttpClient mockedClient) -> {
-            mockGetPromptsV2(mockedClient, MODEL_GPT_35_TURBO, templateName, getChatPromptContentObjects());
+            mockGetPromptsV2(mockedClient, templateName, getChatPromptContentObjects(), Collections.emptyMap(), "openai_chat");
 
             try {
                 Freeplay fpClient = new Freeplay(

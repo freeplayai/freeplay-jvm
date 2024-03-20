@@ -190,7 +190,7 @@ public class OpenAICompletionTest extends HttpClientTestBase {
     @Test
     public void chatCompletionHandlesProcessor() {
         withMockedClient((HttpClient mockedClient) -> {
-            mockGetPromptsV2(mockedClient, MODEL_GPT_35_TURBO, templateName, getChatPromptContentObjects());
+            mockGetPromptsV2(mockedClient, templateName, getChatPromptContentObjects(), Collections.emptyMap(), "openai_chat");
             mockOpenAIChatCalls(mockedClient, chatCompletion1);
 
             Freeplay fpClient = new Freeplay(freeplayApiKey, baseUrl, providerConfigs);
@@ -229,7 +229,7 @@ public class OpenAICompletionTest extends HttpClientTestBase {
     @Test
     public void chatCompletionAsChatHandlesProcessor() {
         withMockedClient((HttpClient mockedClient) -> {
-            mockGetPromptsV2(mockedClient, MODEL_GPT_35_TURBO, templateName, getChatPromptContentObjects());
+            mockGetPromptsV2(mockedClient, templateName, getChatPromptContentObjects(), Collections.emptyMap(), "openai_chat");
             mockOpenAIChatCalls(mockedClient, chatCompletion1);
             mockRecord(mockedClient);
 
@@ -368,7 +368,7 @@ public class OpenAICompletionTest extends HttpClientTestBase {
     @Test
     public void chatDoesNotRecordWhenAskedNotTo() {
         withMockedClient((HttpClient mockedClient) -> {
-            mockGetPromptsV2(mockedClient, MODEL_GPT_35_TURBO, templateName, getChatPromptContentObjects());
+            mockGetPromptsV2(mockedClient, templateName, getChatPromptContentObjects(), Collections.emptyMap(), "openai_chat");
             mockOpenAIChatCalls(mockedClient, chatCompletion1);
 
             Freeplay fpClient = new Freeplay(
@@ -395,7 +395,7 @@ public class OpenAICompletionTest extends HttpClientTestBase {
     @Test
     public void chatCompletionFeedback() {
         withMockedClient((HttpClient mockedClient) -> {
-            mockGetPromptsV2(mockedClient, MODEL_GPT_35_TURBO, templateName, getChatPromptContentObjects());
+            mockGetPromptsV2(mockedClient, templateName, getChatPromptContentObjects(), Collections.emptyMap(), "openai_chat");
             mockOpenAIChatCalls(mockedClient, chatCompletion1);
             mockRecord(mockedClient);
 

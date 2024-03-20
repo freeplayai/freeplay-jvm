@@ -6,6 +6,7 @@ import ai.freeplay.client.model.TestRun;
 import org.junit.Test;
 
 import java.net.http.HttpClient;
+import java.util.Collections;
 import java.util.Map;
 
 import static ai.freeplay.client.ProviderConfig.OpenAIProviderConfig;
@@ -51,7 +52,7 @@ public class OpenAITestRunTest extends HttpClientTestBase {
         String chatCompletion1 = "\\n\\nSorry, I will try to help";
         withMockedClient((HttpClient mockedClient) -> {
             mockCreateTestRun(mockedClient);
-            mockGetPromptsV2(mockedClient, MODEL_GPT_35_TURBO, templateName, getChatPromptContentObjects());
+            mockGetPromptsV2(mockedClient, templateName, getChatPromptContentObjects(), Collections.emptyMap(), "openai_chat");
             mockOpenAIChatCalls(mockedClient, chatCompletion1);
 
             String environment = "prod";
@@ -85,7 +86,7 @@ public class OpenAITestRunTest extends HttpClientTestBase {
         String chatCompletion1 = "\\n\\nSorry, I will try to help";
         withMockedClient((HttpClient mockedClient) -> {
             mockCreateTestRun(mockedClient);
-            mockGetPromptsV2(mockedClient, MODEL_GPT_35_TURBO, templateName, getChatPromptContentObjects());
+            mockGetPromptsV2(mockedClient, templateName, getChatPromptContentObjects(), Collections.emptyMap(), "openai_chat");
             mockOpenAIChatCalls(mockedClient, chatCompletion1);
 
             String environment = "prod";

@@ -32,7 +32,7 @@ public class OpenAIContinuousChatTest extends HttpClientTestBase {
         String formattedPrompt2Expected = "[{\"content\":\"You are a support agent.\",\"role\":\"system\"},{\"content\":\"How may I help you?\",\"role\":\"assistant\"},{\"content\":\"why isn't my sink working?\",\"role\":\"user\"},{\"content\":\"\\n\\nSorry, I will try to help\",\"role\":\"assistant\"},{\"content\":\"Now in Italian!\",\"role\":\"user\"}]";
 
         withMockedClient((HttpClient mockedClient) -> {
-            mockGetPromptsV2(mockedClient, MODEL_GPT_35_TURBO, templateName, getChatPromptContentObjects());
+            mockGetPromptsV2(mockedClient, templateName, getChatPromptContentObjects(), Collections.emptyMap(), "openai_chat");
             mock2OpenAICalls(mockedClient, completion1, completion2);
             mockRecord(mockedClient);
 
@@ -91,7 +91,7 @@ public class OpenAIContinuousChatTest extends HttpClientTestBase {
     @Test
     public void disallowsMessagesParam() {
         withMockedClient((HttpClient mockedClient) -> {
-            mockGetPromptsV2(mockedClient, MODEL_GPT_35_TURBO, templateName, getChatPromptContentObjects());
+            mockGetPromptsV2(mockedClient, templateName, getChatPromptContentObjects(), Collections.emptyMap(), "openai_chat");
 
             try {
                 Freeplay fpClient = new Freeplay(freeplayApiKey, baseUrl, new OpenAIProviderConfig(openaiApiKey));
@@ -117,7 +117,7 @@ public class OpenAIContinuousChatTest extends HttpClientTestBase {
     @Test
     public void handlesUnauthorizedCallingOpenAI() {
         withMockedClient((HttpClient mockedClient) -> {
-            mockGetPromptsV2(mockedClient, MODEL_GPT_35_TURBO, templateName, getChatPromptContentObjects());
+            mockGetPromptsV2(mockedClient, templateName, getChatPromptContentObjects(), Collections.emptyMap(), "openai_chat");
             mockUnauthorizedOpenAIChatCall(mockedClient);
 
             try {
@@ -186,7 +186,7 @@ public class OpenAIContinuousChatTest extends HttpClientTestBase {
         String completion1Expected = "\n\nSorry, I will try to help";
 
         withMockedClient((HttpClient mockedClient) -> {
-            mockGetPromptsV2(mockedClient, MODEL_GPT_35_TURBO, templateName, getChatPromptContentObjects());
+            mockGetPromptsV2(mockedClient, templateName, getChatPromptContentObjects(), Collections.emptyMap(), "openai_chat");
             mockOpenAIChatCalls(mockedClient, completion1);
 
             Freeplay fpClient = new Freeplay(
