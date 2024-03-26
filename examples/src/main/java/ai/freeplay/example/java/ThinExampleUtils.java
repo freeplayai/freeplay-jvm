@@ -9,10 +9,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 import static java.lang.String.format;
@@ -91,19 +88,23 @@ public class ThinExampleUtils {
             String anthropicApiKey,
             String model,
             Map<String, Object> llmParameters,
-            String prompt
+            List<ChatMessage> messages,
+            String systemContent
     ) {
         try {
-            String anthropicCompletionsURL = "https://api.anthropic.com/v1/complete";
+            String anthropicMessagesURL = "https://api.anthropic.com/v1/messages";
 
             Map<String, Object> bodyMap = new LinkedHashMap<>();
             bodyMap.put("model", model);
-            bodyMap.put("prompt", prompt);
+            bodyMap.put("messages", messages);
+            if (systemContent != null) {
+                bodyMap.put("system", systemContent);
+            }
             bodyMap.putAll(llmParameters);
             String body = objectMapper.writeValueAsString(bodyMap);
 
             HttpRequest.Builder requestBuilder = HttpRequest
-                    .newBuilder(new URI(anthropicCompletionsURL))
+                    .newBuilder(new URI(anthropicMessagesURL))
                     .header("accept", "application/json")
                     .header("anthropic-version", "2023-06-01")
                     .header("x-api-key", anthropicApiKey)

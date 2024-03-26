@@ -29,13 +29,13 @@ public class AnthropicChatCompletion {
                 new AnthropicProviderConfig(anthropicApiKey),
                 new AnthropicChatFlavor(),
                 Map.of(
-                        "max_tokens_to_sample", 50,
-                        "model", "claude-2"
+                        "max_tokens", 50,
+                        "model", "claude-2.1"
                 ),
                 new HttpConfig());
         CompletionResponse completion = fpClient.getCompletion(
                 projectId,
-                "my-chat-prompt",
+                "my-anthropic-prompt",
                 Map.of("question", "why isn't my sink working?"),
                 "latest"
         );
@@ -43,7 +43,7 @@ public class AnthropicChatCompletion {
 
         ChatStart<IndexedChatMessage> chatCompletion = fpClient.startChat(
                 projectId,
-                "my-chat-prompt",
+                "my-anthropic-prompt",
                 Map.of("question", "why isn't my sink working?"),
                 "latest"
         );
@@ -51,7 +51,7 @@ public class AnthropicChatCompletion {
 
         ChatStart<Stream<IndexedChatMessage>> streamedChatCompletion = fpClient.startChatStream(
                 projectId,
-                "my-chat-prompt",
+                "my-anthropic-prompt",
                 Map.of("question", "why isn't my sink working?"),
                 Collections.emptyMap(),
                 "latest"

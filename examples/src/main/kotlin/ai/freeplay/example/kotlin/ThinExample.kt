@@ -28,7 +28,7 @@ fun main(): Unit = runBlocking {
 
     println("Getting the prompt...")
     val prompt = fpClient.prompts()
-        .getFormatted<String>(
+        .getFormatted<List<ChatMessage>>(
             projectId,
             "my-prompt-anthropic",
             "prod",
@@ -42,15 +42,16 @@ fun main(): Unit = runBlocking {
         anthropicApiKey,
         prompt.promptInfo.model,
         prompt.promptInfo.modelParameters,
-        prompt.formattedPrompt
+        prompt.formattedPrompt,
+        prompt.systemContent.orElse(null)
     ).await()
 
     val bodyNode = objectMapper.readTree(llmResponse.body())
-    println("Completion: " + bodyNode.path("completion").asText())
+    println("Completion: " + bodyNode.path("content").get(0).path("text").asText())
 
     println("Recording the result")
     val allMessages: List<ChatMessage> = prompt.allMessages(
-        ChatMessage("Assistant", bodyNode.path("completion").asText())
+        ChatMessage("assistant", bodyNode.path("content").get(0).path("text").asText())
     )
     val callInfo = CallInfo.from(
         prompt.getPromptInfo(),

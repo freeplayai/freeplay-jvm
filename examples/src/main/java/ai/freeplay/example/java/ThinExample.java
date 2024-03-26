@@ -38,26 +38,27 @@ public class ThinExample {
         Map<String, Object> variables = Map.of("question", "Why isn't my window working?");
 
         fpClient.prompts()
-                .<String>getFormatted(
+                .<List<ChatMessage>>getFormatted(
                         projectId,
                         "my-prompt-anthropic",
                         "prod",
                         variables,
                         null
-                ).thenCompose((FormattedPrompt<String> formattedPrompt) -> {
+                ).thenCompose((FormattedPrompt<List<ChatMessage>> formattedPrompt) -> {
                             long startTime = System.currentTimeMillis();
                             return callAnthropic(
                                     objectMapper,
                                     anthropicApiKey,
                                     formattedPrompt.getPromptInfo().getModel(),
                                     formattedPrompt.getPromptInfo().getModelParameters(),
-                                    formattedPrompt.getFormattedPrompt()
+                                    formattedPrompt.getFormattedPrompt(),
+                                    formattedPrompt.getSystemContent().orElse(null)
                             ).thenApply((HttpResponse<String> response) ->
                                     new Tuple3<>(formattedPrompt, response, startTime)
                             );
                         }
-                ).thenCompose((Tuple3<FormattedPrompt<String>, HttpResponse<String>, Long> promptAndResponse) -> {
-                            FormattedPrompt<String> formattedPrompt = promptAndResponse.first;
+                ).thenCompose((Tuple3<FormattedPrompt<List<ChatMessage>>, HttpResponse<String>, Long> promptAndResponse) -> {
+                            FormattedPrompt<List<ChatMessage>> formattedPrompt = promptAndResponse.first;
                             HttpResponse<String> response = promptAndResponse.second;
                             long startTime = promptAndResponse.third;
 
@@ -69,7 +70,7 @@ public class ThinExample {
                             }
 
                             List<ChatMessage> allMessages = formattedPrompt.allMessages(
-                                    new ChatMessage("Assistant", bodyNode.path("completion").asText())
+                                    new ChatMessage("assistant", bodyNode.path("content").get(0).path("text").asText())
                             );
 
                             CallInfo callInfo = CallInfo.from(
@@ -84,7 +85,7 @@ public class ThinExample {
                                     .customMetadata(Map.of("custom_field", "custom_value"))
                                     .getSessionInfo();
 
-                            System.out.println("Completion: " + bodyNode.path("completion").asText());
+                            System.out.println("Completion: " + bodyNode.path("content").get(0).path("text").asText());
 
                             return fpClient.recordings().create(
                                     new RecordInfo(

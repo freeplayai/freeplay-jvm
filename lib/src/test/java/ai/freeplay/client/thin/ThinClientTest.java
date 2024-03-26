@@ -79,15 +79,19 @@ public class ThinClientTest extends HttpClientTestBase {
             Freeplay fpClient = new Freeplay(Config().freeplayAPIKey(freeplayApiKey).baseUrl(baseUrl));
 
             TemplatePrompt templatePrompt = fpClient.prompts().get(projectId, templateName, "prod").get();
-            FormattedPrompt<String> anthropicPrompt = templatePrompt
+            FormattedPrompt<List<ChatMessage>> anthropicPrompt = templatePrompt
                     .bind(variables)
                     .format(templatePrompt.getPromptInfo().getFlavorName());
 
-            assertEquals("\n\nHuman: You are a support agent." +
-                            "\n\nAssistant: How may I help you?" +
-                            "\n\nHuman: Why isn't my light working?" +
-                            "\n\nAssistant:",
+
+            assertEquals(
+                    List.of(
+                            new ChatMessage("assistant", "How may I help you?"),
+                            new ChatMessage("user", "Why isn't my light working?")
+                    ),
                     anthropicPrompt.getFormattedPrompt());
+            assertTrue(anthropicPrompt.getSystemContent().isPresent());
+            assertEquals("You are a support agent.", anthropicPrompt.getSystemContent().get());
 
             // Overriding flavor_name
             FormattedPrompt<List<ChatMessage>> openAIPrompt = templatePrompt
@@ -100,6 +104,8 @@ public class ThinClientTest extends HttpClientTestBase {
                     new ChatMessage("user", "Why isn't my light working?")
             );
             assertEquals(expectedMessages, openAIPrompt.getFormattedPrompt());
+            assertTrue(openAIPrompt.getSystemContent().isPresent());
+            assertEquals("You are a support agent.", openAIPrompt.getSystemContent().get());
 
             // Calling getFormatted instead of chaining manually
             CompletableFuture<FormattedPrompt<List<ChatMessage>>> formattedPrompt = fpClient.prompts().getFormatted(
@@ -110,6 +116,39 @@ public class ThinClientTest extends HttpClientTestBase {
                     "openai_chat"
             );
             assertEquals(expectedMessages, formattedPrompt.get().getFormattedPrompt());
+        });
+    }
+
+    @Test
+    public void testSyntaxWithoutSystemMessage() {
+        withMockedClient((HttpClient mockedClient) -> {
+            List<Object> chatPromptContentObjectsWithoutSystem = array(
+                    object(
+                            "role", "assistant",
+                            "content", "How may I help you?"
+                    ),
+                    object(
+                            "role", "user",
+                            "content", "{{question}}"
+                    )
+            );
+            mockGetPromptV2Async(
+                    mockedClient, templateName, "prod", chatPromptContentObjectsWithoutSystem, anthropicLLMParameters, "anthropic_chat"
+            );
+
+            Freeplay fpClient = new Freeplay(Config().freeplayAPIKey(freeplayApiKey).baseUrl(baseUrl));
+
+            TemplatePrompt templatePrompt = fpClient.prompts().get(projectId, templateName, "prod").get();
+            FormattedPrompt<List<ChatMessage>> anthropicPrompt = templatePrompt
+                    .bind(variables)
+                    .format(templatePrompt.getPromptInfo().getFlavorName());
+
+            assertEquals(List.of(
+                            new ChatMessage("assistant", "How may I help you?"),
+                            new ChatMessage("user", "Why isn't my light working?")
+                    ),
+                    anthropicPrompt.getFormattedPrompt());
+            assertTrue(anthropicPrompt.getSystemContent().isEmpty());
         });
     }
 

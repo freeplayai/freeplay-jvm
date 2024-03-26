@@ -71,7 +71,7 @@ public class AnthropicChatCompletionTest extends HttpClientTestBase {
                     Map.of("question", "why isn't my sink working?"),
                     Map.of(
                             "model", MODEL_CLAUDE_2,
-                            "max_tokens_to_sample", 64
+                            "max_tokens", 64
                     ),
                     "latest",
                     ChatFlavor.DEFAULT,
@@ -86,7 +86,7 @@ public class AnthropicChatCompletionTest extends HttpClientTestBase {
             Map<String, Object> recordBodyMap = getCapturedBodyAsMap(mockedClient, 3, 2);
             assertEquals(promptTemplateVersionId, recordBodyMap.get("project_version_id"));
             assertEquals(promptTemplateId, recordBodyMap.get("prompt_template_id"));
-            assertEquals("[{\"content\":\"Answer this question: why isn't my sink working?\",\"role\":\"Human\"}]", recordBodyMap.get("prompt_content"));
+            assertEquals("[{\"content\":\"Answer this question: why isn't my sink working?\",\"role\":\"user\"}]", recordBodyMap.get("prompt_content"));
             assertEquals(" I apologize that your sink isn't working. Can I help you", recordBodyMap.get("return_content"));
             assertNull(recordBodyMap.get("test_run_id"));
             assertEquals(Map.of("customer_id", 123), recordBodyMap.get("custom_metadata"));
@@ -114,15 +114,15 @@ public class AnthropicChatCompletionTest extends HttpClientTestBase {
                     ),
                     Map.of(
                             "model", MODEL_CLAUDE_2,
-                            "max_tokens_to_sample", 64
+                            "max_tokens", 64
                     ),
                     "latest"
             );
 
             Map<String, Object> anthropicCall = getCapturedBodyAsMap(mockedClient, 3, 1);
             assertEquals(
-                    "\n\nHuman: Something this-is-a-name\n\nAssistant:",
-                    anthropicCall.get("prompt"));
+                    List.of(Map.of("content", "Something this-is-a-name", "role", "user")),
+                    anthropicCall.get("messages"));
         });
     }
 
@@ -151,19 +151,14 @@ public class AnthropicChatCompletionTest extends HttpClientTestBase {
                     ),
                     Map.of(
                             "model", MODEL_CLAUDE_2,
-                            "max_tokens_to_sample", 64
+                            "max_tokens", 64
                     ),
                     "latest"
             );
 
             Map<String, Object> anthropicCall = getCapturedBodyAsMap(mockedClient, 3, 1);
-            assertEquals(
-                    "\n\nHuman: Do these things: \n" +
-                            "task1\n" +
-                            "task2\n" +
-                            "task3\n\n" +
-                            "Assistant:",
-                    anthropicCall.get("prompt"));
+            assertEquals(List.of(Map.of("content", "Do these things: \ntask1\ntask2\ntask3", "role", "user")),
+                    anthropicCall.get("messages"));
         });
     }
 
@@ -186,7 +181,7 @@ public class AnthropicChatCompletionTest extends HttpClientTestBase {
                     Map.of("question", "why isn't my sink working?"),
                     Map.of(
                             "model", MODEL_CLAUDE_2,
-                            "max_tokens_to_sample", 64
+                            "max_tokens", 64
                     ),
                     "latest",
                     testChatProcessor
@@ -194,18 +189,17 @@ public class AnthropicChatCompletionTest extends HttpClientTestBase {
 
             // Modified Anthropic call
             Map<String, Object> anthropicRequestBody = getCapturedBodyAsMap(mockedClient, 3, 1);
-            assertEquals(
-                    "\n\nHuman: Answer this question: why isn't my sink working?\n" +
-                            "\n" +
-                            "Human: Inserted Message\n" +
-                            "\n" +
-                            "Assistant:",
-                    anthropicRequestBody.get("prompt"));
+
+            assertEquals(List.of(
+                            Map.of("content", "Answer this question: why isn't my sink working?", "role", "user"),
+                            Map.of("content", "Inserted Message", "role", "user")),
+                    anthropicRequestBody.get("messages"));
+
 
             // Record call
             Map<String, Object> recordBodyMap = getCapturedBodyAsMap(mockedClient, 3, 2);
             assertEquals(
-                    "[{\"content\":\"Answer this question: why isn't my sink working?\",\"role\":\"Human\"},{\"content\":\"Inserted Message\",\"role\":\"user\"}]",
+                    "[{\"content\":\"Answer this question: why isn't my sink working?\",\"role\":\"user\"},{\"content\":\"Inserted Message\",\"role\":\"user\"}]",
                     recordBodyMap.get("prompt_content"));
         });
     }
@@ -216,11 +210,11 @@ public class AnthropicChatCompletionTest extends HttpClientTestBase {
             mockGetPromptsV2(mockedClient, templateName, chatPromptContentObjects, Collections.emptyMap(), "anthropic_chat");
             mockAnthropicCall(mockedClient, completionContent);
 
-            Stream<String> requiredParameters = Stream.of("max_tokens_to_sample");
+            Stream<String> requiredParameters = Stream.of("max_tokens");
 
             Map<String, Object> llmParameters = Map.of(
                     "model", MODEL_CLAUDE_2,
-                    "max_tokens_to_sample", 64
+                    "max_tokens", 64
             );
 
             requiredParameters.forEach((String param) -> {
@@ -267,7 +261,7 @@ public class AnthropicChatCompletionTest extends HttpClientTestBase {
                         Map.of("question", "why isn't my sink working?"),
                         Map.of(
                                 "model", MODEL_CLAUDE_2,
-                                "max_tokens_to_sample", 64,
+                                "max_tokens", 64,
                                 "prompt", "this is not allowed"
                         ),
                         "latest"
@@ -300,7 +294,7 @@ public class AnthropicChatCompletionTest extends HttpClientTestBase {
                     Map.of("question", "why isn't my sink working?"),
                     Map.of(
                             "model", MODEL_CLAUDE_2,
-                            "max_tokens_to_sample", 64
+                            "max_tokens", 64
                     ),
                     "latest"
             );
@@ -335,7 +329,7 @@ public class AnthropicChatCompletionTest extends HttpClientTestBase {
                         Map.of("question", "why isn't my sink working?"),
                         Map.of(
                                 "model", MODEL_CLAUDE_2,
-                                "max_tokens_to_sample", 64
+                                "max_tokens", 64
                         ),
                         "latest"
                 );
@@ -367,7 +361,7 @@ public class AnthropicChatCompletionTest extends HttpClientTestBase {
                     Map.of("question", "why isn't my sink working?"),
                     Map.of(
                             "model", MODEL_CLAUDE_2,
-                            "max_tokens_to_sample", 64
+                            "max_tokens", 64
                     ),
                     "latest"
             );
@@ -375,16 +369,17 @@ public class AnthropicChatCompletionTest extends HttpClientTestBase {
             List<IndexedChatMessage> chunks = responseStream.getFirstCompletion().collect(Collectors.toList());
 
             // Completion
-            assertEquals(4, chunks.size());
-            assertEquals(" Oh", chunks.get(0).getContent());
+            assertEquals(5, chunks.size());
+            assertEquals("Oh", chunks.get(0).getContent());
             assertEquals(" dear", chunks.get(1).getContent());
             assertEquals(",", chunks.get(2).getContent());
             assertEquals(" really", chunks.get(3).getContent());
+            assertFalse(chunks.get(4).isComplete());
 
             // Record call
             Map<String, Object> recordBodyMap = getCapturedBodyAsMap(mockedClient, 3, 2);
-            assertEquals("[{\"content\":\"Answer this question: why isn't my sink working?\",\"role\":\"Human\"}]", recordBodyMap.get("prompt_content"));
-            assertEquals(" Oh dear, really", recordBodyMap.get("return_content"));
+            assertEquals("[{\"content\":\"Answer this question: why isn't my sink working?\",\"role\":\"user\"}]", recordBodyMap.get("prompt_content"));
+            assertEquals("Oh dear, really", recordBodyMap.get("return_content"));
         });
     }
 
@@ -408,7 +403,7 @@ public class AnthropicChatCompletionTest extends HttpClientTestBase {
                     Map.of("question", "why isn't my sink working?"),
                     Map.of(
                             "model", MODEL_CLAUDE_2,
-                            "max_tokens_to_sample", 64
+                            "max_tokens", 64
                     ),
                     null,
                     testChatProcessor
@@ -419,14 +414,15 @@ public class AnthropicChatCompletionTest extends HttpClientTestBase {
 
             // Modified Anthropic call
             Map<String, Object> anthropicRequest = getCapturedBodyAsMap(mockedClient, 3, 1);
-            assertEquals(
-                    "\n\nHuman: Answer this question: why isn't my sink working?\n\nHuman: Inserted Message\n\nAssistant:",
-                    anthropicRequest.get("prompt"));
+            assertEquals(List.of(
+                            Map.of("content", "Answer this question: why isn't my sink working?", "role", "user"),
+                            Map.of("content", "Inserted Message", "role", "user")),
+                    anthropicRequest.get("messages"));
 
             // Record call
             Map<String, Object> recordBodyMap = getCapturedBodyAsMap(mockedClient, 3, 2);
             assertEquals(
-                    "[{\"content\":\"Answer this question: why isn't my sink working?\",\"role\":\"Human\"},{\"content\":\"Inserted Message\",\"role\":\"user\"}]",
+                    "[{\"content\":\"Answer this question: why isn't my sink working?\",\"role\":\"user\"},{\"content\":\"Inserted Message\",\"role\":\"user\"}]",
                     recordBodyMap.get("prompt_content"));
 
         });

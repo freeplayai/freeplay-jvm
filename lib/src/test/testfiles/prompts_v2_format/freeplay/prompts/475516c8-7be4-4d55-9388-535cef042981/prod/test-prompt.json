@@ -18,7 +18,7 @@
         "flavor": "anthropic_chat",
         "model": "claude-2.1",
         "params": {
-            "max_tokens_to_sample": 12,
+            "max_tokens": 12,
             "temperature": 0.15
         },
         "provider": "anthropic",

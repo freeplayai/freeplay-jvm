@@ -169,7 +169,7 @@ public class FilesystemTemplateResolverTest extends HttpClientTestBase {
                         "claude-2.1",
                         "anthropic_chat",
                         Map.of(
-                                "max_tokens_to_sample", 12,
+                                "max_tokens", 12,
                                 "temperature", 0.15
                         ),
                         Collections.emptyMap()

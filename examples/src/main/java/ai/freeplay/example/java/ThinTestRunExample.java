@@ -76,7 +76,7 @@ public class ThinTestRunExample {
             TestRun testRun,
             TestCase testCase
     ) {
-        FormattedPrompt<String> formattedPrompt =
+        FormattedPrompt<List<ChatMessage>> formattedPrompt =
                 templatePrompt.bind(testCase.getVariables()).format();
 
         long startTime = System.currentTimeMillis();
@@ -85,7 +85,8 @@ public class ThinTestRunExample {
                 anthropicApiKey,
                 formattedPrompt.getPromptInfo().getModel(),
                 formattedPrompt.getPromptInfo().getModelParameters(),
-                formattedPrompt.getFormattedPrompt()
+                formattedPrompt.getFormattedPrompt(),
+                formattedPrompt.getSystemContent().orElse(null)
         ).thenCompose((HttpResponse<String> response) ->
                 recordAnthropic(fpClient, testRun, testCase, formattedPrompt, startTime, response)
         );
@@ -95,7 +96,7 @@ public class ThinTestRunExample {
             Freeplay fpClient,
             TestRun testRun,
             TestCase testCase,
-            FormattedPrompt<String> formattedPrompt,
+            FormattedPrompt<List<ChatMessage>> formattedPrompt,
             long startTime,
             HttpResponse<String> response
     ) {

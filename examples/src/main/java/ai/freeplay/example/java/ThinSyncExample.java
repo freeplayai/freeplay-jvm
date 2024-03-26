@@ -37,8 +37,8 @@ public class ThinSyncExample {
 
         Map<String, Object> variables = Map.of("question", "Why isn't my window working?");
 
-        FormattedPrompt<String> prompt = fpClient.prompts()
-                .<String>getFormatted(
+        FormattedPrompt<List<ChatMessage>> prompt = fpClient.prompts()
+                .<List<ChatMessage>>getFormatted(
                         projectId,
                         "my-prompt-anthropic",
                         "prod",
@@ -51,7 +51,8 @@ public class ThinSyncExample {
                 anthropicApiKey,
                 prompt.getPromptInfo().getModel(),
                 prompt.getPromptInfo().getModelParameters(),
-                prompt.getFormattedPrompt()
+                prompt.getFormattedPrompt(),
+                prompt.getSystemContent().orElse(null)
         ).get();
 
         RecordResponse recordResponse = recordResult(
@@ -66,7 +67,7 @@ public class ThinSyncExample {
 
     public static CompletableFuture<RecordResponse> recordResult(
             Freeplay fpClient,
-            FormattedPrompt<String> formattedPrompt, Map<String, Object> variables, long startTime, HttpResponse<String> response
+            FormattedPrompt<List<ChatMessage>> formattedPrompt, Map<String, Object> variables, long startTime, HttpResponse<String> response
     ) {
         JsonNode bodyNode;
         try {

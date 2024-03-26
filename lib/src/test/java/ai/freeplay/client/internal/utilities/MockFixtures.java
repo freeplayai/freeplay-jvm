@@ -263,7 +263,7 @@ public class MockFixtures {
     // Anthropic
     public static void mockAnthropicCall(HttpClient mockedClient, String completion) throws RuntimeException {
         try {
-            when(request(mockedClient, "api.anthropic.com", "POST", "v1/complete"))
+            when(request(mockedClient, "api.anthropic.com", "POST", "v1/messages"))
                     .thenReturn(
                             response(200, getAnthropicResponse(MODEL_CLAUDE_2, completion)));
         } catch (Exception e) {
@@ -273,7 +273,7 @@ public class MockFixtures {
 
     public static void mockAnthropicCallStream(HttpClient mockedClient) throws RuntimeException {
         try {
-            when(request(mockedClient, "api.anthropic.com", "POST", "v1/complete"))
+            when(request(mockedClient, "api.anthropic.com", "POST", "v1/messages"))
                     .thenReturn(
                             response(200, getAnthropicResponseStreamMessages()));
         } catch (Exception e) {
@@ -283,7 +283,7 @@ public class MockFixtures {
 
     public static void mockUnauthorizedAnthropicCall(HttpClient mockedClient) throws RuntimeException {
         try {
-            when(request(mockedClient, "api.anthropic.com", "POST", "v1/complete"))
+            when(request(mockedClient, "api.anthropic.com", "POST", "v1/messages"))
                     .thenReturn(response(401, getAnthropicUnauthorizedResponse()));
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -413,33 +413,56 @@ public class MockFixtures {
 
     public static String getAnthropicResponse(String model, String response) {
         return "{\n" +
-                "  \"completion\": \"" + response + "\",\n" +
-                "  \"stop_reason\": \"max_tokens\",\n" +
+                "  \"content\": [\n" +
+                "    {\n" +
+                "      \"text\": \"" + response + "\",\n" +
+                "      \"type\": \"text\"\n" +
+                "    }\n" +
+                "  ],\n" +
+                "  \"id\": \"msg_013Zva2CMHLNnXjNJJKqJ2EF\",\n" +
                 "  \"model\": \"" + model + "\",\n" +
-                "  \"stop\": null,\n" +
-                "  \"log_id\": \"3dde119e125c95cea0915fcffa21f47f9c340d76c9ceb6050e34cfe2a277652a\"\n" +
+                "  \"role\": \"assistant\",\n" +
+                "  \"stop_reason\": \"end_turn\",\n" +
+                "  \"stop_sequence\": null,\n" +
+                "  \"type\": \"message\",\n" +
+                "  \"usage\": {\n" +
+                "    \"input_tokens\": 10,\n" +
+                "    \"output_tokens\": 25\n" +
+                "  }\n" +
                 "}";
     }
 
     public static Stream<String> getAnthropicResponseStreamMessages() {
         return Stream.of(
-                "event: completion",
-                "data: {\"completion\":\" Oh\",\"stop_reason\":null,\"model\":\"claude-2.0\",\"stop\":null,\"log_id\":\"d0914d5a1c9eaa87de003830bc290dcf32d4bd6c097b27466b2d65a7c80bf7d7\"}",
+                "event: message_start",
+                "data: {\"type\": \"message_start\", \"message\": {\"id\": \"msg_1nZdL29xx5MUA1yADyHTEsnR8uuvGzszyY\", \"type\": \"message\", \"role\": \"assistant\", \"content\": [], \"model\": \"claude-3-opus-20240229\", \"stop_reason\": null, \"stop_sequence\": null, \"usage\": {\"input_tokens\": 25, \"output_tokens\": 1}}}\n",
                 "",
-                "event: completion",
-                "data: {\"completion\":\" dear\",\"stop_reason\":null,\"model\":\"claude-2.0\",\"stop\":null,\"log_id\":\"d0914d5a1c9eaa87de003830bc290dcf32d4bd6c097b27466b2d65a7c80bf7d7\"}",
+                "event: content_block_start",
+                "data: {\"type\": \"content_block_start\", \"index\": 0, \"content_block\": {\"type\": \"text\", \"text\": \"\"}}\n",
                 "",
                 "event: ping",
-                "data: {}",
+                "data: {\"type\": \"ping\"}\n",
                 "",
-                "event: completion",
-                "data: {\"completion\":\",\",\"stop_reason\":null,\"model\":\"claude-2.0\",\"stop\":null,\"log_id\":\"d0914d5a1c9eaa87de003830bc290dcf32d4bd6c097b27466b2d65a7c80bf7d7\"}",
+                "event: content_block_delta",
+                "data: {\"type\": \"content_block_delta\", \"index\": 0, \"delta\": {\"type\": \"text_delta\", \"text\": \"Oh\"}}\n",
+                "",
+                "event: content_block_delta",
+                "data: {\"type\": \"content_block_delta\", \"index\": 0, \"delta\": {\"type\": \"text_delta\", \"text\": \" dear\"}}\n",
+                "",
+                "event: content_block_delta",
+                "data: {\"type\": \"content_block_delta\", \"index\": 0, \"delta\": {\"type\": \"text_delta\", \"text\": \",\"}}\n",
+                "",
+                "event: content_block_delta",
+                "data: {\"type\": \"content_block_delta\", \"index\": 0, \"delta\": {\"type\": \"text_delta\", \"text\": \" really\"}}\n",
                 "",
                 "event: new-unknown-event",
                 "data: ",
                 "",
-                "event: completion",
-                "data: {\"completion\":\" really\",\"stop_reason\":\"max_tokens\",\"model\":\"claude-2.0\",\"stop\":null,\"log_id\":\"d0914d5a1c9eaa87de003830bc290dcf32d4bd6c097b27466b2d65a7c80bf7d7\"}",
+                "event: message_delta",
+                "data: {\"type\": \"message_delta\", \"delta\": {\"stop_reason\": \"end_turn\", \"stop_sequence\":null, \"usage\":{\"output_tokens\": 15}}}",
+                "",
+                "event: message_stop",
+                "data: {\"type\": \"message_stop\"}\n",
                 ""
         );
     }

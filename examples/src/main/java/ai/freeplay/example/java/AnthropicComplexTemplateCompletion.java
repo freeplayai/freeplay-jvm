@@ -26,8 +26,8 @@ public class AnthropicComplexTemplateCompletion {
                 new ProviderConfigs(new AnthropicProviderConfig(anthropicApiKey)),
                 new AnthropicChatFlavor(),
                 Map.of(
-                        "max_tokens_to_sample", 50,
-                        "model", "claude-2"
+                        "max_tokens", 50,
+                        "model", "claude-2.1"
                 ),
                 new HttpConfig());
         CompletionResponse completion = fpClient.getCompletion(

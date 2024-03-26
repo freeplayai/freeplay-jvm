@@ -2,7 +2,9 @@ package ai.freeplay.client.flavor;
 
 import ai.freeplay.client.HttpConfig;
 import ai.freeplay.client.ProviderConfigs;
+import ai.freeplay.client.exceptions.FreeplayClientException;
 import ai.freeplay.client.exceptions.FreeplayException;
+import ai.freeplay.client.exceptions.LLMServerException;
 import ai.freeplay.client.internal.Http;
 import ai.freeplay.client.internal.JSONUtil;
 import ai.freeplay.client.internal.StringUtils;
@@ -14,11 +16,11 @@ import java.io.IOException;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
-import static ai.freeplay.client.internal.Http.parseBody;
-import static ai.freeplay.client.internal.Http.throwFreeplayIfError;
+import static ai.freeplay.client.internal.Http.*;
 import static ai.freeplay.client.internal.StringUtils.isBlank;
 import static ai.freeplay.client.internal.StringUtils.isNotBlank;
 import static java.lang.String.format;
@@ -27,8 +29,11 @@ import static java.util.stream.Collectors.toList;
 
 public class AnthropicChatFlavor implements ChatFlavor {
 
-    private static final String ANTHROPIC_COMPLETIONS_URL = "https://api.anthropic.com/v1/complete";
+    private static final String ANTHROPIC_MESSAGES_URL = "https://api.anthropic.com/v1/messages";
     private static final String ANTHROPIC_VERSION = "2023-06-01";
+
+    private static final String ANTHROPIC_CONTENT_BLOCK_DELTA_EVENT_TYPE = "content_block_delta";
+    private static final String ANTHROPIC_MESSAGE_DELTA_EVENT_TYPE = "message_delta";
 
     @Override
     public String getFormatType() {
@@ -50,20 +55,13 @@ public class AnthropicChatFlavor implements ChatFlavor {
             return JSON.std.listFrom(template).stream().map((Object message) -> {
                 Map<String, Object> messageMap = (Map<String, Object>) message;
                 String formatted = TemplateUtils.format(valueOf(messageMap.get("content")), variables);
-                String role = valueOf(messageMap.get("role"));
-                String anthropicRole;
-                if ("assistant".equalsIgnoreCase(role)) {
-                    anthropicRole = "Assistant";
-                } else {
-                    anthropicRole = "Human";
-                }
                 return new ChatMessage(
-                        anthropicRole,
+                        valueOf(messageMap.get("role")),
                         formatted
                 );
             }).collect(toList());
         } catch (IOException e) {
-            throw new FreeplayException("Error formatting chat prompt template.", e);
+            throw new FreeplayClientException("Error formatting chat prompt template.", e);
         }
     }
 
@@ -92,7 +90,7 @@ public class AnthropicChatFlavor implements ChatFlavor {
         HttpResponse<Stream<String>> httpResponse;
         try {
             httpResponse = Http.postJson(
-                    ANTHROPIC_COMPLETIONS_URL,
+                    ANTHROPIC_MESSAGES_URL,
                     bodyMap,
                     BodyHandlers.ofLines(),
                     httpConfig,
@@ -110,7 +108,7 @@ public class AnthropicChatFlavor implements ChatFlavor {
                 .map((String line) -> handleLine(line, streamStateRef.get()))
                 .filter(Objects::nonNull)
                 .map((CompletionResponse completionResponse) -> new IndexedChatMessage(
-                        "Assistant",
+                        "assistant",
                         completionResponse.getContent(),
                         0,
                         completionResponse.isComplete(),
@@ -118,6 +116,7 @@ public class AnthropicChatFlavor implements ChatFlavor {
                 ));
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public ChatCompletionResponse callChatService(
             Collection<ChatMessage> messages,
@@ -131,7 +130,7 @@ public class AnthropicChatFlavor implements ChatFlavor {
         HttpResponse<String> response;
         try {
             response = Http.postJson(
-                    ANTHROPIC_COMPLETIONS_URL,
+                    ANTHROPIC_MESSAGES_URL,
                     bodyMap,
                     httpConfig,
                     "accept", "application/json",
@@ -142,18 +141,28 @@ public class AnthropicChatFlavor implements ChatFlavor {
             throw new FreeplayException("Error calling Anthropic.", e);
         }
 
-        Map<String, Object> responseBody = parseBody(response);
         throwFreeplayIfError(response, 200);
 
-        boolean isComplete = "stop_sequence".equals(responseBody.get("stop_reason"));
-        return new ChatCompletionResponse(List.of(
-                new IndexedChatMessage(
-                        valueOf(responseBody.get("role")),
-                        valueOf(responseBody.get("completion")),
-                        0,
-                        isComplete,
-                        true)
-        ));
+        Map<String, Object> responseBody;
+        try {
+            responseBody = parseBody(response);
+        } catch (FreeplayException e) {
+            throw new LLMServerException("Error calling Anthropic.", e);
+        }
+        throwLLMIfError(response, 200);
+
+        List<Map<String, Object>> responseContents = (List<Map<String, Object>>) responseBody.get("content");
+
+        AtomicInteger index  = new AtomicInteger(0);
+        List<IndexedChatMessage> anthropicMessages = responseContents.stream().map((Map<String, Object> messageObject) -> new IndexedChatMessage(
+                valueOf(responseBody.get("role")),
+                valueOf(messageObject.get("text")),
+                index.getAndIncrement(),
+                "stop_sequence".equals(messageObject.get("stop_reason")),
+                true
+        )).collect(toList());
+
+        return new ChatCompletionResponse(anthropicMessages);
     }
 
     @Override
@@ -179,8 +188,19 @@ public class AnthropicChatFlavor implements ChatFlavor {
 
     private Map<String, Object> getRequestBody(Collection<ChatMessage> messages, Map<String, Object> llmParameters) {
         Map<String, Object> bodyMap = new HashMap<>(llmParameters);
-        String anthropicSyntax = toLLMSyntax(messages);
-        bodyMap.put("prompt", anthropicSyntax);
+        Collection<ChatMessage> messagesWithoutSystem = messages
+                .stream()
+                .filter(msg -> !msg.getRole().equals("system"))
+                .collect(toList());
+        bodyMap.put("messages", messagesWithoutSystem);
+
+        Optional<String> maybeSystemContent = messages
+                .stream()
+                .filter(msg -> msg.getRole().equals("system"))
+                .findFirst()
+                .map(ChatMessage::getContent);
+        maybeSystemContent.ifPresent(systemContent -> bodyMap.put("system", systemContent));
+
         return bodyMap;
     }
 
@@ -188,31 +208,18 @@ public class AnthropicChatFlavor implements ChatFlavor {
         if (!llmParameters.containsKey("model")) {
             throw new FreeplayException("The 'model' parameter is required when calling Anthropic.");
         }
-        if (!llmParameters.containsKey("max_tokens_to_sample")) {
-            throw new FreeplayException("The 'max_tokens_to_sample' parameter is required when calling Anthropic.");
+        if (!llmParameters.containsKey("max_tokens")) {
+            throw new FreeplayException("The 'max_tokens' parameter is required when calling Anthropic.");
         }
         if (llmParameters.containsKey("prompt")) {
             throw new FreeplayException("The 'prompt' parameter cannot be specified. It is populated automatically.");
         }
     }
 
-    private String toLLMSyntax(Collection<ChatMessage> messages) {
-        List<String> formattedMessages = new ArrayList<>();
-        for (ChatMessage message : messages) {
-            String content = message.getContent();
-            // Anthropic does not support system role for now.
-            String role = message.getRole().equals("assistant") ? "Assistant" : "Human";
-            formattedMessages.add(role + ": " + content);
-        }
-        formattedMessages.add("Assistant:");
-        return "\n\n" + String.join("\n\n", formattedMessages);
-    }
-
-
+    @SuppressWarnings("unchecked")
     private CompletionResponse handleLine(String line, StreamState streamState) {
         // We're implementing this spec in this method:
         //  https://html.spec.whatwg.org/multipage/server-sent-events.html#event-stream-interpretation
-
         if (StringUtils.isBlank(line)) {
             return finishEvent(streamState);
         }
@@ -228,9 +235,16 @@ public class AnthropicChatFlavor implements ChatFlavor {
                 }
                 Map<String, Object> objectMap = JSONUtil.parseMap(fieldValue);
 
-                streamState.appendData((String) objectMap.get("completion"));
-                streamState.setStopReason((String) objectMap.get("stop_reason"));
-
+                String eventType = (String) objectMap.get("type");
+                if (eventType.equals(ANTHROPIC_CONTENT_BLOCK_DELTA_EVENT_TYPE)) {
+                    // Text is streamed through content block delta events.
+                    Map<String, Object> delta = (Map<String, Object>) objectMap.get("delta");
+                    streamState.appendData((String) delta.get("text"));
+                } else if (eventType.equals(ANTHROPIC_MESSAGE_DELTA_EVENT_TYPE)) {
+                    // Stop reason is streamed through message delta events, after a message is complete.
+                    Map<String, Object> delta = (Map<String, Object>) objectMap.get("delta");
+                    streamState.setStopReason((String) delta.get("stop_reason"));
+                }
                 return null;
             } else if ("event".equals(fieldName)) {
                 streamState.startEvent(fieldValue);
@@ -244,11 +258,11 @@ public class AnthropicChatFlavor implements ChatFlavor {
     }
 
     private static CompletionResponse finishEvent(StreamState streamState) {
-        if ("completion".equals(streamState.eventName)) {
+        if (ANTHROPIC_CONTENT_BLOCK_DELTA_EVENT_TYPE.equals(streamState.eventName) || ANTHROPIC_MESSAGE_DELTA_EVENT_TYPE.equals(streamState.eventName)) {
             return streamState.closeCurrentEvent();
         } else {
-            // Currently we only expect 'completion' and 'ping' event types, but Anthropic indicates we need
-            // to be tolerant of new event types. So we simply ignore pings and any new event types.
+            // Anthropic indicates we need to be tolerant of new event types.
+            // So we simply ignore pings and any new event types.
             streamState.reset();
             return null;
         }

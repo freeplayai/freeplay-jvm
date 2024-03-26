@@ -39,7 +39,7 @@ public class ThinExtractedExample {
         Map<String, Object> variables = Map.of("question", "Why isn't my window working?");
 
         var promptFuture = fpClient.prompts()
-                .<String>getFormatted(
+                .<List<ChatMessage>>getFormatted(
                         projectId,
                         "my-prompt-anthropic",
                         "prod",
@@ -47,20 +47,21 @@ public class ThinExtractedExample {
                 );
 
         long startTime = System.currentTimeMillis();
-        var llmFuture = promptFuture.thenCompose((FormattedPrompt<String> formattedPrompt) ->
+        var llmFuture = promptFuture.thenCompose((FormattedPrompt<List<ChatMessage>> formattedPrompt) ->
                         callAnthropic(
                                 objectMapper,
                                 anthropicApiKey,
                                 formattedPrompt.getPromptInfo().getModel(),
                                 formattedPrompt.getPromptInfo().getModelParameters(),
-                                formattedPrompt.getFormattedPrompt()
+                                formattedPrompt.getFormattedPrompt(),
+                                formattedPrompt.getSystemContent().orElse(null)
                         ).thenApply((HttpResponse<String> response) ->
                                 new Tuple2<>(formattedPrompt, response)
                         )
                 );
 
         var recordFuture =
-                llmFuture.thenCompose((Tuple2<FormattedPrompt<String>, HttpResponse<String>> promptAndResponse) ->
+                llmFuture.thenCompose((Tuple2<FormattedPrompt<List<ChatMessage>>, HttpResponse<String>> promptAndResponse) ->
                         recordResult(
                                 fpClient,
                                 promptAndResponse.first, variables, startTime, promptAndResponse.second
@@ -80,7 +81,7 @@ public class ThinExtractedExample {
 
     public static CompletableFuture<RecordResponse> recordResult(
             Freeplay fpClient,
-            FormattedPrompt<String> formattedPrompt,
+            FormattedPrompt<List<ChatMessage>> formattedPrompt,
             Map<String, Object> variables,
             long startTime,
             HttpResponse<String> response
@@ -93,7 +94,7 @@ public class ThinExtractedExample {
         }
 
         List<ChatMessage> allMessages = formattedPrompt.allMessages(
-                new ChatMessage("Assistant", bodyNode.path("completion").asText())
+                new ChatMessage("Assistant", bodyNode.path("content").get(0).path("text").asText())
         );
 
         CallInfo callInfo = CallInfo.from(
@@ -108,7 +109,7 @@ public class ThinExtractedExample {
                 .customMetadata(Map.of("custom_field", "custom_value"))
                 .getSessionInfo();
 
-        System.out.println("Completion: " + bodyNode.path("completion").asText());
+        System.out.println("Completion: " + bodyNode.path("content").get(0).path("text").asText());
 
         return fpClient.recordings().create(
                 new RecordInfo(

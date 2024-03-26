@@ -28,7 +28,7 @@ fun main(): Unit = runBlocking {
     val testRun = fpClient.testRuns().create(projectId, "core-tests").await()
 
     for (testCase in testRun.testCases) {
-        val formattedPrompt = templatePrompt.bind(testCase.variables).format<String>()
+        val formattedPrompt = templatePrompt.bind(testCase.variables).format<List<ChatMessage>>()
 
         val startTime = System.currentTimeMillis()
         val llmResponse = callAnthropic(
@@ -36,14 +36,15 @@ fun main(): Unit = runBlocking {
             anthropicApiKey,
             formattedPrompt.promptInfo.model,
             formattedPrompt.promptInfo.modelParameters,
-            formattedPrompt.formattedPrompt
+            formattedPrompt.formattedPrompt,
+            formattedPrompt.systemContent.orElse(null)
         ).await()
 
         val bodyNode = objectMapper.readTree(llmResponse.body())
 
         println("Recording the result")
         val allMessages = formattedPrompt.allMessages(
-            ChatMessage("Assistant", bodyNode.path("completion").asText())
+            ChatMessage("assistant", bodyNode.path("content").get(0).get("text").asText())
         )
         val callInfo = CallInfo.from(
             formattedPrompt.getPromptInfo(),

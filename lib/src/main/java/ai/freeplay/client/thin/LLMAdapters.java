@@ -3,10 +3,10 @@ package ai.freeplay.client.thin;
 import ai.freeplay.client.exceptions.FreeplayConfigurationException;
 import ai.freeplay.client.thin.resources.prompts.ChatMessage;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static java.lang.String.format;
+import static java.util.stream.Collectors.toList;
 
 public class LLMAdapters {
     public interface LLMAdapter<LLMFormat> {
@@ -25,23 +25,18 @@ public class LLMAdapters {
         }
     }
 
-    public static class AnthropicLLMAdapter implements LLMAdapter<String> {
+    public static class AnthropicLLMAdapter implements LLMAdapter<List<ChatMessage>> {
         @Override
         public String getProvider() {
             return "anthropic";
         }
 
         @Override
-        public String toLLMSyntax(List<ChatMessage> messages) {
-            List<String> formattedMessages = new ArrayList<>();
-            for (ChatMessage message : messages) {
-                String content = message.getContent();
-                // Anthropic does not support system role for now.
-                String role = message.getRole().equals("assistant") ? "Assistant" : "Human";
-                formattedMessages.add(role + ": " + content);
-            }
-            formattedMessages.add("Assistant:");
-            return "\n\n" + String.join("\n\n", formattedMessages);
+        public List<ChatMessage> toLLMSyntax(List<ChatMessage> messages) {
+            return messages
+                    .stream()
+                    .filter(message -> !message.getRole().equals("system"))
+                    .collect(toList());
         }
     }
 
