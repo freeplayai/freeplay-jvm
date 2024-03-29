@@ -531,7 +531,7 @@ public class MockFixtures {
                                         "model", model,
                                         "flavor", flavorName,
                                         "params", params,
-                                        "provider_info", Collections.emptyMap()
+                                        "provider_info", Map.of("provider", "info")
                                 )
                         )
                 )
@@ -561,7 +561,7 @@ public class MockFixtures {
                                 "model", model,
                                 "flavor", flavorName,
                                 "params", params,
-                                "provider_info", Collections.emptyMap()
+                                "provider_info", Map.of("provider", "info")
                         )
                 )
         );

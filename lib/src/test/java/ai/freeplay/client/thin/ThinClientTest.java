@@ -57,7 +57,7 @@ public class ThinClientTest extends HttpClientTestBase {
                     "openai",
                     MODEL_GPT_35_TURBO,
                     "openai_chat"
-            );
+            ).providerInfo(Map.of("provider", "info"));
             assertEquals(expectedInfo, templatePrompt.getPromptInfo());
 
             List<ChatMessage> expectedMessages = List.of(
@@ -219,6 +219,7 @@ public class ThinClientTest extends HttpClientTestBase {
                     "anthropic",
                     MODEL_CLAUDE_2,
                     Map.of("max_tokens", 256),
+                    Map.of("provider", "info"),
                     null
             );
             RecordDTO apiPayload = JSONUtil.parse(requestBody, RecordDTO.class);
@@ -271,6 +272,7 @@ public class ThinClientTest extends HttpClientTestBase {
                     "anthropic",
                     differentModel,
                     fixtures.getModelParameters(),
+                    fixtures.getProviderInfo(),
                     null
             );
             RecordDTO actualPayload = JSONUtil.parse(
@@ -327,6 +329,7 @@ public class ThinClientTest extends HttpClientTestBase {
                     "anthropic",
                     differentModel,
                     fixtures.getModelParameters(),
+                    Map.of("provider_info_key", "provider_info_value"),
                     null
             );
             RecordDTO actualPayload = JSONUtil.parse(
@@ -430,6 +433,7 @@ public class ThinClientTest extends HttpClientTestBase {
                     "openai",
                     MODEL_GPT_35_TURBO,
                     fixtures.getModelParameters(),
+                    Map.of("provider_info_key", "provider_info_value"),
                     Map.of("name", functionName, "arguments", arguments)
             );
             RecordDTO actualPayload = JSONUtil.parse(
@@ -629,6 +633,7 @@ public class ThinClientTest extends HttpClientTestBase {
         private final CallInfo callInfo;
         private final ResponseInfo responseInfo = new ResponseInfo(true);
         private final Map<String, Object> modelParameters;
+        private final Map<String, Object> providerInfo;
 
         public StubbedRecordFixtures(
                 String provider,
@@ -637,6 +642,7 @@ public class ThinClientTest extends HttpClientTestBase {
                 String completion
         ) {
             modelParameters = Map.of("max_tokens", 256);
+            providerInfo = Map.of("provider_info_key", "provider_info_value");
             promptInfo = new PromptInfo(
                     promptTemplateId,
                     promptTemplateVersionId,
@@ -646,7 +652,7 @@ public class ThinClientTest extends HttpClientTestBase {
                     provider,
                     model,
                     flavorName
-            );
+            ).providerInfo(providerInfo);
             this.completion = completion;
 
             callInfo = new CallInfo(
@@ -655,7 +661,7 @@ public class ThinClientTest extends HttpClientTestBase {
                     System.currentTimeMillis() - 10,
                     System.currentTimeMillis(),
                     modelParameters
-            );
+            ).providerInfo(providerInfo);
 
             boundPrompt = new TemplatePrompt(
                     getPromptInfo(),
@@ -672,6 +678,10 @@ public class ThinClientTest extends HttpClientTestBase {
 
         public Map<String, Object> getModelParameters() {
             return modelParameters;
+        }
+
+        public Map<String, Object> getProviderInfo() {
+            return providerInfo;
         }
 
         public PromptInfo getPromptInfo() {

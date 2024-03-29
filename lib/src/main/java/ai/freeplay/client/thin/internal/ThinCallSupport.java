@@ -93,6 +93,7 @@ public class ThinCallSupport {
                 recordPayload.getCallInfo().getProvider(),
                 recordPayload.getCallInfo().getModel(),
                 recordPayload.getCallInfo().getModelParameters(),
+                recordPayload.getCallInfo().getProviderInfo(),
                 recordPayload.getResponseInfo().getFunctionCallMap()
         );
         return AsyncHttp.postJson(

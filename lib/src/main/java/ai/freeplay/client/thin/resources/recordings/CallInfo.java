@@ -12,6 +12,7 @@ public class CallInfo {
     private final double startTime;
     private final double endTime;
     private final Map<String, Object> modelParameters;
+    private Map<String, Object> providerInfo;
 
     public static double instantToDouble(Instant instant) {
         return Double.parseDouble(instant.getEpochSecond() + "." + instant.getNano());
@@ -24,7 +25,7 @@ public class CallInfo {
                 startTime,
                 endTime,
                 promptInfo.getModelParameters()
-        );
+        ).providerInfo(promptInfo.getProviderInfo());
     }
 
     public CallInfo(
@@ -39,6 +40,11 @@ public class CallInfo {
         this.startTime = instantToDouble(Instant.ofEpochMilli(startTime));
         this.endTime = instantToDouble(Instant.ofEpochMilli(endTime));
         this.modelParameters = modelParameters;
+    }
+
+    public CallInfo providerInfo(Map<String, Object> providerInfo) {
+        this.providerInfo = providerInfo;
+        return this;
     }
 
     public String getProvider() {
@@ -59,5 +65,9 @@ public class CallInfo {
 
     public Map<String, Object> getModelParameters() {
         return modelParameters;
+    }
+
+    public Map<String, Object> getProviderInfo() {
+        return providerInfo;
     }
 }

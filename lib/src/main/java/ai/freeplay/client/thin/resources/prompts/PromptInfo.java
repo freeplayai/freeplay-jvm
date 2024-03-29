@@ -9,6 +9,7 @@ public class PromptInfo {
     private final String templateName;
     private final String environment;
     private final Map<String, Object> modelParameters;
+    private Map<String, Object> providerInfo;
     private final String provider;
     private final String model;
     private final String flavorName;
@@ -33,6 +34,11 @@ public class PromptInfo {
         this.flavorName = flavorName;
     }
 
+    public PromptInfo providerInfo(Map<String, Object> providerInfo) {
+        this.providerInfo = providerInfo;
+        return this;
+    }
+
     public String getPromptTemplateId() {
         return promptTemplateId;
     }
@@ -53,6 +59,10 @@ public class PromptInfo {
         return modelParameters;
     }
 
+    public Map<String, Object> getProviderInfo() {
+        return providerInfo;
+    }
+
     public String getProvider() {
         return provider;
     }
@@ -70,12 +80,12 @@ public class PromptInfo {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         PromptInfo that = (PromptInfo) o;
-        return Objects.equals(promptTemplateId, that.promptTemplateId) && Objects.equals(promptTemplateVersionId, that.promptTemplateVersionId) && Objects.equals(templateName, that.templateName) && Objects.equals(environment, that.environment) && Objects.equals(modelParameters, that.modelParameters) && Objects.equals(provider, that.provider) && Objects.equals(model, that.model) && Objects.equals(flavorName, that.flavorName);
+        return Objects.equals(promptTemplateId, that.promptTemplateId) && Objects.equals(promptTemplateVersionId, that.promptTemplateVersionId) && Objects.equals(templateName, that.templateName) && Objects.equals(environment, that.environment) && Objects.equals(modelParameters, that.modelParameters)  && Objects.equals(providerInfo, that.providerInfo) && Objects.equals(provider, that.provider) && Objects.equals(model, that.model) && Objects.equals(flavorName, that.flavorName);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(promptTemplateId, promptTemplateVersionId, templateName, environment, modelParameters, provider, model, flavorName);
+        return Objects.hash(promptTemplateId, promptTemplateVersionId, templateName, environment, modelParameters, providerInfo, provider, model, flavorName);
     }
 
     @Override
@@ -86,6 +96,7 @@ public class PromptInfo {
                 ", templateName='" + templateName + '\'' +
                 ", environment='" + environment + '\'' +
                 ", modelParameters=" + modelParameters +
+                ", providerInfo=" + providerInfo +
                 ", provider='" + provider + '\'' +
                 ", model='" + model + '\'' +
                 ", flavorName='" + flavorName + '\'' +

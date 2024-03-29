@@ -41,8 +41,7 @@ public class Prompts {
                             new ChatMessage(message.getRole(), message.getContent())
                     ).collect(toList());
 
-                    return new TemplatePrompt(
-                            new PromptInfo(
+                    PromptInfo promptInfo = new PromptInfo(
                                     template.getPromptTemplateId(),
                                     template.getPromptTemplateVersionId(),
                                     template.getPromptTemplateName(),
@@ -51,7 +50,10 @@ public class Prompts {
                                     flavor.getProvider(),
                                     model,
                                     template.getMetadata().getFlavor()
-                            ),
+                            ).providerInfo(template.getMetadata().getProviderInfo());
+
+                    return new TemplatePrompt(
+                            promptInfo,
                             messages
                     );
                 });
