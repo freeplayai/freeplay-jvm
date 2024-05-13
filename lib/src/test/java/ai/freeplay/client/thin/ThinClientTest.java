@@ -33,6 +33,10 @@ public class ThinClientTest extends HttpClientTestBase {
             "model", MODEL_CLAUDE_2,
             "max_tokens", 256
     );
+    private final Map<String, Object> sagemakerLLMParameters = Map.of(
+            "max_new_tokens", 256,
+            "temperature", 0.1
+    );
     private final Map<String, Object> openAILLMParameters = Map.of(
             "model", MODEL_GPT_35_TURBO
     );
@@ -116,6 +120,31 @@ public class ThinClientTest extends HttpClientTestBase {
                     "openai_chat"
             );
             assertEquals(expectedMessages, formattedPrompt.get().getFormattedPrompt());
+        });
+    }
+
+    @Test
+    public void testSyntaxLlama3() {
+        withMockedClient((HttpClient mockedClient) -> {
+            mockGetPromptV2Async(
+                    mockedClient, templateName, "latest", getChatPromptContentObjects(), sagemakerLLMParameters, "llama_3_chat"
+            );
+
+            Freeplay fpClient = new Freeplay(Config().freeplayAPIKey(freeplayApiKey).baseUrl(baseUrl));
+
+            TemplatePrompt templatePrompt = fpClient.prompts().get(projectId, templateName, "latest").get();
+            FormattedPrompt<String> sagemakerPrompt = templatePrompt
+                    .bind(variables)
+                    .format(templatePrompt.getPromptInfo().getFlavorName());
+
+            assertEquals(
+                    "<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n" +
+                            "You are a support agent.<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n" +
+                            "How may I help you?<|eot_id|><|start_header_id|>user<|end_header_id|>\n" +
+                            "Why isn't my light working?<|eot_id|><|start_header_id|>assistant<|end_header_id|>",
+                    sagemakerPrompt.getFormattedPrompt());
+            assertTrue(sagemakerPrompt.getSystemContent().isPresent());
+            assertEquals("You are a support agent.", sagemakerPrompt.getSystemContent().get());
         });
     }
 

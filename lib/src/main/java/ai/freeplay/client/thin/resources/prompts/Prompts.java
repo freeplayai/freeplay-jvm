@@ -1,8 +1,8 @@
 package ai.freeplay.client.thin.resources.prompts;
 
 import ai.freeplay.client.exceptions.FreeplayConfigurationException;
-import ai.freeplay.client.flavor.ChatFlavor;
-import ai.freeplay.client.flavor.Flavors;
+import ai.freeplay.client.thin.LLMAdapters;
+import ai.freeplay.client.thin.LLMAdapters.LLMAdapter;
 import ai.freeplay.client.thin.internal.ThinCallSupport;
 import ai.freeplay.client.thin.internal.v2dto.TemplateDTO;
 
@@ -32,7 +32,7 @@ public class Prompts {
                 .thenApply((TemplateDTO template) -> {
                     validateReturnedTemplate(template);
 
-                    ChatFlavor flavor = Flavors.getFlavorByName(template.getMetadata().getFlavor());
+                    LLMAdapter<?> llmAdapter = LLMAdapters.adapterForFlavor(template.getMetadata().getFlavor());
                     String model = template.getMetadata().getModel();
                     HashMap<String, Object> params = new HashMap<>(template.getMetadata().getParams());
                     params.remove("model");
@@ -42,15 +42,15 @@ public class Prompts {
                     ).collect(toList());
 
                     PromptInfo promptInfo = new PromptInfo(
-                                    template.getPromptTemplateId(),
-                                    template.getPromptTemplateVersionId(),
-                                    template.getPromptTemplateName(),
-                                    environment,
-                                    params,
-                                    flavor.getProvider(),
-                                    model,
-                                    template.getMetadata().getFlavor()
-                            ).providerInfo(template.getMetadata().getProviderInfo());
+                            template.getPromptTemplateId(),
+                            template.getPromptTemplateVersionId(),
+                            template.getPromptTemplateName(),
+                            environment,
+                            params,
+                            llmAdapter.getProvider(),
+                            model,
+                            template.getMetadata().getFlavor()
+                    ).providerInfo(template.getMetadata().getProviderInfo());
 
                     return new TemplatePrompt(
                             promptInfo,

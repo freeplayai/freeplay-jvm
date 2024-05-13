@@ -5,10 +5,13 @@ import ai.freeplay.client.thin.resources.prompts.ChatMessage
 import ai.freeplay.client.thin.resources.recordings.CallInfo
 import ai.freeplay.client.thin.resources.recordings.RecordInfo
 import ai.freeplay.client.thin.resources.recordings.ResponseInfo
-import ai.freeplay.example.java.ThinExampleUtils.callAnthropic
 import com.fasterxml.jackson.databind.ObjectMapper
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.runBlocking
+import software.amazon.awssdk.core.SdkBytes
+import software.amazon.awssdk.regions.Region
+import software.amazon.awssdk.services.sagemakerruntime.SageMakerRuntimeClient
+import software.amazon.awssdk.services.sagemakerruntime.model.InvokeEndpointRequest
 
 private val objectMapper = ObjectMapper()
 
@@ -16,7 +19,6 @@ fun main(): Unit = runBlocking {
     val freeplayApiKey = System.getenv("FREEPLAY_API_KEY")
     val projectId = System.getenv("FREEPLAY_PROJECT_ID")
     val baseUrl = System.getenv("FREEPLAY_API_URL") + "/api"
-    val anthropicApiKey = System.getenv("ANTHROPIC_API_KEY")
 
     val fpClient = Freeplay(
         Freeplay.Config()
@@ -28,37 +30,49 @@ fun main(): Unit = runBlocking {
 
     println("Getting the prompt...")
     val prompt = fpClient.prompts()
-        .getFormatted<List<ChatMessage>>(
+        .getFormatted<String>(
             projectId,
-            "my-prompt-anthropic",
-            "prod",
+            "my-sagemaker-llama-3-prompt",
+            "latest",
             variables
         ).await()
 
-    println("Calling Anthropic...")
-    val startTime = System.currentTimeMillis()
-    val llmResponse = callAnthropic(
-        objectMapper,
-        anthropicApiKey,
-        prompt.promptInfo.model,
-        prompt.promptInfo.modelParameters,
-        prompt.formattedPrompt,
-        prompt.systemContent.orElse(null)
-    ).await()
+    val endpointName = prompt.promptInfo.providerInfo["endpoint_name"] as String
+    val inferenceComponent = prompt.promptInfo.providerInfo["inference_component_name"] as String
 
-    val bodyNode = objectMapper.readTree(llmResponse.body())
-    println("Completion: " + bodyNode.path("content").get(0).path("text").asText())
+    val client = SageMakerRuntimeClient.builder().region(Region.US_EAST_1).build()
+
+    val llMParameters = mapOf(
+        "inputs" to prompt.formattedPrompt.toString(),
+        "parameters" to prompt.promptInfo.modelParameters
+    )
+    val requestBody = objectMapper.writeValueAsString(llMParameters)
+
+    val startTime = System.currentTimeMillis()
+    val response = client.invokeEndpoint(
+        InvokeEndpointRequest.builder()
+            .accept("application/json")
+            .contentType("application/json")
+            .endpointName(endpointName)
+            .inferenceComponentName(inferenceComponent)
+            .body(SdkBytes.fromUtf8String(requestBody))
+            .build()
+    )
+
+    val body = response.body().asUtf8String()
+    val completion = objectMapper.readTree(body)["generated_text"].asText()
+    println(completion)
 
     println("Recording the result")
     val allMessages: List<ChatMessage> = prompt.allMessages(
-        ChatMessage("assistant", bodyNode.path("content").get(0).path("text").asText())
+        ChatMessage("assistant", completion)
     )
     val callInfo = CallInfo.from(
         prompt.promptInfo,
         startTime,
         System.currentTimeMillis()
     )
-    val responseInfo = ResponseInfo("stop_sequence" == bodyNode.path("stop_reason").asText())
+    val responseInfo = ResponseInfo(true)
     val sessionInfo = fpClient.sessions().create()
         .customMetadata(mapOf("custom_field" to "custom_value"))
         .sessionInfo
@@ -68,7 +82,7 @@ fun main(): Unit = runBlocking {
             allMessages,
             variables,
             sessionInfo,
-            prompt.getPromptInfo(),
+            prompt.promptInfo,
             callInfo,
             responseInfo
         )

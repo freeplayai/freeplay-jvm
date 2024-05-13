@@ -15,16 +15,16 @@ private val objectMapper = ObjectMapper()
 fun main(): Unit = runBlocking {
     val freeplayApiKey = System.getenv("FREEPLAY_API_KEY")
     val projectId = System.getenv("FREEPLAY_PROJECT_ID")
-    val customerDomain = System.getenv("FREEPLAY_CUSTOMER_NAME")
+    val baseUrl = System.getenv("FREEPLAY_API_URL") + "/api"
     val anthropicApiKey = System.getenv("ANTHROPIC_API_KEY")
 
     val fpClient = Freeplay(
         Freeplay.Config()
             .freeplayAPIKey(freeplayApiKey)
-            .customerDomain(customerDomain)
+            .baseUrl(baseUrl)
     )
 
-    val templatePrompt = fpClient.prompts().get(projectId, "my-prompt-anthropic", "prod").await()
+    val templatePrompt = fpClient.prompts().get(projectId, "my-anthropic-prompt", "prod").await()
     val testRun = fpClient.testRuns().create(projectId, "core-tests").await()
 
     for (testCase in testRun.testCases) {
