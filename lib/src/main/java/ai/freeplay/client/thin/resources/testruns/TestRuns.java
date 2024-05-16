@@ -12,10 +12,14 @@ public class TestRuns {
     }
 
     public CompletableFuture<TestRun> create(String projectId, String testList) {
-        return callSupport.createTestRun(projectId, testList, false);
+        return this.create(projectId, testList, false, null, null);
     }
 
     public CompletableFuture<TestRun> create(String projectId, String testList, boolean includeOutputs) {
-        return callSupport.createTestRun(projectId, testList, includeOutputs);
+        return this.create(projectId, testList, includeOutputs, null, null);
+    }
+
+    public CompletableFuture<TestRun> create(String projectId, String testList, boolean includeOutputs, String name, String description) {
+        return callSupport.createTestRun(projectId, testList, includeOutputs, name, description);
     }
 }

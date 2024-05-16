@@ -16,6 +16,7 @@ public class RecordInfo {
     private final CallInfo callInfo;
     private final ResponseInfo responseInfo;
     private TestRunInfo testRunInfo;
+    private Map<String, Object> evalResults;
 
     public RecordInfo(
             List<ChatMessage> allMessages,
@@ -35,6 +36,11 @@ public class RecordInfo {
 
     public RecordInfo testRunInfo(TestRunInfo testRunInfo) {
         this.testRunInfo = testRunInfo;
+        return this;
+    }
+
+    public RecordInfo evalResults(Map<String, Object> evalResults) {
+        this.evalResults = evalResults;
         return this;
     }
 
@@ -64,5 +70,9 @@ public class RecordInfo {
 
     public TestRunInfo getTestRunInfo() {
         return testRunInfo;
+    }
+
+    public Map<String, Object> getEvalResults() {
+        return evalResults;
     }
 }

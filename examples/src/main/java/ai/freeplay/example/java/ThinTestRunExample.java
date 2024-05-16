@@ -17,6 +17,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.net.http.HttpResponse;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
@@ -41,7 +42,8 @@ public class ThinTestRunExample {
                 .freeplayAPIKey(freeplayApiKey)
                 .customerDomain(customerDomain)
         );
-        List<RecordResponse> recordResponses = fpClient.testRuns().create(projectId, "core-tests")
+        String testRunName = "Test run: " + UUID.randomUUID();
+        List<RecordResponse> recordResponses = fpClient.testRuns().create(projectId, "20-q", false, testRunName, "Run from JVM examples")
                 .thenCompose(testRun ->
                         fpClient.prompts().get(projectId, "my-prompt-anthropic", "prod")
                                 .thenCompose(templatePrompt -> {

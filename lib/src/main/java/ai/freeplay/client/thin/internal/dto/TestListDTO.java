@@ -6,9 +6,15 @@ public class TestListDTO {
     private final String testListName;
     private final boolean includeOutputs;
 
-    public TestListDTO(String testListName, boolean includeOutputs) {
+    private final String name;
+
+    private final String description;
+
+    public TestListDTO(String testListName, boolean includeOutputs, String name, String description) {
         this.testListName = testListName;
         this.includeOutputs = includeOutputs;
+        this.name = name;
+        this.description = description;
     }
 
     @SuppressWarnings("unused")
@@ -21,5 +27,17 @@ public class TestListDTO {
     @JsonProperty("include_test_case_outputs")
     public boolean getIncludeOutputs() {
         return includeOutputs;
+    }
+
+    @SuppressWarnings("unused")
+    @JsonProperty("name")
+    public String getName() {
+        return name;
+    }
+
+    @SuppressWarnings("unused")
+    @JsonProperty("description")
+    public String getDescription() {
+        return description;
     }
 }

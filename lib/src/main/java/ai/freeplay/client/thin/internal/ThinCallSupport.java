@@ -94,7 +94,8 @@ public class ThinCallSupport {
                 recordPayload.getCallInfo().getModel(),
                 recordPayload.getCallInfo().getModelParameters(),
                 recordPayload.getCallInfo().getProviderInfo(),
-                recordPayload.getResponseInfo().getFunctionCallMap()
+                recordPayload.getResponseInfo().getFunctionCallMap(),
+                recordPayload.getEvalResults()
         );
         return AsyncHttp.postJson(
                 format("%s/v1/record", baseUrl),
@@ -108,13 +109,13 @@ public class ThinCallSupport {
         });
     }
 
-    public CompletableFuture<TestRun> createTestRun(String projectId, String testList, boolean includeOutputs) {
+    public CompletableFuture<TestRun> createTestRun(String projectId, String testList, boolean includeOutputs, String name, String description) {
         String url = String.format("%s/projects/%s/test-runs-cases", baseUrl, projectId);
         return AsyncHttp.postJson(
                 url,
                 freeplayApiKey,
                 httpConfig,
-                new TestListDTO(testList, includeOutputs)
+                new TestListDTO(testList, includeOutputs, name, description)
         ).thenApply(httpResponse -> {
             throwFreeplayIfError(httpResponse, 201);
 

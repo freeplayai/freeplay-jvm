@@ -29,6 +29,7 @@ public class RecordDTO {
     private Map<String, Object> providerInfo;
     private boolean isComplete;
     private Map<String, String> functionCallResponse;
+    private Map<String, Object> evalResults;
 
     public RecordDTO() {
     }
@@ -51,7 +52,8 @@ public class RecordDTO {
             String model,
             Map<String, Object> llmParameters,
             Map<String, Object> providerInfo,
-            Map<String, String> functionCallResponse
+            Map<String, String> functionCallResponse,
+            Map<String, Object> evalResults
     ) {
         this.sessionId = sessionId;
         this.projectVersionId = projectVersionId;
@@ -71,6 +73,7 @@ public class RecordDTO {
         this.llmParameters = llmParameters;
         this.providerInfo = providerInfo;
         this.functionCallResponse = functionCallResponse;
+        this.evalResults = evalResults;
     }
 
     public String getSessionId() {
@@ -150,17 +153,21 @@ public class RecordDTO {
         return functionCallResponse;
     }
 
+    public Map<String, Object> getEvalResults() {
+        return evalResults;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         RecordDTO recordDTO = (RecordDTO) o;
-        return Double.compare(recordDTO.startTime, startTime) == 0 && Double.compare(recordDTO.endTime, endTime) == 0 && isComplete == recordDTO.isComplete && Objects.equals(sessionId, recordDTO.sessionId) && Objects.equals(projectVersionId, recordDTO.projectVersionId) && Objects.equals(promptTemplateId, recordDTO.promptTemplateId) && Objects.equals(tag, recordDTO.tag) && Objects.equals(inputs, recordDTO.inputs) && Objects.equals(customMetadata, recordDTO.customMetadata) && Objects.equals(promptContent, recordDTO.promptContent) && Objects.equals(returnContent, recordDTO.returnContent) && Objects.equals(testRunId, recordDTO.testRunId) && Objects.equals(testCaseId, recordDTO.testCaseId) && Objects.equals(provider, recordDTO.provider) && Objects.equals(model, recordDTO.model) && Objects.equals(llmParameters, recordDTO.llmParameters) && Objects.equals(providerInfo, recordDTO.providerInfo) && Objects.equals(functionCallResponse, recordDTO.functionCallResponse);
+        return Double.compare(startTime, recordDTO.startTime) == 0 && Double.compare(endTime, recordDTO.endTime) == 0 && isComplete == recordDTO.isComplete && Objects.equals(sessionId, recordDTO.sessionId) && Objects.equals(projectVersionId, recordDTO.projectVersionId) && Objects.equals(promptTemplateId, recordDTO.promptTemplateId) && Objects.equals(tag, recordDTO.tag) && Objects.equals(inputs, recordDTO.inputs) && Objects.equals(customMetadata, recordDTO.customMetadata) && Objects.equals(promptContent, recordDTO.promptContent) && Objects.equals(returnContent, recordDTO.returnContent) && Objects.equals(testRunId, recordDTO.testRunId) && Objects.equals(testCaseId, recordDTO.testCaseId) && Objects.equals(provider, recordDTO.provider) && Objects.equals(model, recordDTO.model) && Objects.equals(llmParameters, recordDTO.llmParameters) && Objects.equals(providerInfo, recordDTO.providerInfo) && Objects.equals(functionCallResponse, recordDTO.functionCallResponse) && Objects.equals(evalResults, recordDTO.evalResults);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(sessionId, projectVersionId, promptTemplateId, startTime, endTime, tag, inputs, customMetadata, promptContent, returnContent, testRunId, testCaseId, provider, model, llmParameters, providerInfo, isComplete, functionCallResponse);
+        return Objects.hash(sessionId, projectVersionId, promptTemplateId, startTime, endTime, tag, inputs, customMetadata, promptContent, returnContent, testRunId, testCaseId, provider, model, llmParameters, providerInfo, isComplete, functionCallResponse, evalResults);
     }
 
     @Override
@@ -184,6 +191,7 @@ public class RecordDTO {
                 ", providerInfo=" + providerInfo +
                 ", isComplete=" + isComplete +
                 ", functionCallResponse=" + functionCallResponse +
+                ", evalResults=" + evalResults +
                 '}';
     }
 }

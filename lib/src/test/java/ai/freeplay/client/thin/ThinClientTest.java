@@ -213,19 +213,20 @@ public class ThinClientTest extends HttpClientTestBase {
             );
             ResponseInfo responseInfo = new ResponseInfo(true);
             List<ChatMessage> allMessages = prompt.allMessages(new ChatMessage("Assistant", completion));
+            Map<String, Object> evalResults = Map.of("bool_value", true, "float_value", 0.23);
 
             Session session = fpClient.sessions().create()
                     .customMetadata(customMetadata);
 
-            CompletableFuture<RecordResponse> recordFuture = fpClient.recordings().create(
-                    new RecordInfo(
-                            allMessages,
-                            variables,
-                            session.getSessionInfo(),
-                            prompt.getPromptInfo(),
-                            callInfo,
-                            responseInfo
-                    ));
+            RecordInfo recordInfo = new RecordInfo(
+                    allMessages,
+                    variables,
+                    session.getSessionInfo(),
+                    prompt.getPromptInfo(),
+                    callInfo,
+                    responseInfo
+            ).evalResults(evalResults);
+            CompletableFuture<RecordResponse> recordFuture = fpClient.recordings().create(recordInfo);
 
             // Assertions
             assertNotNull(recordFuture.get().getCompletionId());
@@ -249,7 +250,8 @@ public class ThinClientTest extends HttpClientTestBase {
                     MODEL_CLAUDE_2,
                     Map.of("max_tokens", 256),
                     Map.of("provider", "info"),
-                    null
+                    null,
+                    Map.of("bool_value", true, "float_value", 0.23)
             );
             RecordDTO apiPayload = JSONUtil.parse(requestBody, RecordDTO.class);
             assertEquals(expectedPayload, apiPayload);
@@ -302,6 +304,7 @@ public class ThinClientTest extends HttpClientTestBase {
                     differentModel,
                     fixtures.getModelParameters(),
                     fixtures.getProviderInfo(),
+                    null,
                     null
             );
             RecordDTO actualPayload = JSONUtil.parse(
@@ -359,6 +362,7 @@ public class ThinClientTest extends HttpClientTestBase {
                     differentModel,
                     fixtures.getModelParameters(),
                     Map.of("provider_info_key", "provider_info_value"),
+                    null,
                     null
             );
             RecordDTO actualPayload = JSONUtil.parse(
@@ -463,7 +467,8 @@ public class ThinClientTest extends HttpClientTestBase {
                     MODEL_GPT_35_TURBO,
                     fixtures.getModelParameters(),
                     Map.of("provider_info_key", "provider_info_value"),
-                    Map.of("name", functionName, "arguments", arguments)
+                    Map.of("name", functionName, "arguments", arguments),
+                    null
             );
             RecordDTO actualPayload = JSONUtil.parse(
                     getCapturedAsyncBody(mockedClient, 1, 0), RecordDTO.class
@@ -493,6 +498,26 @@ public class ThinClientTest extends HttpClientTestBase {
             assertNotNull(testRun.getTestCases().get(1).getTestCaseId());
             assertEquals("Why isn't my internet working?", testRun.getTestCases().get(1).getVariables().get("question"));
             assertEquals("It's playing golf with the sink", testRun.getTestCases().get(1).getOutput());
+        });
+    }
+
+    @Test
+    public void testTestRunCreatedWithNameAndDescription() {
+        withMockedClient((HttpClient mockedClient) -> {
+            mockCreateTestRunAsync(mockedClient);
+
+            String testListName = "core-tests";
+            Freeplay fpClient = new Freeplay(Config().freeplayAPIKey(freeplayApiKey).baseUrl(baseUrl));
+            TestRun testRun = fpClient.testRuns().create(
+                    projectId,
+                    testListName,
+                    true,
+                    "test-run-name",
+                    "test-run-description"
+            ).get();
+
+            // Completion
+            assertEquals(2, testRun.getTestCases().size());
         });
     }
 
