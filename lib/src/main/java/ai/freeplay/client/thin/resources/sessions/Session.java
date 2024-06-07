@@ -13,6 +13,12 @@ public class Session {
         sessionId = UUID.randomUUID();
     }
 
+    public Session(
+            UUID sessionId
+    ) {
+        this.sessionId = sessionId;
+    }
+
     public Session customMetadata(Map<String, Object> customMetadata) {
         validateBasicMap(customMetadata);
         this.customMetadata = customMetadata;
