@@ -24,6 +24,11 @@ public class LLMAdapters {
                 return new AnthropicLLMAdapter();
             case "llama_3_chat":
                 return new Llama3LLMAdapter();
+            case "baseten_mistral_chat":
+                return new BasetenLLMAdapter();
+                // Disabled until we have re-enabled Gemini in the app
+//            case "gemini_chat":
+//                return new GeminiLLMAdapter();
             default:
                 throw new FreeplayConfigurationException(format("Unable to create LLMAdapter for name '%s'.%n", flavor));
         }
@@ -41,6 +46,35 @@ public class LLMAdapters {
                     .stream()
                     .filter(message -> !message.getRole().equals("system"))
                     .collect(toList());
+        }
+    }
+
+    public static class GeminiLLMAdapter implements LLMAdapter<List<ChatMessage>> {
+        @Override
+        public String getProvider() {
+            return "vertex";
+        }
+
+        @Override
+        public List<ChatMessage> toLLMSyntax(List<ChatMessage> messages) {
+            return messages
+                    .stream()
+                    .filter(message -> !message.getRole().equals("system"))
+                    .map(message -> new ChatMessage(translateRole(message.getRole()), message.getContent()))
+                    .collect(toList());
+        }
+
+        private String translateRole(String role) {
+            switch (role) {
+                case "user":
+                    return "user";
+                case "assistant":
+                    return "model";
+                default:
+                    throw new FreeplayConfigurationException(
+                            format("Unknown role in prompt template for Gemini: %s", role)
+                    );
+            }
         }
     }
 
@@ -70,6 +104,18 @@ public class LLMAdapters {
         @Override
         public String getProvider() {
             return "openai";
+        }
+
+        @Override
+        public List<ChatMessage> toLLMSyntax(List<ChatMessage> messages) {
+            return messages;
+        }
+    }
+
+    public static class BasetenLLMAdapter implements LLMAdapter<List<ChatMessage>> {
+        @Override
+        public String getProvider() {
+            return "baseten";
         }
 
         @Override

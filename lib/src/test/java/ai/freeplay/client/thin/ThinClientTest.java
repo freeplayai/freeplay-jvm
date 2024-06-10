@@ -87,13 +87,16 @@ public class ThinClientTest extends HttpClientTestBase {
                     .bind(variables)
                     .format(templatePrompt.getPromptInfo().getFlavorName());
 
-
-            assertEquals(
-                    List.of(
-                            new ChatMessage("assistant", "How may I help you?"),
-                            new ChatMessage("user", "Why isn't my light working?")
-                    ),
-                    anthropicPrompt.getFormattedPrompt());
+            List<ChatMessage> expectedMessages = List.of(
+                    new ChatMessage("system", "You are a support agent."),
+                    new ChatMessage("assistant", "How may I help you?"),
+                    new ChatMessage("user", "Why isn't my light working?")
+            );
+            List<ChatMessage> expectedMessagesWithoutSystem = List.of(
+                    new ChatMessage("assistant", "How may I help you?"),
+                    new ChatMessage("user", "Why isn't my light working?")
+            );
+            assertEquals(expectedMessagesWithoutSystem, anthropicPrompt.getFormattedPrompt());
             assertTrue(anthropicPrompt.getSystemContent().isPresent());
             assertEquals("You are a support agent.", anthropicPrompt.getSystemContent().get());
 
@@ -102,11 +105,7 @@ public class ThinClientTest extends HttpClientTestBase {
                     .bind(variables)
                     .format("openai_chat");
 
-            List<ChatMessage> expectedMessages = List.of(
-                    new ChatMessage("system", "You are a support agent."),
-                    new ChatMessage("assistant", "How may I help you?"),
-                    new ChatMessage("user", "Why isn't my light working?")
-            );
+
             assertEquals(expectedMessages, openAIPrompt.getFormattedPrompt());
             assertTrue(openAIPrompt.getSystemContent().isPresent());
             assertEquals("You are a support agent.", openAIPrompt.getSystemContent().get());
@@ -120,6 +119,30 @@ public class ThinClientTest extends HttpClientTestBase {
                     "openai_chat"
             );
             assertEquals(expectedMessages, formattedPrompt.get().getFormattedPrompt());
+
+            // Baseten Mistral (effectively OpenAI's format)
+            CompletableFuture<FormattedPrompt<List<ChatMessage>>> basetenMistralPrompt = fpClient.prompts().getFormatted(
+                    projectId,
+                    templateName,
+                    "prod",
+                    variables,
+                    "baseten_mistral_chat"
+            );
+            assertEquals(expectedMessages, basetenMistralPrompt.get().getFormattedPrompt());
+
+            // Gemini
+            // Re-enable when the app supports Vertex/Gemini
+//            CompletableFuture<FormattedPrompt<List<ChatMessage>>> geminiPrompt = fpClient.prompts().getFormatted(
+//                    projectId,
+//                    templateName,
+//                    "prod",
+//                    variables,
+//                    "gemini_chat"
+//            );
+//            assertEquals(List.of(
+//                    new ChatMessage("model", "How may I help you?"),
+//                    new ChatMessage("user", "Why isn't my light working?")
+//            ), geminiPrompt.get().getFormattedPrompt());
         });
     }
 

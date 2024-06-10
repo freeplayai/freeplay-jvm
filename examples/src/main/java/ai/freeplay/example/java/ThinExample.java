@@ -41,7 +41,7 @@ public class ThinExample {
                 .<List<ChatMessage>>getFormatted(
                         projectId,
                         "my-prompt-anthropic",
-                        "prod",
+                        "latest",
                         variables,
                         null
                 ).thenCompose((FormattedPrompt<List<ChatMessage>> formattedPrompt) -> {

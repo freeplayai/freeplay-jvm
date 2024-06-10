@@ -9,7 +9,10 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.util.*;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import static java.lang.String.format;
@@ -108,6 +111,35 @@ public class ThinExampleUtils {
                     .header("accept", "application/json")
                     .header("anthropic-version", "2023-06-01")
                     .header("x-api-key", anthropicApiKey)
+                    .POST(ofString(body));
+
+            return HttpClient.newBuilder()
+                    .build()
+                    .sendAsync(requestBuilder.build(), HttpResponse.BodyHandlers.ofString());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static CompletableFuture<HttpResponse<String>> callBaseten(
+            ObjectMapper objectMapper,
+            String basetenApiKey,
+            String modelId,
+            Map<String, Object> llmParameters,
+            List<ChatMessage> messages
+    ) {
+        try {
+            String modelUrl = format("https://model-%s.api.baseten.co/production/predict", modelId);
+
+            Map<String, Object> bodyMap = new LinkedHashMap<>();
+            bodyMap.put("messages", messages);
+            bodyMap.putAll(llmParameters);
+            String body = objectMapper.writeValueAsString(bodyMap);
+
+            HttpRequest.Builder requestBuilder = HttpRequest
+                    .newBuilder(new URI(modelUrl))
+                    .header("accept", "application/json")
+                    .header("Authorization", format("Api-Key %s", basetenApiKey))
                     .POST(ofString(body));
 
             return HttpClient.newBuilder()
