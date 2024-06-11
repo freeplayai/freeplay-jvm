@@ -46,4 +46,17 @@ public class APITemplateResolver implements TemplateResolver {
                     return JSONUtil.parse(response.body(), TemplateDTO.class);
                 });
     }
+
+    @Override
+    public CompletableFuture<TemplateDTO> getPromptByVersionId(String projectId, String templateId, String templateVersionId) {
+        String url = format("%s/v2/projects/%s/prompt-templates/id/%s/versions/%s",
+                baseUrl, projectId, templateId, templateVersionId
+        );
+        return AsyncHttp
+                .get(url, freeplayApiKey, httpConfig)
+                .thenApply((HttpResponse<String> response) -> {
+                    throwFreeplayIfError(response, 200);
+                    return JSONUtil.parse(response.body(), TemplateDTO.class);
+                });
+    }
 }

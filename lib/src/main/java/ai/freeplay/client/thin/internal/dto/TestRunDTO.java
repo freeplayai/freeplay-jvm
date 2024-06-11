@@ -11,6 +11,8 @@ import java.util.Map;
 public class TestRunDTO {
     private String testRunId;
     private List<TestCase> testCases;
+    private String testRunDescription;
+    private String testRunName;
 
     public String getTestRunId() {
         return testRunId;
@@ -19,16 +21,22 @@ public class TestRunDTO {
     public List<TestCase> getTestCases() {
         return testCases;
     }
+    public String getTestRunDescription() {
+        return testRunDescription;
+    }
+    public String getTestRunName() {
+        return testRunName;
+    }
 
     @SuppressWarnings("unused")
     @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
     public static class TestCase {
-        private String id;
+        private String testCaseId;
         private Map<String, Object> variables;
         private String output;
 
-        public String getId() {
-            return id;
+        public String getTestCaseId() {
+            return testCaseId;
         }
 
         public Map<String, Object> getVariables() {

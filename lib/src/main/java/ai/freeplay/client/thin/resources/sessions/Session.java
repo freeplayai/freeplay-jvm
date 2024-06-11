@@ -1,10 +1,13 @@
 package ai.freeplay.client.thin.resources.sessions;
 
+import com.fasterxml.jackson.databind.annotation.JsonNaming;
+
 import java.util.Map;
 import java.util.UUID;
 
 import static ai.freeplay.client.internal.ParameterUtils.validateBasicMap;
 
+@JsonNaming(com.fasterxml.jackson.databind.PropertyNamingStrategies.SnakeCaseStrategy.class)
 public class Session {
     private final UUID sessionId;
     private Map<String, Object> customMetadata;
@@ -13,6 +16,7 @@ public class Session {
         sessionId = UUID.randomUUID();
     }
 
+    @SuppressWarnings("unused")
     public Session(
             UUID sessionId
     ) {

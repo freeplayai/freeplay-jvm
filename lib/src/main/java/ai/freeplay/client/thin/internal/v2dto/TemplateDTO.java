@@ -18,6 +18,7 @@ public class TemplateDTO {
     private Metadata metadata;
 
     private int formatVersion = -1;
+    private String projectId;
 
     public TemplateDTO() {
     }
@@ -28,7 +29,8 @@ public class TemplateDTO {
             String promptTemplateName,
             List<Message> content,
             Metadata metadata,
-            int formatVersion
+            int formatVersion,
+            String projectId
     ) {
         this.promptTemplateId = promptTemplateId;
         this.promptTemplateVersionId = promptTemplateVersionId;
@@ -36,6 +38,7 @@ public class TemplateDTO {
         this.content = content;
         this.metadata = metadata;
         this.formatVersion = formatVersion;
+        this.projectId = projectId;
     }
 
     public String getPromptTemplateId() {
@@ -61,6 +64,7 @@ public class TemplateDTO {
     public int getFormatVersion() {
         return formatVersion;
     }
+    public String getProjectId() { return projectId; }
 
     @Override
     public boolean equals(Object o) {
@@ -72,7 +76,7 @@ public class TemplateDTO {
 
     @Override
     public int hashCode() {
-        return Objects.hash(promptTemplateId, promptTemplateVersionId, promptTemplateName, content, metadata, formatVersion);
+        return Objects.hash(promptTemplateId, promptTemplateVersionId, promptTemplateName, content, metadata, formatVersion, projectId);
     }
 
     @Override
@@ -84,6 +88,7 @@ public class TemplateDTO {
                 ", content=" + content +
                 ", metadata=" + metadata +
                 ", formatVersion=" + formatVersion +
+                ", projectId='" + projectId + '\'' +
                 '}';
     }
 

@@ -30,9 +30,11 @@ public class MockFixtures {
     public static final String promptTemplateVersionId = UUID.randomUUID().toString();
 
     // Freeplay
-    public static void mockRecord(HttpClient mockedClient) throws RuntimeException {
+    public static void mockRecord(
+            HttpClient mockedClient
+    ) throws RuntimeException {
         try {
-            when(request(mockedClient, "POST", "v1/record"))
+            when(request(mockedClient, "POST", "v2/projects/[^/]*/sessions/[^/]*/completions"))
                     .thenReturn(
                             response(201,
                                     JSONUtil.asString(
@@ -129,7 +131,7 @@ public class MockFixtures {
 
     public static void mockRecordAsync(HttpClient mockedClient) throws RuntimeException {
         try {
-            when(requestAsync(mockedClient, "POST", "v1/record")).thenReturn(
+            when(requestAsync(mockedClient, "POST", "v2/projects/[^/]*/sessions/[^/]*/completions")).thenReturn(
                     asyncResponse(
                             201,
                             getRecordPayloadWithCompletionId()
@@ -142,7 +144,7 @@ public class MockFixtures {
 
     public static void mockRecordNoCompletionIdAsync(HttpClient mockedClient) throws RuntimeException {
         try {
-            when(requestAsync(mockedClient, "POST", "v1/record")).thenReturn(
+            when(requestAsync(mockedClient, "POST", "v2/projects/[^/]*/sessions/[^/]*/completions")).thenReturn(
                     asyncResponse(
                             201,
                             JSONUtil.asString("")
@@ -155,7 +157,7 @@ public class MockFixtures {
 
     public static void mockUnauthorizedRecordAsync(HttpClient mockedClient) throws RuntimeException {
         try {
-            when(requestAsync(mockedClient, "POST", "v1/record"))
+            when(requestAsync(mockedClient, "POST", "v2/projects/[^/]*/sessions/[^/]*/completions"))
                     .thenReturn(asyncResponse(401, ""));
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -164,7 +166,7 @@ public class MockFixtures {
 
     public static void mockCreateTestRun(HttpClient mockedClient) throws RuntimeException {
         try {
-            when(request(mockedClient, "POST", "projects/[^/]*/test-runs"))
+            when(request(mockedClient, "POST", "v2/projects/[^/]*/test-runs"))
                     .thenReturn(
                             response(201, getTestRunResponsePayload(UUID.randomUUID().toString())));
         } catch (Exception e) {
@@ -174,7 +176,7 @@ public class MockFixtures {
 
     public static void mockCreateTestRunAsync(HttpClient mockedClient) throws RuntimeException {
         try {
-            when(requestAsync(mockedClient, "POST", "projects/[^/]*/test-runs-cases"))
+            when(requestAsync(mockedClient, "POST", "v2/projects/[^/]*/test-runs"))
                     .thenReturn(
                             asyncResponse(201, getTestRunTestCasesResponsePayload(UUID.randomUUID().toString(), true)));
         } catch (Exception e) {
@@ -191,6 +193,26 @@ public class MockFixtures {
         }
     }
 
+    public static void mockGetTestRunResults(HttpClient mockedClient, String testRunId) {
+        String body = JSONUtil.asString(
+                object(
+                        "id", testRunId,
+                        "name", null,
+                        "description", null,
+                        "summary_statistics", object(
+                                "human_evaluation", object(),
+                                "auto_evaluation", object()
+                        )
+                )
+        );
+        try {
+            when(requestAsync(mockedClient, "GET", "v2/projects/[^/]*/test-runs/id/[^/]*"))
+                    .thenReturn(asyncResponse(200, body));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public static void mockUnauthorizedUpdateCustomerFeedbackAsync(HttpClient mockedClient) throws RuntimeException {
         try {
             when(requestAsync(mockedClient, "PUT", "v1/completion_feedback/[^/]*"))
@@ -202,7 +224,7 @@ public class MockFixtures {
 
     public static void mockUnauthorizedCreateTestRunAsync(HttpClient mockedClient) throws RuntimeException {
         try {
-            when(requestAsync(mockedClient, "POST", "projects/[^/]*/test-runs-cases"))
+            when(requestAsync(mockedClient, "POST", "v2/projects/[^/]*/test-runs"))
                     .thenReturn(asyncResponse(401, ""));
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -307,14 +329,14 @@ public class MockFixtures {
                         "test_run_id", testRunId,
                         "test_cases", array(
                                 object(
-                                        "id", UUID.randomUUID(),
+                                        "test_case_id", UUID.randomUUID(),
                                         "variables", object(
                                                 "question", "Why isn't my sink working?"
                                         ),
                                         "output", includeOutputs ? "It took PTO today" : null
                                 ),
                                 object(
-                                        "id", UUID.randomUUID(),
+                                        "test_case_id", UUID.randomUUID(),
                                         "variables", object(
                                                 "question", "Why isn't my internet working?"
                                         ),

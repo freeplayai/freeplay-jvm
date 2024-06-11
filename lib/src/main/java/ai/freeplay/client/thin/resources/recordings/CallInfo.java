@@ -1,11 +1,14 @@
 package ai.freeplay.client.thin.resources.recordings;
 
 import ai.freeplay.client.thin.resources.prompts.PromptInfo;
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
+import com.fasterxml.jackson.databind.annotation.JsonNaming;
 
 import java.time.Instant;
 import java.util.Map;
 
 @SuppressWarnings("FieldCanBeLocal")
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public class CallInfo {
     private final String provider;
     private final String model;

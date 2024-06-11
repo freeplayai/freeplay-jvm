@@ -47,7 +47,8 @@ public class FilesystemTemplateResolverTest extends HttpClientTestBase {
                         ),
                         Collections.emptyMap()
                 ),
-                0
+                0,
+                projectId
         );
 
         assertEquals(expected, template);
@@ -76,7 +77,40 @@ public class FilesystemTemplateResolverTest extends HttpClientTestBase {
                         ),
                         Collections.emptyMap()
                 ),
-                0
+                0,
+                projectId
+        );
+
+        assertEquals(expected, template);
+    }
+
+    @Test
+    public void testResolvesPromptByVersionId() throws ExecutionException, InterruptedException {
+        FilesystemTemplateResolver resolver = new FilesystemTemplateResolver(getTestFilesDirectory());
+        String templateId = "a8b91d92-e063-4c3e-bb44-0d570793856b";
+        String templateVersionId = "6fe8af2e-defe-41b8-bdf2-7b2ec23592f5";
+        TemplateDTO template = resolver.getPromptByVersionId(projectId, templateId, templateVersionId).get();
+
+        TemplateDTO expected = new TemplateDTO(
+                templateId,
+                templateVersionId,
+                "test-prompt-with-params",
+                List.of(
+                        new TemplateDTO.Message("system", "You are a support agent"),
+                        new TemplateDTO.Message("assistant", "How can I help you?"),
+                        new TemplateDTO.Message("user", "{{question}}")
+                ),
+                new TemplateDTO.Metadata(
+                        "openai",
+                        "gpt-3.5-turbo-1106",
+                        "openai_chat",
+                        Map.of("max_tokens", 56,
+                                "temperature", 0.1
+                        ),
+                        Collections.emptyMap()
+                ),
+                0,
+                projectId
         );
 
         assertEquals(expected, template);
@@ -107,7 +141,8 @@ public class FilesystemTemplateResolverTest extends HttpClientTestBase {
                         Collections.emptyMap(),
                         Collections.emptyMap()
                 ),
-                0
+                0,
+                projectId
         );
 
         assertEquals(expected, template);
@@ -140,7 +175,8 @@ public class FilesystemTemplateResolverTest extends HttpClientTestBase {
                         ),
                         Collections.emptyMap()
                 ),
-                0
+                0,
+                projectId
         );
 
         assertEquals(expected, template);
@@ -174,7 +210,8 @@ public class FilesystemTemplateResolverTest extends HttpClientTestBase {
                         ),
                         Collections.emptyMap()
                 ),
-                2
+                2,
+                projectId
         );
 
         assertEquals(expected, template);

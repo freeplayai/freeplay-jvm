@@ -1,7 +1,11 @@
 package ai.freeplay.client.thin.resources.recordings;
 
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
+import com.fasterxml.jackson.databind.annotation.JsonNaming;
+
 import java.util.Map;
 
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 @SuppressWarnings({"FieldCanBeLocal", "unused"})
 public class ResponseInfo {
     private final boolean isComplete;
@@ -61,5 +65,14 @@ public class ResponseInfo {
 
     public int getResponseTokens() {
         return responseTokens;
+    }
+
+    public String toString() {
+        return "ResponseInfo{" +
+                "isComplete=" + isComplete +
+                ", functionCall=" + functionCall +
+                ", promptTokens=" + promptTokens +
+                ", responseTokens=" + responseTokens +
+                '}';
     }
 }

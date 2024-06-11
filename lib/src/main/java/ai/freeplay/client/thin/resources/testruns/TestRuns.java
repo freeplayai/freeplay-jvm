@@ -22,4 +22,8 @@ public class TestRuns {
     public CompletableFuture<TestRun> create(String projectId, String testList, boolean includeOutputs, String name, String description) {
         return callSupport.createTestRun(projectId, testList, includeOutputs, name, description);
     }
+
+    public CompletableFuture<TestRunResults> get(String projectId, String testRunId) {
+        return callSupport.getTestRunResults(projectId, testRunId);
+    }
 }

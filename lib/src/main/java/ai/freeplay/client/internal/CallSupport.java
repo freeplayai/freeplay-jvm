@@ -79,7 +79,7 @@ public class CallSupport {
     }
 
     public TestRun createTestRun(String projectId, String environment, String testListName) {
-        String url = getUrl("projects/%s/test-runs", projectId);
+        String url = getUrl("v2/projects/%s/test-runs", projectId);
         HttpResponse<String> response;
         try {
             response = Http.postJsonWithBearer(

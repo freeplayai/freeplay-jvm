@@ -18,4 +18,12 @@ public class SessionInfo {
     public Map<String, Object> getCustomMetadata() {
         return customMetadata;
     }
+
+    @Override
+    public String toString() {
+        return "SessionInfo{" +
+                "sessionId=" + sessionId +
+                ", customMetadata=" + customMetadata +
+                '}';
+    }
 }

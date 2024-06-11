@@ -75,4 +75,18 @@ public class RecordInfo {
     public Map<String, Object> getEvalResults() {
         return evalResults;
     }
+
+    @Override
+    public String toString() {
+        return "RecordInfo{" +
+                "allMessages=" + allMessages +
+                ", inputs=" + inputs +
+                ", sessionInfo=" + sessionInfo +
+                ", promptInfo=" + promptInfo +
+                ", callInfo=" + callInfo +
+                ", responseInfo=" + responseInfo +
+                ", testRunInfo=" + testRunInfo +
+                ", evalResults=" + evalResults +
+                '}';
+    }
 }

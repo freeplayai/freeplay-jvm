@@ -10,10 +10,10 @@ import ai.freeplay.client.thin.resources.prompts.*;
 import ai.freeplay.client.thin.resources.recordings.*;
 import ai.freeplay.client.thin.resources.sessions.Session;
 import ai.freeplay.client.thin.resources.testruns.TestRun;
+import ai.freeplay.client.thin.resources.testruns.TestRunResults;
 import org.junit.Test;
 
 import java.net.http.HttpClient;
-import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -60,7 +60,8 @@ public class ThinClientTest extends HttpClientTestBase {
                     Map.of(),
                     "openai",
                     MODEL_GPT_35_TURBO,
-                    "openai_chat"
+                    "openai_chat",
+                    projectId
             ).providerInfo(Map.of("provider", "info"));
             assertEquals(expectedInfo, templatePrompt.getPromptInfo());
 
@@ -207,11 +208,6 @@ public class ThinClientTest extends HttpClientTestBase {
     @Test
     public void testRecord() {
         withMockedClient((HttpClient mockedClient) -> {
-            String expectedPrompt = "[" +
-                    "{\"role\":\"system\",\"content\":\"You are a support agent.\"}," +
-                    "{\"role\":\"assistant\",\"content\":\"How may I help you?\"}," +
-                    "{\"role\":\"user\",\"content\":\"Why isn't my light working?\"}" +
-                    "]";
             String completion = "I'd like to help you...";
             long startTime = System.currentTimeMillis();
             long endTime = System.currentTimeMillis() + 5;
@@ -256,23 +252,18 @@ public class ThinClientTest extends HttpClientTestBase {
 
             String requestBody = getCapturedAsyncBody(mockedClient, 2, 1);
             RecordDTO expectedPayload = new RecordDTO(
-                    session.getSessionId(),
-                    promptTemplateVersionId,
-                    promptTemplateId,
-                    CallInfo.instantToDouble(Instant.ofEpochMilli(startTime)),
-                    CallInfo.instantToDouble(Instant.ofEpochMilli(endTime)),
-                    "prod",
+                    allMessages,
                     variables,
-                    customMetadata,
-                    expectedPrompt,
-                    "I'd like to help you...",
-                    true,
-                    null,
-                    null,
-                    "anthropic",
-                    MODEL_CLAUDE_2,
-                    Map.of("max_tokens", 256),
-                    Map.of("provider", "info"),
+                    new RecordDTO.SessionInfoDTO(session.getSessionInfo().getSessionId(), session.getSessionInfo().getCustomMetadata()),
+                    new RecordDTO.PromptInfoDTO(prompt.getPromptInfo().getPromptTemplateId(), prompt.getPromptInfo().getPromptTemplateVersionId(),
+                            prompt.getPromptInfo().getTemplateName(), prompt.getPromptInfo().getEnvironment(),
+                            prompt.getPromptInfo().getModelParameters(), prompt.getPromptInfo().getProviderInfo(),
+                            prompt.getPromptInfo().getProvider(), prompt.getPromptInfo().getModel(),
+                            prompt.getPromptInfo().getFlavorName(), prompt.getPromptInfo().getProjectId()),
+                    new RecordDTO.CallInfoDTO(callInfo.getProvider(), callInfo.getModel(),
+                            (long) callInfo.getStartTime(), (long) callInfo.getEndTime(), callInfo.getProviderInfo()),
+                    new RecordDTO.ResponseInfoDTO(responseInfo.isComplete(), null,
+                            responseInfo.getPromptTokens(), responseInfo.getResponseTokens()),
                     null,
                     Map.of("bool_value", true, "float_value", 0.23)
             );
@@ -308,25 +299,19 @@ public class ThinClientTest extends HttpClientTestBase {
             // Assertions
             assertNotNull(recordFuture.get().getCompletionId());
 
-            String expected2 = JSONUtil.toString(fixtures.getBoundPrompt().getMessages());
             RecordDTO expectedPayload = new RecordDTO(
-                    session.getSessionId(),
-                    promptTemplateVersionId,
-                    promptTemplateId,
-                    fixtures.getCallInfo().getStartTime(),
-                    fixtures.getCallInfo().getEndTime(),
-                    "prod",
+                    fixtures.getAllMessages(),
                     variables,
-                    null,
-                    expected2,
-                    fixtures.getCompletion(),
-                    true,
-                    null,
-                    null,
-                    "anthropic",
-                    differentModel,
-                    fixtures.getModelParameters(),
-                    fixtures.getProviderInfo(),
+                    new RecordDTO.SessionInfoDTO(session.getSessionId(), session.getCustomMetadata()),
+                    new RecordDTO.PromptInfoDTO(fixtures.getPromptInfo().getPromptTemplateId(), fixtures.getPromptInfo().getPromptTemplateVersionId(),
+                            fixtures.getPromptInfo().getTemplateName(), fixtures.getPromptInfo().getEnvironment(),
+                            fixtures.getPromptInfo().getModelParameters(), fixtures.getPromptInfo().getProviderInfo(),
+                            fixtures.getPromptInfo().getProvider(), fixtures.getPromptInfo().getModel(),
+                            fixtures.getPromptInfo().getFlavorName(), fixtures.getPromptInfo().getProjectId()),
+                    new RecordDTO.CallInfoDTO(fixtures.getCallInfo().getProvider(), fixtures.getCallInfo().getModel(),
+                            (long) fixtures.getCallInfo().getStartTime(), (long) fixtures.getCallInfo().getEndTime(), fixtures.getCallInfo().getProviderInfo()),
+                    new RecordDTO.ResponseInfoDTO(fixtures.getResponseInfo().isComplete(), null,
+                            fixtures.getResponseInfo().getPromptTokens(), fixtures.getResponseInfo().getResponseTokens()),
                     null,
                     null
             );
@@ -348,6 +333,8 @@ public class ThinClientTest extends HttpClientTestBase {
             String completion = "I'd like to help you...";
             String differentModel = "different-claude";
 
+            mockGetTestRunResults(mockedClient, testRunId);
+
             StubbedRecordFixtures fixtures = new StubbedRecordFixtures(
                     "anthropic", differentModel, "anthropic_chat", completion
             );
@@ -366,32 +353,32 @@ public class ThinClientTest extends HttpClientTestBase {
             // Assertions
             assertNotNull(recordFuture.get().getCompletionId());
 
-            String expected2 = JSONUtil.toString(fixtures.getBoundPrompt().getMessages());
             RecordDTO expectedPayload = new RecordDTO(
-                    session.getSessionId(),
-                    promptTemplateVersionId,
-                    promptTemplateId,
-                    fixtures.getCallInfo().getStartTime(),
-                    fixtures.getCallInfo().getEndTime(),
-                    "prod",
+                    fixtures.getAllMessages(),
                     variables,
-                    null,
-                    expected2,
-                    fixtures.getCompletion(),
-                    true,
-                    testRunId,
-                    testCaseId,
-                    "anthropic",
-                    differentModel,
-                    fixtures.getModelParameters(),
-                    Map.of("provider_info_key", "provider_info_value"),
-                    null,
+                    new RecordDTO.SessionInfoDTO(session.getSessionInfo().getSessionId(), session.getSessionInfo().getCustomMetadata()),
+                    new RecordDTO.PromptInfoDTO(fixtures.getPromptInfo().getPromptTemplateId(), fixtures.getPromptInfo().getPromptTemplateVersionId(),
+                            fixtures.getPromptInfo().getTemplateName(), fixtures.getPromptInfo().getEnvironment(),
+                            fixtures.getPromptInfo().getModelParameters(), fixtures.getPromptInfo().getProviderInfo(),
+                            fixtures.getPromptInfo().getProvider(), fixtures.getPromptInfo().getModel(),
+                            fixtures.getPromptInfo().getFlavorName(), fixtures.getPromptInfo().getProjectId()),
+                    new RecordDTO.CallInfoDTO(fixtures.getCallInfo().getProvider(), fixtures.getCallInfo().getModel(),
+                            (long) fixtures.getCallInfo().getStartTime(), (long) fixtures.getCallInfo().getEndTime(), fixtures.getCallInfo().getProviderInfo()),
+                    new RecordDTO.ResponseInfoDTO(fixtures.getResponseInfo().isComplete(), null,
+                            fixtures.getResponseInfo().getPromptTokens(), fixtures.getResponseInfo().getResponseTokens()),
+                    new RecordDTO.TestRunInfoDTO(testRunId, testCaseId),
                     null
             );
             RecordDTO actualPayload = JSONUtil.parse(
                     getCapturedAsyncBody(mockedClient, 1, 0), RecordDTO.class
             );
             assertEquals(expectedPayload, actualPayload);
+
+            CompletableFuture<TestRunResults> testRunResults = fpClient.testRuns().get(projectId, testRunId);
+
+            assertEquals(testRunId, testRunResults.get().getId());
+            assertNull(testRunResults.get().getName());
+            assertNull(testRunResults.get().getDescription());
         });
     }
 
@@ -471,26 +458,20 @@ public class ThinClientTest extends HttpClientTestBase {
             // Assertions
             assertNotNull(recordFuture.get().getCompletionId());
 
-            String expected = JSONUtil.toString(fixtures.getBoundPrompt().getMessages());
             RecordDTO expectedPayload = new RecordDTO(
-                    session.getSessionId(),
-                    promptTemplateVersionId,
-                    promptTemplateId,
-                    fixtures.getCallInfo().getStartTime(),
-                    fixtures.getCallInfo().getEndTime(),
-                    "prod",
+                    fixtures.getAllMessages(),
                     variables,
+                    new RecordDTO.SessionInfoDTO(session.getSessionId(), session.getCustomMetadata()),
+                    new RecordDTO.PromptInfoDTO(fixtures.getPromptInfo().getPromptTemplateId(), fixtures.getPromptInfo().getPromptTemplateVersionId(),
+                            fixtures.getPromptInfo().getTemplateName(), fixtures.getPromptInfo().getEnvironment(),
+                            fixtures.getPromptInfo().getModelParameters(), fixtures.getPromptInfo().getProviderInfo(),
+                            fixtures.getPromptInfo().getProvider(), fixtures.getPromptInfo().getModel(),
+                            fixtures.getPromptInfo().getFlavorName(), fixtures.getPromptInfo().getProjectId()),
+                    new RecordDTO.CallInfoDTO(fixtures.getCallInfo().getProvider(), fixtures.getCallInfo().getModel(),
+                            (long) fixtures.getCallInfo().getStartTime(), (long) fixtures.getCallInfo().getEndTime(), fixtures.getCallInfo().getProviderInfo()),
+                    new RecordDTO.ResponseInfoDTO(responseInfo.isComplete(), new RecordDTO.OpenAIFunctionCallDTO(responseInfo.getFunctionCall().getName(), responseInfo.getFunctionCall().getArguments()),
+                            responseInfo.getPromptTokens(), responseInfo.getResponseTokens()),
                     null,
-                    expected,
-                    null,
-                    true,
-                    null,
-                    null,
-                    "openai",
-                    MODEL_GPT_35_TURBO,
-                    fixtures.getModelParameters(),
-                    Map.of("provider_info_key", "provider_info_value"),
-                    Map.of("name", functionName, "arguments", arguments),
                     null
             );
             RecordDTO actualPayload = JSONUtil.parse(
@@ -728,7 +709,8 @@ public class ThinClientTest extends HttpClientTestBase {
                     modelParameters,
                     provider,
                     model,
-                    flavorName
+                    flavorName,
+                    projectId
             ).providerInfo(providerInfo);
             this.completion = completion;
 
@@ -749,14 +731,17 @@ public class ThinClientTest extends HttpClientTestBase {
                     )).bind(variables);
         }
 
+        @SuppressWarnings("unused")
         public String getCompletion() {
             return completion;
         }
 
+        @SuppressWarnings("unused")
         public Map<String, Object> getModelParameters() {
             return modelParameters;
         }
 
+        @SuppressWarnings("unused")
         public Map<String, Object> getProviderInfo() {
             return providerInfo;
         }

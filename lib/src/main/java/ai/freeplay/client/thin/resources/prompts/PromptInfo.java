@@ -13,6 +13,7 @@ public class PromptInfo {
     private final String provider;
     private final String model;
     private final String flavorName;
+    private final String projectId;
 
     public PromptInfo(
             String promptTemplateId,
@@ -22,7 +23,8 @@ public class PromptInfo {
             Map<String, Object> modelParameters,
             String provider,
             String model,
-            String flavorName
+            String flavorName,
+            String projectId
     ) {
         this.promptTemplateId = promptTemplateId;
         this.promptTemplateVersionId = promptTemplateVersionId;
@@ -32,6 +34,7 @@ public class PromptInfo {
         this.provider = provider;
         this.model = model;
         this.flavorName = flavorName;
+        this.projectId = projectId;
     }
 
     public PromptInfo providerInfo(Map<String, Object> providerInfo) {
@@ -74,6 +77,7 @@ public class PromptInfo {
     public String getFlavorName() {
         return flavorName;
     }
+    public String getProjectId() { return projectId; }
 
     @Override
     public boolean equals(Object o) {

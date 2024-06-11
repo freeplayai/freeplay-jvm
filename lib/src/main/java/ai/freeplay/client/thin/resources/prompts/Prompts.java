@@ -29,34 +29,17 @@ public class Prompts {
     ) {
         return callSupport
                 .getPrompt(projectId, templateName, environment)
-                .thenApply((TemplateDTO template) -> {
-                    validateReturnedTemplate(template);
+                .thenApply(template -> getTemplateFromDTO(projectId, environment, template));
+    }
 
-                    LLMAdapter<?> llmAdapter = LLMAdapters.adapterForFlavor(template.getMetadata().getFlavor());
-                    String model = template.getMetadata().getModel();
-                    HashMap<String, Object> params = new HashMap<>(template.getMetadata().getParams());
-                    params.remove("model");
-
-                    List<ChatMessage> messages = template.getContent().stream().map(message ->
-                            new ChatMessage(message.getRole(), message.getContent())
-                    ).collect(toList());
-
-                    PromptInfo promptInfo = new PromptInfo(
-                            template.getPromptTemplateId(),
-                            template.getPromptTemplateVersionId(),
-                            template.getPromptTemplateName(),
-                            environment,
-                            params,
-                            llmAdapter.getProvider(),
-                            model,
-                            template.getMetadata().getFlavor()
-                    ).providerInfo(template.getMetadata().getProviderInfo());
-
-                    return new TemplatePrompt(
-                            promptInfo,
-                            messages
-                    );
-                });
+    public CompletableFuture<TemplatePrompt> getByVersionId(
+            String projectId,
+            String templateId,
+            String templateVersionId
+    ) {
+        return callSupport
+                .getPromptByVersionId(projectId, templateId, templateVersionId)
+                .thenApply(template -> getTemplateFromDTO(projectId, null, template));
     }
 
     public <LLMFormat> CompletableFuture<FormattedPrompt<LLMFormat>> getFormatted(
@@ -80,6 +63,18 @@ public class Prompts {
                 .thenApply(BoundPrompt::format);
     }
 
+    public <LLMFormat> CompletableFuture<FormattedPrompt<LLMFormat>> getFormattedByVersionId(
+            String projectId,
+            String templateId,
+            String templateVersionId,
+            Map<String, Object> variables,
+            String flavorName
+    ) {
+        return this.getByVersionId(projectId, templateId, templateVersionId)
+                .thenApply(templatePrompt -> templatePrompt.bind(variables))
+                .thenApply(boundPrompt -> boundPrompt.format(flavorName));
+    }
+
     private CompletableFuture<BoundPrompt> getBound(
             String projectId,
             String templateName,
@@ -100,4 +95,36 @@ public class Prompts {
                     "Model must be configured in the Freeplay UI. Unable to fulfill request.");
         }
     }
+
+
+    private TemplatePrompt getTemplateFromDTO(String projectId, String environment, TemplateDTO template) {
+        validateReturnedTemplate(template);
+
+        LLMAdapter<?> llmAdapter = LLMAdapters.adapterForFlavor(template.getMetadata().getFlavor());
+        String model = template.getMetadata().getModel();
+        HashMap<String, Object> params = new HashMap<>(template.getMetadata().getParams());
+        params.remove("model");
+
+        List<ChatMessage> messages = template.getContent().stream().map(message ->
+                new ChatMessage(message.getRole(), message.getContent())
+        ).collect(toList());
+
+        PromptInfo promptInfo = new PromptInfo(
+                template.getPromptTemplateId(),
+                template.getPromptTemplateVersionId(),
+                template.getPromptTemplateName(),
+                environment,
+                params,
+                llmAdapter.getProvider(),
+                model,
+                template.getMetadata().getFlavor(),
+                projectId
+        ).providerInfo(template.getMetadata().getProviderInfo());
+
+        return new TemplatePrompt(
+                promptInfo,
+                messages
+        );
+    }
+
 }

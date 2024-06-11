@@ -9,4 +9,6 @@ public interface TemplateResolver {
     CompletableFuture<TemplatesDTO> getPrompts(String projectId, String environment);
 
     CompletableFuture<TemplateDTO> getPrompt(String projectId, String templateName, String environment);
+
+    CompletableFuture<TemplateDTO> getPromptByVersionId(String projectId, String templateId, String templateVersionId);
 }

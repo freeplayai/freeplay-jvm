@@ -12,10 +12,21 @@ public class OpenAIFunctionCall {
         this.arguments = arguments;
     }
 
+    public String getName() {
+        return name;
+    }
+    public String getArguments() {
+        return arguments;
+    }
+
     public Map<String, String> asMap() {
         return Map.of(
                 "name", name,
                 "arguments", arguments
         );
+    }
+
+    public String toString() {
+        return "OpenAIFunctionCall(name=" + this.name + ", arguments=" + this.arguments + ")";
     }
 }

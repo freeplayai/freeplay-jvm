@@ -8,6 +8,7 @@ import ai.freeplay.client.thin.TemplateResolver;
 import ai.freeplay.client.thin.internal.dto.RecordDTO;
 import ai.freeplay.client.thin.internal.dto.TestListDTO;
 import ai.freeplay.client.thin.internal.dto.TestRunDTO;
+import ai.freeplay.client.thin.internal.dto.TestRunResultsDTO;
 import ai.freeplay.client.thin.internal.v2dto.TemplateDTO;
 import ai.freeplay.client.thin.resources.feedback.CustomerFeedbackResponse;
 import ai.freeplay.client.thin.resources.prompts.ChatMessage;
@@ -15,6 +16,7 @@ import ai.freeplay.client.thin.resources.recordings.RecordInfo;
 import ai.freeplay.client.thin.resources.recordings.RecordResponse;
 import ai.freeplay.client.thin.resources.testruns.TestCase;
 import ai.freeplay.client.thin.resources.testruns.TestRun;
+import ai.freeplay.client.thin.resources.testruns.TestRunResults;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import java.util.List;
@@ -58,14 +60,20 @@ public class ThinCallSupport {
         return templateResolver.getPrompt(projectId, templateName, getFinalEnvironment(environment));
     }
 
+    public CompletableFuture<TemplateDTO> getPromptByVersionId(
+            String projectId,
+            String templateId,
+            String templateVersionId
+    ) {
+        return templateResolver.getPromptByVersionId(projectId, templateId, templateVersionId);
+    }
+
     public CompletableFuture<RecordResponse> record(RecordInfo recordPayload) {
 
         if (recordPayload.getAllMessages().isEmpty()) {
             throw new FreeplayClientException("Messages list must have at least one message. " +
                     "The last message should be the current response.");
         }
-        String historyAsString = historyAsString(recordPayload.getAllMessages());
-        ChatMessage completion = recordPayload.getAllMessages().get(recordPayload.getAllMessages().size() - 1);
 
         String testRunId =
                 recordPayload.getTestRunInfo() == null
@@ -76,29 +84,34 @@ public class ThinCallSupport {
                         ? null
                         : recordPayload.getTestRunInfo().getTestCaseId();
 
-        RecordDTO payload = new RecordDTO(
-                recordPayload.getSessionInfo().getSessionId(),
-                recordPayload.getPromptInfo().getPromptTemplateVersionId(),
-                recordPayload.getPromptInfo().getPromptTemplateId(),
-                recordPayload.getCallInfo().getStartTime(),
-                recordPayload.getCallInfo().getEndTime(),
-                recordPayload.getPromptInfo().getEnvironment(),
-                recordPayload.getInputs(),
-                recordPayload.getSessionInfo().getCustomMetadata(),
-                historyAsString,
-                completion.getContent(),
+        RecordDTO.ResponseInfoDTO responseInfo = new RecordDTO.ResponseInfoDTO(
                 recordPayload.getResponseInfo().isComplete(),
-                testRunId,
-                testCaseId,
-                recordPayload.getCallInfo().getProvider(),
-                recordPayload.getCallInfo().getModel(),
-                recordPayload.getCallInfo().getModelParameters(),
-                recordPayload.getCallInfo().getProviderInfo(),
-                recordPayload.getResponseInfo().getFunctionCallMap(),
+                recordPayload.getResponseInfo().getFunctionCall() != null ? new RecordDTO.OpenAIFunctionCallDTO(
+                        recordPayload.getResponseInfo().getFunctionCall().getName(),
+                        recordPayload.getResponseInfo().getFunctionCall().getArguments()
+                ) : null,
+                recordPayload.getResponseInfo().getPromptTokens(),
+                recordPayload.getResponseInfo().getResponseTokens()
+        );
+
+        RecordDTO payload = new RecordDTO(
+                recordPayload.getAllMessages(),
+                recordPayload.getInputs(),
+                new RecordDTO.SessionInfoDTO(recordPayload.getSessionInfo().getSessionId(), recordPayload.getSessionInfo().getCustomMetadata()),
+                new RecordDTO.PromptInfoDTO(recordPayload.getPromptInfo().getPromptTemplateId(), recordPayload.getPromptInfo().getPromptTemplateVersionId(),
+                        recordPayload.getPromptInfo().getTemplateName(), recordPayload.getPromptInfo().getEnvironment(),
+                        recordPayload.getPromptInfo().getModelParameters(), recordPayload.getPromptInfo().getProviderInfo(),
+                        recordPayload.getPromptInfo().getProvider(), recordPayload.getPromptInfo().getModel(),
+                        recordPayload.getPromptInfo().getFlavorName(), recordPayload.getPromptInfo().getProjectId()),
+                new RecordDTO.CallInfoDTO(recordPayload.getCallInfo().getProvider(), recordPayload.getCallInfo().getModel(),
+                        (long) recordPayload.getCallInfo().getStartTime(), (long) recordPayload.getCallInfo().getEndTime(), recordPayload.getCallInfo().getProviderInfo()),
+                responseInfo,
+                testRunId != null ? new RecordDTO.TestRunInfoDTO(testRunId, testCaseId) : null,
                 recordPayload.getEvalResults()
         );
+
         return AsyncHttp.postJson(
-                format("%s/v1/record", baseUrl),
+                format("%s/v2/projects/%s/sessions/%s/completions", baseUrl, recordPayload.getPromptInfo().getProjectId(), recordPayload.getSessionInfo().getSessionId()),
                 freeplayApiKey,
                 httpConfig,
                 payload
@@ -110,7 +123,7 @@ public class ThinCallSupport {
     }
 
     public CompletableFuture<TestRun> createTestRun(String projectId, String testList, boolean includeOutputs, String name, String description) {
-        String url = String.format("%s/projects/%s/test-runs-cases", baseUrl, projectId);
+        String url = String.format("%s/v2/projects/%s/test-runs", baseUrl, projectId);
         return AsyncHttp.postJson(
                 url,
                 freeplayApiKey,
@@ -128,11 +141,30 @@ public class ThinCallSupport {
                     testRun.getTestRunId(),
                     testRun.getTestCases().stream()
                             .map(testCase -> new TestCase(
-                                    testCase.getId(),
+                                    testCase.getTestCaseId(),
                                     testCase.getVariables(),
                                     testCase.getOutput()
                             ))
                             .collect(toList())
+            );
+        });
+    }
+
+    public CompletableFuture<TestRunResults> getTestRunResults(String projectId, String testRunId) {
+        String url = String.format("%s/v2/projects/%s/test-runs/id/%s", baseUrl, projectId, testRunId);
+        return AsyncHttp.get(
+                url,
+                freeplayApiKey,
+                httpConfig
+        ).thenApply(httpResponse -> {
+            throwFreeplayIfError(httpResponse, 200);
+
+            TestRunResultsDTO testRunResults = JSONUtil.parse(httpResponse.body(), TestRunResultsDTO.class);
+            return new TestRunResults(
+                    testRunResults.getId(),
+                    testRunResults.getName(),
+                    testRunResults.getDescription(),
+                    testRunResults.getSummaryStatistics()
             );
         });
     }
@@ -155,6 +187,7 @@ public class ThinCallSupport {
         });
     }
 
+    @SuppressWarnings("unused")
     private static String historyAsString(List<ChatMessage> allMessages) {
         List<ChatMessage> allButLast = allMessages.subList(0, allMessages.size() - 1);
         return JSONUtil.toString(allButLast);

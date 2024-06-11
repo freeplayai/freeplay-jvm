@@ -13,6 +13,7 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static ai.freeplay.client.internal.JSONUtil.nodeToMap;
 import static java.lang.String.format;
@@ -41,7 +42,7 @@ public class FilesystemTemplateResolver implements TemplateResolver {
         List<TemplateDTO> templateList = Arrays.stream(
                         requireNonNull(
                                 environmentDir.toFile().listFiles((dir, name) -> name.endsWith(".json"))
-                        )).map(this::toTemplate)
+                        )).map(file -> toTemplate(file, projectId))
                 .collect(Collectors.toList());
 
         return CompletableFuture.completedFuture(new TemplatesDTO(templateList));
@@ -60,7 +61,29 @@ public class FilesystemTemplateResolver implements TemplateResolver {
             ));
         }
 
-        return CompletableFuture.completedFuture(toTemplate(templateFile.toFile()));
+        return CompletableFuture.completedFuture(toTemplate(templateFile.toFile(), projectId));
+    }
+
+    public CompletableFuture<TemplateDTO> getPromptByVersionId(String projectId, String templateId, String templateVersionId) {
+        try {
+            List<Path> promptFilePaths = getAllPromptFilePaths(projectId);
+            for (Path templateFile : promptFilePaths){
+                TemplateDTO templatePrompt = toTemplate(templateFile.toFile(), projectId);
+                if (templatePrompt.getPromptTemplateVersionId().equals(templateVersionId)){
+                    return CompletableFuture.completedFuture(templatePrompt);
+                }
+            }
+            throw new FreeplayConfigurationException(format(
+                    "Could not find template version id %s for project %s in local filesystem",
+                    templateVersionId,
+                    projectId
+            ));
+        } catch (IOException e) {
+            System.err.println("Failed to retrieve prompt file paths: " + e.getMessage());
+            throw new RuntimeException("Error accessing prompt files", e);
+        }
+
+
     }
 
     private Path getEnvironmentDir(String projectId, String environment) {
@@ -73,7 +96,23 @@ public class FilesystemTemplateResolver implements TemplateResolver {
         return environmentDir;
     }
 
-    private TemplateDTO toTemplate(File templateFile) {
+    private List<Path> getAllPromptFilePaths(String projectId) throws IOException {
+        Path projectDir = promptsDirectory.resolve(projectId);
+
+        if (!Files.exists(projectDir) || !Files.isDirectory(projectDir)) {
+            throw new FreeplayConfigurationException(String.format(
+                    "Could not find directory for project %s.%n", projectId));
+        }
+
+        try (Stream<Path> paths = Files.walk(projectDir)) {
+            return paths
+                    .filter(Files::isRegularFile)
+                    .filter(path -> path.toString().endsWith(".json"))
+                    .collect(Collectors.toList());
+        }
+    }
+
+    private TemplateDTO toTemplate(File templateFile, String projectId) {
         File promptAbsoluteFile = templateFile.getAbsoluteFile();
 
         try {
@@ -91,7 +130,8 @@ public class FilesystemTemplateResolver implements TemplateResolver {
                                 nodeToMap(templateNode.path("metadata").path("params")),
                                 nodeToMap(templateNode.path("metadata").path("provider_info"))
                         ),
-                        templateNode.get("format_version").asInt()
+                        templateNode.get("format_version").asInt(),
+                        projectId
                 );
             } else {
                 String flavorName = templateNode.path("metadata").path("flavor_name").textValue();
@@ -125,7 +165,8 @@ public class FilesystemTemplateResolver implements TemplateResolver {
                                 params,
                                 Collections.emptyMap()
                         ),
-                        0
+                        0,
+                        projectId
                 );
             }
         } catch (IOException e) {

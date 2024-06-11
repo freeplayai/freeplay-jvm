@@ -1,43 +1,70 @@
 package ai.freeplay.client.thin.internal.dto;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
+import com.fasterxml.jackson.databind.annotation.JsonNaming;
 
+import java.util.Objects;
+
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public class TestListDTO {
-    private final String testListName;
-    private final boolean includeOutputs;
+    private String datasetName;
+    private boolean includeOutputs;
 
-    private final String name;
+    private String testRunName;
 
-    private final String description;
+    private String testRunDescription;
 
-    public TestListDTO(String testListName, boolean includeOutputs, String name, String description) {
-        this.testListName = testListName;
+    @SuppressWarnings("unused")
+    public TestListDTO() {
+    }
+
+    public TestListDTO(String datasetName, boolean includeOutputs, String testRunName, String testRunDescription) {
+        this.datasetName = datasetName;
         this.includeOutputs = includeOutputs;
-        this.name = name;
-        this.description = description;
+        this.testRunName = testRunName;
+        this.testRunDescription = testRunDescription;
     }
 
     @SuppressWarnings("unused")
-    @JsonProperty("testlist_name")
-    public String getTestListName() {
-        return testListName;
+    public String getDatasetName() {
+        return datasetName;
     }
 
     @SuppressWarnings("unused")
-    @JsonProperty("include_test_case_outputs")
     public boolean getIncludeOutputs() {
         return includeOutputs;
     }
 
-    @SuppressWarnings("unused")
-    @JsonProperty("name")
-    public String getName() {
-        return name;
+    public String getTestRunName() {
+        return testRunName;
     }
 
     @SuppressWarnings("unused")
-    @JsonProperty("description")
-    public String getDescription() {
-        return description;
+    public String getTestRunDescription() {
+        return testRunDescription;
+    }
+
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        TestListDTO that = (TestListDTO) o;
+        return Objects.equals(datasetName, that.datasetName) && Objects.equals(includeOutputs, that.includeOutputs) && Objects.equals(testRunName, that.getTestRunName()) && Objects.equals(testRunDescription, that.testRunDescription);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(datasetName, includeOutputs, testRunName, testRunDescription);
+    }
+
+    @Override
+    public String toString() {
+        return "TestListDTO{" +
+                "datasetName='" + datasetName + '\'' +
+                ", includeOutputs=" + includeOutputs +
+                ", testRunName='" + testRunName + '\'' +
+                ", testRunDescription='" + testRunDescription + '\'' +
+                '}';
     }
 }
