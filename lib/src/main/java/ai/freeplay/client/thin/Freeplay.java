@@ -25,7 +25,7 @@ public class Freeplay {
                 config.baseUrl,
                 config.freeplayAPIKey
         );
-        sessions = new Sessions();
+        sessions = new Sessions(callSupport);
         prompts = new Prompts(callSupport);
         recordings = new Recordings(callSupport);
         testRuns = new TestRuns(callSupport);

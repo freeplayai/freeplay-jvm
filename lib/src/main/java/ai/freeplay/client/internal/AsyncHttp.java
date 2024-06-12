@@ -49,6 +49,22 @@ public class AsyncHttp {
         return sendJson(url, apiKey, httpConfig, "PUT", body);
     }
 
+    public static CompletableFuture<HttpResponse<String>> delete(
+            String url,
+            String apiKey,
+            HttpConfig httpConfig
+    ) throws FreeplayException {
+        HttpRequest.Builder requestBuilder = request(url, apiKey, httpConfig);
+
+        try {
+            return client(httpConfig)
+                    .build()
+                    .sendAsync(requestBuilder.DELETE().build(), BodyHandlers.ofString());
+        } catch (Exception e) {
+            throw new FreeplayException("Error sending DELETE request.", e);
+        }
+    }
+
     private static CompletableFuture<HttpResponse<String>> sendJson(
             String url,
             String apiKey,

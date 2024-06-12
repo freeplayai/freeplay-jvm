@@ -14,6 +14,7 @@ import ai.freeplay.client.thin.resources.feedback.CustomerFeedbackResponse;
 import ai.freeplay.client.thin.resources.prompts.ChatMessage;
 import ai.freeplay.client.thin.resources.recordings.RecordInfo;
 import ai.freeplay.client.thin.resources.recordings.RecordResponse;
+import ai.freeplay.client.thin.resources.sessions.SessionDeleteResponse;
 import ai.freeplay.client.thin.resources.testruns.TestCase;
 import ai.freeplay.client.thin.resources.testruns.TestRun;
 import ai.freeplay.client.thin.resources.testruns.TestRunResults;
@@ -184,6 +185,18 @@ public class ThinCallSupport {
             throwFreeplayIfError(httpResponse, 201);
 
             return new CustomerFeedbackResponse();
+        });
+    }
+
+    public CompletableFuture<SessionDeleteResponse> deleteSession(String projectId, String sessionId) {
+        String url = String.format("%s/v2/projects/%s/sessions/%s", baseUrl, projectId, sessionId);
+        return AsyncHttp.delete(
+                url,
+                freeplayApiKey,
+                httpConfig
+        ).thenApply(httpResponse -> {
+            throwFreeplayIfError(httpResponse, 201);
+            return new SessionDeleteResponse();
         });
     }
 

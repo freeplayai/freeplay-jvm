@@ -193,6 +193,15 @@ public class MockFixtures {
         }
     }
 
+    public static void mockSessionDelete(HttpClient mockedClient) throws RuntimeException {
+        try {
+            when(requestAsync(mockedClient, "DELETE", "v2/projects/[^/]*/sessions/[^/]*"))
+                    .thenReturn(asyncResponse(201, ""));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public static void mockGetTestRunResults(HttpClient mockedClient, String testRunId) {
         String body = JSONUtil.asString(
                 object(

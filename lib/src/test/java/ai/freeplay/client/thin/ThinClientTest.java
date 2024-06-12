@@ -12,8 +12,10 @@ import ai.freeplay.client.thin.resources.sessions.Session;
 import ai.freeplay.client.thin.resources.testruns.TestRun;
 import ai.freeplay.client.thin.resources.testruns.TestRunResults;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 
 import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -24,6 +26,8 @@ import static ai.freeplay.client.internal.utilities.MockFixtures.*;
 import static ai.freeplay.client.internal.utilities.MockMethods.getCapturedAsyncBody;
 import static ai.freeplay.client.thin.Freeplay.Config;
 import static org.junit.Assert.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 
 public class ThinClientTest extends HttpClientTestBase {
 
@@ -269,6 +273,20 @@ public class ThinClientTest extends HttpClientTestBase {
             );
             RecordDTO apiPayload = JSONUtil.parse(requestBody, RecordDTO.class);
             assertEquals(expectedPayload, apiPayload);
+        });
+    }
+
+    @Test
+    public void testSessionDelete() {
+        withMockedClient((HttpClient mockedClient) -> {
+            mockSessionDelete(mockedClient);
+            Freeplay fpClient = new Freeplay(Config().freeplayAPIKey(freeplayApiKey).baseUrl(baseUrl));
+
+            fpClient.sessions().delete(projectId, UUID.randomUUID().toString());
+
+            ArgumentCaptor<HttpRequest> recordRequestArg = ArgumentCaptor.forClass(HttpRequest.class);
+            verify(mockedClient).sendAsync(recordRequestArg.capture(), any());
+            assertEquals("DELETE", recordRequestArg.getValue().method());
         });
     }
 
