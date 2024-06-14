@@ -5,10 +5,12 @@ import ai.freeplay.client.exceptions.FreeplayClientException;
 import ai.freeplay.client.exceptions.FreeplayConfigurationException;
 import ai.freeplay.client.internal.JSONUtil;
 import ai.freeplay.client.thin.internal.dto.RecordDTO;
+import ai.freeplay.client.thin.internal.dto.TraceInfoDTO;
 import ai.freeplay.client.thin.resources.feedback.CustomerFeedbackResponse;
 import ai.freeplay.client.thin.resources.prompts.*;
 import ai.freeplay.client.thin.resources.recordings.*;
 import ai.freeplay.client.thin.resources.sessions.Session;
+import ai.freeplay.client.thin.resources.sessions.TraceInfo;
 import ai.freeplay.client.thin.resources.testruns.TestRun;
 import ai.freeplay.client.thin.resources.testruns.TestRunResults;
 import org.junit.Test;
@@ -269,7 +271,8 @@ public class ThinClientTest extends HttpClientTestBase {
                     new RecordDTO.ResponseInfoDTO(responseInfo.isComplete(), null,
                             responseInfo.getPromptTokens(), responseInfo.getResponseTokens()),
                     null,
-                    Map.of("bool_value", true, "float_value", 0.23)
+                    Map.of("bool_value", true, "float_value", 0.23),
+                    null
             );
             RecordDTO apiPayload = JSONUtil.parse(requestBody, RecordDTO.class);
             assertEquals(expectedPayload, apiPayload);
@@ -331,6 +334,7 @@ public class ThinClientTest extends HttpClientTestBase {
                     new RecordDTO.ResponseInfoDTO(fixtures.getResponseInfo().isComplete(), null,
                             fixtures.getResponseInfo().getPromptTokens(), fixtures.getResponseInfo().getResponseTokens()),
                     null,
+                    null,
                     null
             );
             RecordDTO actualPayload = JSONUtil.parse(
@@ -385,6 +389,7 @@ public class ThinClientTest extends HttpClientTestBase {
                     new RecordDTO.ResponseInfoDTO(fixtures.getResponseInfo().isComplete(), null,
                             fixtures.getResponseInfo().getPromptTokens(), fixtures.getResponseInfo().getResponseTokens()),
                     new RecordDTO.TestRunInfoDTO(testRunId, testCaseId),
+                    null,
                     null
             );
             RecordDTO actualPayload = JSONUtil.parse(
@@ -448,6 +453,88 @@ public class ThinClientTest extends HttpClientTestBase {
     }
 
     @Test
+    public void testRecordTrace(){
+        withMockedClient((HttpClient mockedClient) -> {
+            String completion = "42";
+            String input = "What is the meaning of life?";
+            long startTime = System.currentTimeMillis();
+            long endTime = System.currentTimeMillis() + 5;
+            Map<String, Object> customMetadata = Map.of("customer_id", 123);
+
+            mockGetPromptV2Async(
+                    mockedClient, templateName, "prod", getChatPromptContentObjects(), anthropicLLMParameters, "anthropic_chat"
+            );
+            mockRecordAsync(mockedClient);
+            mockRecordTraceAsync(mockedClient);
+
+            Freeplay fpClient = new Freeplay(Config().freeplayAPIKey(freeplayApiKey).baseUrl(baseUrl));
+
+            CompletableFuture<FormattedPrompt<String>> future = fpClient.prompts().getFormatted(
+                    projectId, templateName, "prod", variables, "anthropic_chat"
+            );
+            FormattedPrompt<String> prompt = future.get();
+
+            CallInfo callInfo = CallInfo.from(
+                    prompt.getPromptInfo(),
+                    startTime,
+                    endTime
+            );
+            ResponseInfo responseInfo = new ResponseInfo(true);
+            List<ChatMessage> allMessages = prompt.allMessages(new ChatMessage("Assistant", completion));
+            Map<String, Object> evalResults = Map.of("bool_value", true, "float_value", 0.23);
+
+            Session session = fpClient.sessions().create()
+                    .customMetadata(customMetadata);
+            TraceInfo traceInfo = session.createTrace(input);
+
+            RecordInfo recordInfo = new RecordInfo(
+                    allMessages,
+                    variables,
+                    session.getSessionInfo(),
+                    prompt.getPromptInfo(),
+                    callInfo,
+                    responseInfo
+            ).evalResults(evalResults).traceInfo(traceInfo);
+            CompletableFuture<RecordResponse> recordFuture = fpClient.recordings().create(recordInfo);
+
+            // Assertions
+            assertNotNull(recordFuture.get().getCompletionId());
+
+            String requestBody = getCapturedAsyncBody(mockedClient, 2, 1);
+            RecordDTO expectedPayload = new RecordDTO(
+                    allMessages,
+                    variables,
+                    new RecordDTO.SessionInfoDTO(session.getSessionInfo().getSessionId(), session.getSessionInfo().getCustomMetadata()),
+                    new RecordDTO.PromptInfoDTO(prompt.getPromptInfo().getPromptTemplateId(), prompt.getPromptInfo().getPromptTemplateVersionId(),
+                            prompt.getPromptInfo().getTemplateName(), prompt.getPromptInfo().getEnvironment(),
+                            prompt.getPromptInfo().getModelParameters(), prompt.getPromptInfo().getProviderInfo(),
+                            prompt.getPromptInfo().getProvider(), prompt.getPromptInfo().getModel(),
+                            prompt.getPromptInfo().getFlavorName(), prompt.getPromptInfo().getProjectId()),
+                    new RecordDTO.CallInfoDTO(callInfo.getProvider(), callInfo.getModel(),
+                            (long) callInfo.getStartTime(), (long) callInfo.getEndTime(), callInfo.getProviderInfo()),
+                    new RecordDTO.ResponseInfoDTO(responseInfo.isComplete(), null,
+                            responseInfo.getPromptTokens(), responseInfo.getResponseTokens()),
+                    null,
+                    Map.of("bool_value", true, "float_value", 0.23),
+                    new RecordDTO.TraceInfoDTO(traceInfo.getTraceId())
+            );
+            RecordDTO apiPayload = JSONUtil.parse(requestBody, RecordDTO.class);
+            assertEquals(expectedPayload, apiPayload);
+
+            traceInfo.recordOutput(projectId, completion);
+
+            String traceRequestBody = getCapturedAsyncBody(mockedClient, 3, 2);
+            TraceInfoDTO expectedTracePayload = new TraceInfoDTO(
+                    traceInfo.getInput(),
+                    traceInfo.getOutput()
+            );
+            TraceInfoDTO actualTracePayload = JSONUtil.parse(traceRequestBody, TraceInfoDTO.class);
+            assertEquals(expectedTracePayload, actualTracePayload);
+    });
+    }
+
+
+    @Test
     public void testRecordFunctionCall() {
         withMockedClient((HttpClient mockedClient) -> {
             mockRecordAsync(mockedClient);
@@ -489,6 +576,7 @@ public class ThinClientTest extends HttpClientTestBase {
                             (long) fixtures.getCallInfo().getStartTime(), (long) fixtures.getCallInfo().getEndTime(), fixtures.getCallInfo().getProviderInfo()),
                     new RecordDTO.ResponseInfoDTO(responseInfo.isComplete(), new RecordDTO.OpenAIFunctionCallDTO(responseInfo.getFunctionCall().getName(), responseInfo.getFunctionCall().getArguments()),
                             responseInfo.getPromptTokens(), responseInfo.getResponseTokens()),
+                    null,
                     null,
                     null
             );

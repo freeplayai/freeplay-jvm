@@ -142,6 +142,20 @@ public class MockFixtures {
         }
     }
 
+    public static void mockRecordTraceAsync(HttpClient mockedClient) throws RuntimeException {
+        try {
+            when(requestAsync(mockedClient, "POST", "v2/projects/[^/]*/sessions/[^/]*/traces/id/[^/]*")).thenReturn(
+                    asyncResponse(
+                            201,
+                            JSONUtil.asString(object())
+                    )
+            );
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+
     public static void mockRecordNoCompletionIdAsync(HttpClient mockedClient) throws RuntimeException {
         try {
             when(requestAsync(mockedClient, "POST", "v2/projects/[^/]*/sessions/[^/]*/completions")).thenReturn(

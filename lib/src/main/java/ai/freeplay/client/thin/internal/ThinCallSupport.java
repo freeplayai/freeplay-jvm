@@ -5,16 +5,15 @@ import ai.freeplay.client.exceptions.FreeplayClientException;
 import ai.freeplay.client.internal.AsyncHttp;
 import ai.freeplay.client.internal.JSONUtil;
 import ai.freeplay.client.thin.TemplateResolver;
-import ai.freeplay.client.thin.internal.dto.RecordDTO;
-import ai.freeplay.client.thin.internal.dto.TestListDTO;
-import ai.freeplay.client.thin.internal.dto.TestRunDTO;
-import ai.freeplay.client.thin.internal.dto.TestRunResultsDTO;
+import ai.freeplay.client.thin.internal.dto.*;
 import ai.freeplay.client.thin.internal.v2dto.TemplateDTO;
 import ai.freeplay.client.thin.resources.feedback.CustomerFeedbackResponse;
 import ai.freeplay.client.thin.resources.prompts.ChatMessage;
 import ai.freeplay.client.thin.resources.recordings.RecordInfo;
 import ai.freeplay.client.thin.resources.recordings.RecordResponse;
 import ai.freeplay.client.thin.resources.sessions.SessionDeleteResponse;
+import ai.freeplay.client.thin.resources.sessions.TraceInfo;
+import ai.freeplay.client.thin.resources.sessions.TraceRecordResponse;
 import ai.freeplay.client.thin.resources.testruns.TestCase;
 import ai.freeplay.client.thin.resources.testruns.TestRun;
 import ai.freeplay.client.thin.resources.testruns.TestRunResults;
@@ -108,7 +107,8 @@ public class ThinCallSupport {
                         (long) recordPayload.getCallInfo().getStartTime(), (long) recordPayload.getCallInfo().getEndTime(), recordPayload.getCallInfo().getProviderInfo()),
                 responseInfo,
                 testRunId != null ? new RecordDTO.TestRunInfoDTO(testRunId, testCaseId) : null,
-                recordPayload.getEvalResults()
+                recordPayload.getEvalResults(),
+                recordPayload.getTraceInfo() != null ? new RecordDTO.TraceInfoDTO(recordPayload.getTraceInfo().traceId) : null
         );
 
         return AsyncHttp.postJson(
@@ -120,6 +120,26 @@ public class ThinCallSupport {
             throwFreeplayIfError(httpResponse, 201);
             JsonNode responseNode = JSONUtil.parseDOM(httpResponse.body());
             return new RecordResponse(responseNode.path("completion_id").asText(null));
+        });
+    }
+
+    @SuppressWarnings("unused")
+    public CompletableFuture<TraceRecordResponse> recordTrace(String projectId, TraceInfo traceInfo){
+        if (traceInfo.input.isEmpty()){
+            throw new FreeplayClientException("Input needed to record a trace");
+        }
+        TraceInfoDTO payload = new TraceInfoDTO(
+                traceInfo.input,
+                traceInfo.output
+        );
+        return AsyncHttp.postJson(
+                format("%s/v2/projects/%s/sessions/%s/traces/id/%s", baseUrl, projectId, traceInfo.sessionId, traceInfo.traceId),
+                freeplayApiKey,
+                httpConfig,
+                payload
+        ).thenApply(httpResponse -> {
+            throwFreeplayIfError(httpResponse, 201);
+            return new TraceRecordResponse();
         });
     }
 

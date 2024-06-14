@@ -1,5 +1,6 @@
 package ai.freeplay.client.thin.resources.sessions;
 
+import ai.freeplay.client.thin.internal.ThinCallSupport;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 
 import java.util.Map;
@@ -11,16 +12,19 @@ import static ai.freeplay.client.internal.ParameterUtils.validateBasicMap;
 public class Session {
     private final UUID sessionId;
     private Map<String, Object> customMetadata;
+    private final ThinCallSupport callSupport;
 
-    public Session() {
+    public Session(ThinCallSupport callSupport) {
+        this.callSupport = callSupport;
         sessionId = UUID.randomUUID();
     }
 
-    @SuppressWarnings("unused")
+    // this can't be used by customer to restore sessions anynmore?
     public Session(
-            UUID sessionId
+            UUID sessionId, ThinCallSupport callSupport
     ) {
         this.sessionId = sessionId;
+        this.callSupport = callSupport;
     }
 
     public Session customMetadata(Map<String, Object> customMetadata) {
@@ -39,5 +43,14 @@ public class Session {
 
     public SessionInfo getSessionInfo() {
         return new SessionInfo(sessionId.toString(), customMetadata);
+    }
+
+    public TraceInfo createTrace(String input){
+        return new TraceInfo(
+                this.sessionId,
+                UUID.randomUUID(),
+                input,
+                this.callSupport
+        );
     }
 }

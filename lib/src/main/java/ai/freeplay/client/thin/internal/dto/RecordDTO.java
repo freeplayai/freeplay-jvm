@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 
 @SuppressWarnings({"unused", "FieldCanBeLocal"})
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
@@ -20,6 +21,7 @@ public class RecordDTO {
     private ResponseInfoDTO responseInfo;
     private TestRunInfoDTO testRunInfo;
     private Map<String, Object> evalResults;
+    private TraceInfoDTO traceInfo;
 
     public RecordDTO() {
     }
@@ -32,7 +34,8 @@ public class RecordDTO {
             CallInfoDTO callInfo,
             ResponseInfoDTO responseInfo,
             TestRunInfoDTO testRunInfo,
-            Map<String, Object> evalResults
+            Map<String, Object> evalResults,
+            TraceInfoDTO traceInfo
     ) {
         this.messages = messages;
         this.inputs = inputs;
@@ -42,6 +45,7 @@ public class RecordDTO {
         this.responseInfo = responseInfo;
         this.testRunInfo = testRunInfo;
         this.evalResults = evalResults;
+        this.traceInfo = traceInfo;
     }
 
     public List<ChatMessage> getMessages() {
@@ -71,6 +75,7 @@ public class RecordDTO {
     public TestRunInfoDTO getTestRunInfo() {
         return testRunInfo;
     }
+    public TraceInfoDTO getTraceInfo(){return traceInfo;}
 
     @Override
     public String toString() {
@@ -504,6 +509,40 @@ public class RecordDTO {
             return "OpenAIFunctionCallDTO{" +
                     "name='" + name + '\'' +
                     ", arguments='" + arguments + '\'' +
+                    '}';
+        }
+    }
+
+    @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
+    public static class TraceInfoDTO {
+        private UUID traceId;
+
+        public TraceInfoDTO() {
+        }
+
+        public TraceInfoDTO(UUID traceId){
+            this.traceId = traceId;
+        }
+
+        public UUID getTraceId(){return traceId;}
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            TraceInfoDTO that = (TraceInfoDTO) o;
+            return Objects.equals(traceId, that.traceId);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(traceId);
+        }
+
+        @Override
+        public String toString() {
+            return "TraceInfoDTO{" +
+                    "traceId='" + traceId + '\'' +
                     '}';
         }
     }

@@ -3,6 +3,7 @@ package ai.freeplay.client.thin.resources.recordings;
 import ai.freeplay.client.thin.resources.prompts.ChatMessage;
 import ai.freeplay.client.thin.resources.prompts.PromptInfo;
 import ai.freeplay.client.thin.resources.sessions.SessionInfo;
+import ai.freeplay.client.thin.resources.sessions.TraceInfo;
 
 import java.util.List;
 import java.util.Map;
@@ -17,6 +18,8 @@ public class RecordInfo {
     private final ResponseInfo responseInfo;
     private TestRunInfo testRunInfo;
     private Map<String, Object> evalResults;
+
+    private TraceInfo traceInfo;
 
     public RecordInfo(
             List<ChatMessage> allMessages,
@@ -41,6 +44,10 @@ public class RecordInfo {
 
     public RecordInfo evalResults(Map<String, Object> evalResults) {
         this.evalResults = evalResults;
+        return this;
+    }
+    public RecordInfo traceInfo(TraceInfo traceInfo){
+        this.traceInfo = traceInfo;
         return this;
     }
 
@@ -76,6 +83,8 @@ public class RecordInfo {
         return evalResults;
     }
 
+    public TraceInfo getTraceInfo() {return traceInfo;}
+
     @Override
     public String toString() {
         return "RecordInfo{" +
@@ -87,6 +96,7 @@ public class RecordInfo {
                 ", responseInfo=" + responseInfo +
                 ", testRunInfo=" + testRunInfo +
                 ", evalResults=" + evalResults +
+                ", traceInfo=" + traceInfo +
                 '}';
     }
 }
