@@ -13,6 +13,8 @@ import ai.freeplay.client.thin.resources.sessions.Session;
 import ai.freeplay.client.thin.resources.sessions.TraceInfo;
 import ai.freeplay.client.thin.resources.testruns.TestRun;
 import ai.freeplay.client.thin.resources.testruns.TestRunResults;
+import com.google.cloud.vertexai.api.Content;
+import com.google.cloud.vertexai.generativeai.ContentMaker;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
@@ -138,18 +140,17 @@ public class ThinClientTest extends HttpClientTestBase {
             assertEquals(expectedMessages, basetenMistralPrompt.get().getFormattedPrompt());
 
             // Gemini
-            // Re-enable when the app supports Vertex/Gemini
-//            CompletableFuture<FormattedPrompt<List<ChatMessage>>> geminiPrompt = fpClient.prompts().getFormatted(
-//                    projectId,
-//                    templateName,
-//                    "prod",
-//                    variables,
-//                    "gemini_chat"
-//            );
-//            assertEquals(List.of(
-//                    new ChatMessage("model", "How may I help you?"),
-//                    new ChatMessage("user", "Why isn't my light working?")
-//            ), geminiPrompt.get().getFormattedPrompt());
+            CompletableFuture<FormattedPrompt<List<Content>>> geminiPrompt = fpClient.prompts().getFormatted(
+                    projectId,
+                    templateName,
+                    "prod",
+                    variables,
+                    "gemini_chat"
+            );
+            assertEquals(List.of(
+                    ContentMaker.forRole("model").fromString("How may I help you?"),
+                    ContentMaker.forRole("user").fromString("Why isn't my light working?")
+            ), geminiPrompt.get().getFormattedPrompt());
         });
     }
 

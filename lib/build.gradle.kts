@@ -13,6 +13,12 @@ repositories {
     mavenCentral()
 }
 
+java {
+    registerFeature("gemini") {
+        usingSourceSet(sourceSets["main"])
+    }
+}
+
 dependencies {
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.mockito:mockito-core:5.4.0")
@@ -20,6 +26,7 @@ dependencies {
     implementation("com.fasterxml.jackson.jr:jackson-jr-all:2.16.1")
     implementation("com.fasterxml.jackson.core:jackson-databind:2.16.1")
     implementation("com.github.spullara.mustache.java:compiler:0.9.11")
+    "geminiImplementation"("com.google.cloud:google-cloud-vertexai:1.5.0")
 }
 
 tasks.register<Jar>("sourcesJar") {

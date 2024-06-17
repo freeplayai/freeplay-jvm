@@ -2,6 +2,8 @@ package ai.freeplay.client.thin;
 
 import ai.freeplay.client.exceptions.FreeplayConfigurationException;
 import ai.freeplay.client.thin.resources.prompts.ChatMessage;
+import com.google.cloud.vertexai.api.Content;
+import com.google.cloud.vertexai.generativeai.ContentMaker;
 
 import java.util.List;
 
@@ -26,9 +28,8 @@ public class LLMAdapters {
                 return new Llama3LLMAdapter();
             case "baseten_mistral_chat":
                 return new BasetenLLMAdapter();
-                // Disabled until we have re-enabled Gemini in the app
-//            case "gemini_chat":
-//                return new GeminiLLMAdapter();
+            case "gemini_chat":
+                return new GeminiLLMAdapter();
             default:
                 throw new FreeplayConfigurationException(format("Unable to create LLMAdapter for name '%s'.%n", flavor));
         }
@@ -49,18 +50,20 @@ public class LLMAdapters {
         }
     }
 
-    public static class GeminiLLMAdapter implements LLMAdapter<List<ChatMessage>> {
+    public static class GeminiLLMAdapter implements LLMAdapter<List<Content>> {
         @Override
         public String getProvider() {
             return "vertex";
         }
 
         @Override
-        public List<ChatMessage> toLLMSyntax(List<ChatMessage> messages) {
+        public List<Content> toLLMSyntax(List<ChatMessage> messages) {
             return messages
                     .stream()
                     .filter(message -> !message.getRole().equals("system"))
-                    .map(message -> new ChatMessage(translateRole(message.getRole()), message.getContent()))
+                    .map(message ->
+                            ContentMaker.forRole(translateRole(message.getRole())).fromString(message.getContent())
+                    )
                     .collect(toList());
         }
 
