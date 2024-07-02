@@ -403,6 +403,22 @@ public class MockFixtures {
         );
     }
 
+    public static List<Object> getChatWithHistoryPromptContentObjects() {
+        return array(
+                object(
+                        "role", "system",
+                        "content", "You are a support agent."
+                ),
+                object(
+                        "kind", "history"
+                ),
+                object(
+                        "role", "user",
+                        "content", "User message {{number}}"
+                )
+        );
+    }
+
     public static String getOpenAIChatResponse(String response) {
         return "{\n" +
                 "  \"id\": \"chatcmpl-7r34GwVSTw9RCL63j3g3AlCXQ4TSw\",\n" +

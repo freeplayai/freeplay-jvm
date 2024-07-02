@@ -1,6 +1,6 @@
 package ai.freeplay.client.exceptions;
 
-public class FreeplayConfigurationException extends FreeplayException{
+public class FreeplayConfigurationException extends FreeplayException {
     public FreeplayConfigurationException(String message) {
         super(message);
     }

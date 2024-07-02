@@ -64,7 +64,10 @@ public class TemplateDTO {
     public int getFormatVersion() {
         return formatVersion;
     }
-    public String getProjectId() { return projectId; }
+
+    public String getProjectId() {
+        return projectId;
+    }
 
     @Override
     public boolean equals(Object o) {
@@ -166,13 +169,21 @@ public class TemplateDTO {
     public static class Message {
         private String role;
         private String content;
+        private String kind;
 
         public Message() {
+        }
+
+        public Message(String role, String content, String kind) {
+            this.role = role;
+            this.content = content;
+            this.kind = kind;
         }
 
         public Message(String role, String content) {
             this.role = role;
             this.content = content;
+            this.kind = null;
         }
 
         public String getRole() {
@@ -183,17 +194,25 @@ public class TemplateDTO {
             return content;
         }
 
+        public boolean isKind() {
+            return kind != null;
+        }
+
+        public String getKind() {
+            return kind;
+        }
+
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (!(o instanceof Message)) return false;
             Message message = (Message) o;
-            return Objects.equals(role, message.role) && Objects.equals(content, message.content);
+            return Objects.equals(role, message.role) && Objects.equals(content, message.content) && Objects.equals(kind, message.kind);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(role, content);
+            return Objects.hash(role, content, kind);
         }
 
         @Override
@@ -201,6 +220,7 @@ public class TemplateDTO {
             return "Message{" +
                     "role='" + role + '\'' +
                     ", content='" + content + '\'' +
+                    ", kind='" + kind + '\'' +
                     '}';
         }
     }

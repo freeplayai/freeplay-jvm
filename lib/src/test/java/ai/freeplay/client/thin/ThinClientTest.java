@@ -114,7 +114,6 @@ public class ThinClientTest extends HttpClientTestBase {
                     .bind(variables)
                     .format("openai_chat");
 
-
             assertEquals(expectedMessages, openAIPrompt.getFormattedPrompt());
             assertTrue(openAIPrompt.getSystemContent().isPresent());
             assertEquals("You are a support agent.", openAIPrompt.getSystemContent().get());
@@ -209,6 +208,67 @@ public class ThinClientTest extends HttpClientTestBase {
                     ),
                     anthropicPrompt.getFormattedPrompt());
             assertTrue(anthropicPrompt.getSystemContent().isEmpty());
+        });
+    }
+
+    @Test
+    public void testHistory() {
+        withMockedClient((HttpClient mockedClient) -> {
+            mockGetPromptV2Async(
+                    mockedClient, templateName, "prod", getChatWithHistoryPromptContentObjects(), anthropicLLMParameters, "anthropic_chat"
+            );
+
+            Freeplay fpClient = new Freeplay(Config().freeplayAPIKey(freeplayApiKey).baseUrl(baseUrl));
+
+            TemplatePrompt templatePrompt = fpClient.prompts().get(projectId, templateName, "prod").get();
+            Map<String, Object> variables = Map.of("number", "2");
+
+            // No history given
+            BoundPrompt boundPrompt = templatePrompt.bind(variables);
+            List<ChatMessage> expectedMessages = List.of(
+                    new ChatMessage("system", "You are a support agent."),
+                    new ChatMessage("user", "User message 2")
+            );
+            assertEquals(expectedMessages, boundPrompt.getMessages());
+
+            // History given
+            BoundPrompt boundPrompt2 = templatePrompt.bind(variables, List.of(
+                    new ChatMessage("user", "User message 1"),
+                    new ChatMessage("assistant", "assistant message 1")
+            ));
+            List<ChatMessage> expectedMessages2 = List.of(
+                    new ChatMessage("system", "You are a support agent."),
+                    new ChatMessage("user", "User message 1"),
+                    new ChatMessage("assistant", "assistant message 1"),
+                    new ChatMessage("user", "User message 2")
+            );
+            assertEquals(expectedMessages2, boundPrompt2.getMessages());
+        });
+    }
+
+    @Test
+    public void testUnexpectedHistory() {
+        withMockedClient((HttpClient mockedClient) -> {
+            mockGetPromptV2Async(
+                    mockedClient, templateName, "prod", getChatPromptContentObjects(), anthropicLLMParameters, "anthropic_chat"
+            );
+
+            Freeplay fpClient = new Freeplay(Config().freeplayAPIKey(freeplayApiKey).baseUrl(baseUrl));
+            TemplatePrompt templatePrompt = fpClient.prompts().get(projectId, templateName, "prod").get();
+            Map<String, Object> variables = Map.of("number", "2");
+
+            // No history placeholder in the prompt
+            try {
+                templatePrompt.bind(variables, List.of(
+                        new ChatMessage("user", "User message 1")
+                ));
+                fail("Should have gotten an exception");
+            } catch (Exception e) {
+                assertEquals(
+                        "Received history but prompt 'my-prompt' does not have a history placeholder.",
+                        e.getMessage()
+                );
+            }
         });
     }
 
@@ -454,7 +514,7 @@ public class ThinClientTest extends HttpClientTestBase {
     }
 
     @Test
-    public void testRecordTrace(){
+    public void testRecordTrace() {
         withMockedClient((HttpClient mockedClient) -> {
             String completion = "42";
             String input = "What is the meaning of life?";
@@ -531,7 +591,7 @@ public class ThinClientTest extends HttpClientTestBase {
             );
             TraceInfoDTO actualTracePayload = JSONUtil.parse(traceRequestBody, TraceInfoDTO.class);
             assertEquals(expectedTracePayload, actualTracePayload);
-    });
+        });
     }
 
 

@@ -1,5 +1,6 @@
 package ai.freeplay.client.thin.resources.prompts;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 
@@ -24,6 +25,11 @@ public class ChatMessage {
 
     public String getContent() {
         return content;
+    }
+
+    @JsonIgnore
+    public boolean isKind() {
+        return false;
     }
 
     @Override

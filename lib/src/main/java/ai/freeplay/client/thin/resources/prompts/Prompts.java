@@ -81,8 +81,19 @@ public class Prompts {
             String environment,
             Map<String, Object> variables
     ) {
+        return getBound(projectId, templateName, environment, variables, null);
+    }
+
+    @SuppressWarnings("SameParameterValue")
+    private CompletableFuture<BoundPrompt> getBound(
+            String projectId,
+            String templateName,
+            String environment,
+            Map<String, Object> variables,
+            List<ChatMessage> history
+    ) {
         return get(projectId, templateName, environment)
-                .thenApply(templatePrompt -> templatePrompt.bind(variables));
+                .thenApply(templatePrompt -> templatePrompt.bind(variables, history));
     }
 
     private void validateReturnedTemplate(TemplateDTO template) {
@@ -105,9 +116,13 @@ public class Prompts {
         HashMap<String, Object> params = new HashMap<>(template.getMetadata().getParams());
         params.remove("model");
 
-        List<ChatMessage> messages = template.getContent().stream().map(message ->
-                new ChatMessage(message.getRole(), message.getContent())
-        ).collect(toList());
+        List<ChatMessage> messages = template.getContent().stream().map(message -> {
+            if (message.isKind()) {
+                return new KindMessage(message.getKind());
+            } else {
+                return new ChatMessage(message.getRole(), message.getContent());
+            }
+        }).collect(toList());
 
         PromptInfo promptInfo = new PromptInfo(
                 template.getPromptTemplateId(),
@@ -126,5 +141,4 @@ public class Prompts {
                 messages
         );
     }
-
 }

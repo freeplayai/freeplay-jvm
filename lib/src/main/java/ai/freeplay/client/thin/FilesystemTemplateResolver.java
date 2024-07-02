@@ -67,9 +67,9 @@ public class FilesystemTemplateResolver implements TemplateResolver {
     public CompletableFuture<TemplateDTO> getPromptByVersionId(String projectId, String templateId, String templateVersionId) {
         try {
             List<Path> promptFilePaths = getAllPromptFilePaths(projectId);
-            for (Path templateFile : promptFilePaths){
+            for (Path templateFile : promptFilePaths) {
                 TemplateDTO templatePrompt = toTemplate(templateFile.toFile(), projectId);
-                if (templatePrompt.getPromptTemplateVersionId().equals(templateVersionId)){
+                if (templatePrompt.getPromptTemplateVersionId().equals(templateVersionId)) {
                     return CompletableFuture.completedFuture(templatePrompt);
                 }
             }
@@ -177,12 +177,10 @@ public class FilesystemTemplateResolver implements TemplateResolver {
     private List<TemplateDTO.Message> getV2Content(JsonNode content) {
         List<TemplateDTO.Message> messages = new ArrayList<>(content.size());
         content.forEach(messageNode ->
-                messages.add(
-                        new TemplateDTO.Message(
-                                translateRole(messageNode.get("role").textValue()),
-                                messageNode.get("content").textValue()
-                        )
-                ));
+                messages.add(new TemplateDTO.Message(
+                        translateRole(messageNode.get("role").textValue()),
+                        messageNode.get("content").textValue()
+                )));
         return messages;
     }
 
