@@ -165,7 +165,8 @@ public class ThinCallSupport {
                             .map(testCase -> new TestCase(
                                     testCase.getTestCaseId(),
                                     testCase.getVariables(),
-                                    testCase.getOutput()
+                                    testCase.getOutput(),
+                                    testCase.getHistory()
                             ))
                             .collect(toList())
             );

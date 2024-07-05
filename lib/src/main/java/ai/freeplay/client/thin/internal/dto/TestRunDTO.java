@@ -1,5 +1,6 @@
 package ai.freeplay.client.thin.internal.dto;
 
+import ai.freeplay.client.thin.resources.prompts.ChatMessage;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 
@@ -34,6 +35,7 @@ public class TestRunDTO {
         private String testCaseId;
         private Map<String, Object> variables;
         private String output;
+        private List<ChatMessage> history;
 
         public String getTestCaseId() {
             return testCaseId;
@@ -45,6 +47,10 @@ public class TestRunDTO {
 
         public String getOutput() {
             return output;
+        }
+
+        public List<ChatMessage> getHistory() {
+            return history;
         }
     }
 }
