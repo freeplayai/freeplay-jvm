@@ -187,7 +187,7 @@ public class FilesystemTemplateResolverTest extends HttpClientTestBase {
         FilesystemTemplateResolver resolver = new FilesystemTemplateResolver(getV2TestFilesDirectory());
         TemplatesDTO templates = resolver.getPrompts(projectId, "prod").get();
 
-        assertEquals(1, templates.getPromptTemplates().size());
+        assertEquals(2, templates.getPromptTemplates().size());
 
         TemplateDTO template = getTemplate(templates, "test-prompt");
 
@@ -198,6 +198,41 @@ public class FilesystemTemplateResolverTest extends HttpClientTestBase {
                 List.of(
                         new TemplateDTO.Message("user", "Answer the question to the best of your ability with truthful information, while being entertaining."),
                         new TemplateDTO.Message("assistant", "How may I help you?"),
+                        new TemplateDTO.Message("user", "{{question}}")
+                ),
+                new TemplateDTO.Metadata(
+                        "anthropic",
+                        "claude-2.1",
+                        "anthropic_chat",
+                        Map.of(
+                                "max_tokens", 12,
+                                "temperature", 0.15
+                        ),
+                        Collections.emptyMap()
+                ),
+                2,
+                projectId
+        );
+
+        assertEquals(expected, template);
+    }
+
+    @Test
+    public void testResolvesV2PromptWithHistory() throws ExecutionException, InterruptedException {
+        FilesystemTemplateResolver resolver = new FilesystemTemplateResolver(getV2TestFilesDirectory());
+        TemplatesDTO templates = resolver.getPrompts(projectId, "prod").get();
+
+        assertEquals(2, templates.getPromptTemplates().size());
+
+        TemplateDTO template = getTemplate(templates, "test-prompt-with-history");
+
+        TemplateDTO expected = new TemplateDTO(
+                "e8c69d70-1166-4546-8a60-cf4684a3a66b",
+                "41ee9a25-0e7a-4c0b-a42b-4b5239721d7b",
+                "test-prompt-with-history",
+                List.of(
+                        new TemplateDTO.Message("user", "Answer the question to the best of your ability with truthful information, while being entertaining."),
+                        new TemplateDTO.Message(null, null, "history"),
                         new TemplateDTO.Message("user", "{{question}}")
                 ),
                 new TemplateDTO.Metadata(

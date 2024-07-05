@@ -176,11 +176,24 @@ public class FilesystemTemplateResolver implements TemplateResolver {
 
     private List<TemplateDTO.Message> getV2Content(JsonNode content) {
         List<TemplateDTO.Message> messages = new ArrayList<>(content.size());
-        content.forEach(messageNode ->
-                messages.add(new TemplateDTO.Message(
-                        translateRole(messageNode.get("role").textValue()),
-                        messageNode.get("content").textValue()
-                )));
+        content.forEach(messageNode -> {
+            if (messageNode.path("kind").isMissingNode()) {
+                messages.add(
+                        new TemplateDTO.Message(
+                                translateRole(messageNode.get("role").textValue()),
+                                messageNode.get("content").textValue()
+                        )
+                );
+            } else {
+                messages.add(
+                        new TemplateDTO.Message(
+                                null,
+                                null,
+                                messageNode.path("kind").textValue()
+                        )
+                );
+            }
+        });
         return messages;
     }
 
