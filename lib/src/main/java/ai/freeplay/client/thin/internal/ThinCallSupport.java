@@ -8,6 +8,7 @@ import ai.freeplay.client.thin.TemplateResolver;
 import ai.freeplay.client.thin.internal.dto.*;
 import ai.freeplay.client.thin.internal.v2dto.TemplateDTO;
 import ai.freeplay.client.thin.resources.feedback.CustomerFeedbackResponse;
+import ai.freeplay.client.thin.resources.feedback.TraceFeedbackResponse;
 import ai.freeplay.client.thin.resources.prompts.ChatMessage;
 import ai.freeplay.client.thin.resources.recordings.RecordInfo;
 import ai.freeplay.client.thin.resources.recordings.RecordResponse;
@@ -205,6 +206,25 @@ public class ThinCallSupport {
             throwFreeplayIfError(httpResponse, 201);
 
             return new CustomerFeedbackResponse();
+        });
+    }
+
+    public CompletableFuture<TraceFeedbackResponse> updateTraceFeedback(
+            String projectId,
+            String traceId,
+            Map<String, Object> feedback
+    ) {
+        validateBasicMap(feedback);
+        String url = String.format("%s/v2/projects/%s/trace-feedback/id/%s", baseUrl, projectId, traceId);
+        return AsyncHttp.postJson(
+                url,
+                freeplayApiKey,
+                httpConfig,
+                feedback
+        ).thenApply(httpResponse -> {
+            throwFreeplayIfError(httpResponse, 201);
+
+            return new TraceFeedbackResponse();
         });
     }
 

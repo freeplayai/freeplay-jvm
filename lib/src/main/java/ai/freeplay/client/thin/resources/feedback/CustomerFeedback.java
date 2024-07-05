@@ -16,4 +16,8 @@ public class CustomerFeedback {
     public CompletableFuture<CustomerFeedbackResponse> update(String completionId, Map<String, Object> feedback) {
         return callSupport.updateCustomerFeedback(completionId, feedback);
     }
+
+    public CompletableFuture<TraceFeedbackResponse> updateTrace(String projectId, String traceId, Map<String, Object> feedback) {
+        return callSupport.updateTraceFeedback(projectId, traceId, feedback);
+    }
 }

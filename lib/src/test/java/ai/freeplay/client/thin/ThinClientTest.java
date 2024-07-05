@@ -7,6 +7,7 @@ import ai.freeplay.client.internal.JSONUtil;
 import ai.freeplay.client.thin.internal.dto.RecordDTO;
 import ai.freeplay.client.thin.internal.dto.TraceInfoDTO;
 import ai.freeplay.client.thin.resources.feedback.CustomerFeedbackResponse;
+import ai.freeplay.client.thin.resources.feedback.TraceFeedbackResponse;
 import ai.freeplay.client.thin.resources.prompts.*;
 import ai.freeplay.client.thin.resources.recordings.*;
 import ai.freeplay.client.thin.resources.sessions.Session;
@@ -707,6 +708,30 @@ public class ThinClientTest extends HttpClientTestBase {
             Freeplay fpClient = new Freeplay(Config().freeplayAPIKey(freeplayApiKey).baseUrl(baseUrl));
 
             CustomerFeedbackResponse response = fpClient.customerFeedback().update(completionId, feedback).get();
+
+            assertNotNull(response);
+
+            Map<String, Object> requestBody = JSONUtil.parseMap(getCapturedAsyncBody(mockedClient, 1, 0));
+            assertEquals(feedback, requestBody);
+        });
+    }
+
+    @Test
+    public void testTraceFeedback() {
+        withMockedClient((HttpClient mockedClient) -> {
+            mockUpdateTraceFeedbackAsync(mockedClient);
+            String traceId = UUID.randomUUID().toString();
+            Map<String, Object> feedback = Map.of(
+                    "helpful", "thumbsup",
+                    "intkey", 1234,
+                    "floatkey", 12.34,
+                    "booleankey", false,
+                    "freeplay_feedback", "positive"
+            );
+
+            Freeplay fpClient = new Freeplay(Config().freeplayAPIKey(freeplayApiKey).baseUrl(baseUrl));
+
+            TraceFeedbackResponse response = fpClient.customerFeedback().updateTrace(projectId, traceId, feedback).get();
 
             assertNotNull(response);
 

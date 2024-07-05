@@ -141,5 +141,7 @@ public class ThinTrace {
         System.out.println("Second Completion: " + category);
 
         System.out.println("Recorded Trace " + traceInfo.traceId + " to session " + traceInfo.sessionId + " with input " + traceInfo.input + " and output " + response);
+
+        fpClient.customerFeedback().updateTrace(projectId, String.valueOf(traceInfo.traceId), Map.of("freeplay_feedback", "positive")).get();
     }
 }
