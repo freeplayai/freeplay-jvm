@@ -24,58 +24,81 @@ fun main(): Unit = runBlocking {
             .baseUrl(baseUrl)
     )
 
-    val variables = mapOf("question" to "Why isn't my window working?")
-    val history = listOf(
-        ChatMessage("user", "User message 1"),
-        ChatMessage("assistant", "Assistant message 1"),
+    val questions = listOf(
+            "who was the first president of the united states?",
+            "what color is the sky?",
+            "what shape is the earth?",
+            "repeat the first question and answer"
     )
+    val articles = listOf(
+            "george washington was the first president of the united states",
+            "the sky is blue",
+            "the earth is round",
+            ""
+    )
+    val history = mutableListOf<ChatMessage>()
 
     println("Getting the prompt...")
     val template = fpClient.prompts()
         .get(
             projectId,
-            "my-anthropic-history-prompt",
+            "History-QA",
             "latest"
         ).await()
-    val formatted = template.bind(variables, history).format<List<ChatMessage>>()
 
-    println("Calling Anthropic...")
-    val startTime = System.currentTimeMillis()
-    val llmResponse = callAnthropic(
-        objectMapper,
-        anthropicApiKey,
-        formatted.promptInfo.model,
-        formatted.promptInfo.modelParameters,
-        formatted.formattedPrompt,
-        formatted.systemContent.orElse(null)
-    ).await()
-
-    val bodyNode = objectMapper.readTree(llmResponse.body())
-    println("Completion: " + bodyNode.path("content").get(0).path("text").asText())
-
-    println("Recording the result")
-    val allMessages: List<ChatMessage> = formatted.allMessages(
-        ChatMessage("assistant", bodyNode.path("content").get(0).path("text").asText())
-    )
-    val callInfo = CallInfo.from(
-        formatted.promptInfo,
-        startTime,
-        System.currentTimeMillis()
-    )
-    val responseInfo = ResponseInfo("stop_sequence" == bodyNode.path("stop_reason").asText())
     val sessionInfo = fpClient.sessions().create()
-        .customMetadata(mapOf("custom_field" to "custom_value"))
-        .sessionInfo
+            .customMetadata(mapOf("custom_field" to "custom_value"))
+            .sessionInfo
 
-    val recordResponse = fpClient.recordings().create(
-        RecordInfo(
-            allMessages,
-            variables,
-            sessionInfo,
-            formatted.getPromptInfo(),
-            callInfo,
-            responseInfo
+    for (i in 1..questions.size){
+        val variables = mapOf("question" to questions[i-1], "article" to articles[i-1])
+        println("variables: $variables")
+
+        val formatted = template.bind(variables, history).format<List<ChatMessage>>()
+
+        println("Calling Anthropic...")
+        val startTime = System.currentTimeMillis()
+        val llmResponse = callAnthropic(
+                objectMapper,
+                anthropicApiKey,
+                formatted.promptInfo.model,
+                formatted.promptInfo.modelParameters,
+                formatted.formattedPrompt,
+                formatted.systemContent.orElse(null)
+        ).await()
+
+        val bodyNode = objectMapper.readTree(llmResponse.body())
+        println("Completion: " + bodyNode.path("content").get(0).path("text").asText())
+
+        println("Recording the result")
+        val allMessages: List<ChatMessage> = formatted.allMessages(
+                ChatMessage("assistant", bodyNode.path("content").get(0).path("text").asText())
         )
-    ).await()
-    println("Recorded with completionId ${recordResponse.completionId}")
+
+        if (allMessages.size >= 2) {
+            history.add(allMessages[allMessages.size - 2])
+            history.add(allMessages[allMessages.size - 1])
+        } else if (allMessages.isNotEmpty()) {
+            history.addAll(allMessages)
+        }
+
+        val callInfo = CallInfo.from(
+                formatted.promptInfo,
+                startTime,
+                System.currentTimeMillis()
+        )
+        val responseInfo = ResponseInfo("stop_sequence" == bodyNode.path("stop_reason").asText())
+
+        val recordResponse = fpClient.recordings().create(
+                RecordInfo(
+                        allMessages,
+                        variables,
+                        sessionInfo,
+                        formatted.getPromptInfo(),
+                        callInfo,
+                        responseInfo
+                )
+        ).await()
+
+    }
 }
