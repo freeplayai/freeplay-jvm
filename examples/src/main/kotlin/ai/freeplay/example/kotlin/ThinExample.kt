@@ -31,7 +31,7 @@ fun main(): Unit = runBlocking {
         .getFormatted<List<ChatMessage>>(
             projectId,
             "my-prompt-anthropic",
-            "prod",
+            "latest",
             variables
         ).await()
 
@@ -46,6 +46,8 @@ fun main(): Unit = runBlocking {
         prompt.systemContent.orElse(null)
     ).await()
 
+    val endTime = System.currentTimeMillis()
+
     val bodyNode = objectMapper.readTree(llmResponse.body())
     println("Completion: " + bodyNode.path("content").get(0).path("text").asText())
 
@@ -56,7 +58,7 @@ fun main(): Unit = runBlocking {
     val callInfo = CallInfo.from(
         prompt.promptInfo,
         startTime,
-        System.currentTimeMillis()
+        endTime
     )
     val responseInfo = ResponseInfo("stop_sequence" == bodyNode.path("stop_reason").asText())
     val sessionInfo = fpClient.sessions().create()

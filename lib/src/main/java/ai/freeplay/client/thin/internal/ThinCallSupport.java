@@ -105,7 +105,7 @@ public class ThinCallSupport {
                         recordPayload.getPromptInfo().getProvider(), recordPayload.getPromptInfo().getModel(),
                         recordPayload.getPromptInfo().getFlavorName(), recordPayload.getPromptInfo().getProjectId()),
                 new RecordDTO.CallInfoDTO(recordPayload.getCallInfo().getProvider(), recordPayload.getCallInfo().getModel(),
-                        (long) recordPayload.getCallInfo().getStartTime(), (long) recordPayload.getCallInfo().getEndTime(), recordPayload.getCallInfo().getProviderInfo()),
+                        recordPayload.getCallInfo().getStartTime(), recordPayload.getCallInfo().getEndTime(), recordPayload.getCallInfo().getProviderInfo()),
                 responseInfo,
                 testRunId != null ? new RecordDTO.TestRunInfoDTO(testRunId, testCaseId) : null,
                 recordPayload.getEvalResults(),

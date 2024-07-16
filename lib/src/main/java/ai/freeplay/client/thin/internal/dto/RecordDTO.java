@@ -272,8 +272,8 @@ public class RecordDTO {
         public CallInfoDTO(
                 String provider,
                 String model,
-                long startTime,
-                long endTime,
+                double startTime,
+                double endTime,
                 Map<String, Object> modelParameters
         ) {
             this.provider = provider;
