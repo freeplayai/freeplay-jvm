@@ -51,7 +51,7 @@ public class OpenAIContinuousChatTest extends HttpClientTestBase {
                     Collections.emptyMap(),
                     "latest",
                     null,
-                    Map.of("customer_id", "abc")
+                    Map.of("customer_id", "abc", "true", false)
             );
 
             // Completion
@@ -65,7 +65,7 @@ public class OpenAIContinuousChatTest extends HttpClientTestBase {
             assertEquals(formattedPromptExpected, recordBodyMap.get("prompt_content"));
             assertEquals(completion1Expected, recordBodyMap.get("return_content"));
             assertEquals(MODEL_GPT_35_TURBO, recordBodyMap.get("model"));
-            assertEquals(Map.of("customer_id", "abc"), recordBodyMap.get("custom_metadata"));
+            assertEquals(Map.of("customer_id", "abc", "true", false), recordBodyMap.get("custom_metadata"));
             assertNull(recordBodyMap.get("test_run_id"));
 
             // Continue
