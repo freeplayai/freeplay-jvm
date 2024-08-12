@@ -117,7 +117,7 @@ public class FilesystemTemplateResolver implements TemplateResolver {
 
         try {
             JsonNode templateNode = JSONUtil.parseDOM(Files.readString(promptAbsoluteFile.toPath()));
-            if (isFormat(templateNode, 2)) {
+            if (isFormat(templateNode, 2) | isFormat(templateNode, 3)) {
                 return new TemplateDTO(
                         templateNode.get("prompt_template_id").textValue(),
                         templateNode.get("prompt_template_version_id").textValue(),

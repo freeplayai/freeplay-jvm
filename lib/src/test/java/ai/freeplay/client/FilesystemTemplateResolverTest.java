@@ -55,7 +55,7 @@ public class FilesystemTemplateResolverTest extends HttpClientTestBase {
         } catch (Exception e) {
             assertEquals(e.getClass(), FreeplayConfigurationException.class);
             assertTrue(e.getMessage().contains("Path for templates is not a directory"));
-            assertTrue(e.getMessage().contains("testfiles/prompts/does_not_exist"));
+            assertTrue(e.getMessage().contains("testfiles/prompts_legacy/does_not_exist"));
         }
     }
 
@@ -76,7 +76,7 @@ public class FilesystemTemplateResolverTest extends HttpClientTestBase {
     }
 
     private Path getTestFilesDirectory() {
-        Path path = FileSystems.getDefault().getPath("src", "test", "testfiles", "prompts");
+        Path path = FileSystems.getDefault().getPath("src", "test", "testfiles", "prompts_legacy");
         assertTrue(path.toFile().exists());
         return path;
     }
