@@ -1,7 +1,12 @@
 package ai.freeplay.client.internal;
 
 import ai.freeplay.client.exceptions.FreeplayClientException;
-import com.github.mustachejava.*;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.mustachejava.Code;
+import com.github.mustachejava.DefaultMustacheFactory;
+import com.github.mustachejava.Mustache;
+import com.github.mustachejava.reflect.ReflectionObjectHandler;
 import com.github.mustachejava.util.Node;
 
 import java.io.IOException;
@@ -19,7 +24,8 @@ public class TemplateUtils {
     public static String format(String template, Map<String, Object> variables) {
         validateVariables(variables);
 
-        MustacheFactory mf = new NoEscapeMustacheFactory();
+        DefaultMustacheFactory mf = new NoEscapeMustacheFactory();
+        mf.setObjectHandler(new JSONObjectSerializingObjectHandler());
 
         Mustache mustache;
         try {
@@ -66,6 +72,29 @@ public class TemplateUtils {
         return value instanceof String ||
                 value instanceof Number ||
                 value instanceof Boolean;
+    }
+
+    private static class JSONObjectSerializingObjectHandler extends ReflectionObjectHandler {
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        @Override
+        public String stringify(Object object) {
+            if (object == null) {
+                return "";
+            }
+
+            // Check if the object is a primitive type, its wrapper, or a String
+            if (object instanceof Number || object instanceof Boolean || object instanceof Character || object instanceof String) {
+                return object.toString();
+            }
+
+            // Otherwise, serialize to JSON for object types
+            try {
+                return objectMapper.writeValueAsString(object);
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 
     private static class NoEscapeMustacheFactory extends DefaultMustacheFactory {
