@@ -84,7 +84,7 @@ public class TemplateUtils {
             }
 
             // Check if the object is a primitive type, its wrapper, or a String
-            if (object instanceof Number || object instanceof Boolean || object instanceof Character || object instanceof String) {
+            if (object instanceof Number || object instanceof Boolean || object instanceof Character || object instanceof CharSequence) {
                 return object.toString();
             }
 
@@ -92,7 +92,7 @@ public class TemplateUtils {
             try {
                 return objectMapper.writeValueAsString(object);
             } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
+                throw new FreeplayClientException("Error formatting template.", e);
             }
         }
     }

@@ -156,6 +156,13 @@ public class TemplateUtilsTest {
     }
 
     @Test
+    public void testEmptyMap() {
+        String template = "{{foo}}";
+        String result = TemplateUtils.format(template, Map.of("foo", Map.of()));
+        assertEquals("{}", result);
+    }
+
+    @Test
     public void testTopLevelArray() {
         String template = "{{foo}}";
         String result = TemplateUtils.format(template, Map.of("foo", Arrays.asList("Larry", "Moe", "Curly")));
@@ -235,8 +242,8 @@ public class TemplateUtilsTest {
     @Test
     public void testArrayOfNumbersAndStrings() {
         String template = "{{#foo}}{{.}}{{/foo}}";
-        String result = TemplateUtils.format(template, Map.of("foo", Arrays.asList(1, "two", 3, "four")));
-        assertEquals("1two3four", result);
+        String result = TemplateUtils.format(template, Map.of("foo", Arrays.asList(1, "two", 3, "four", 5.1)));
+        assertEquals("1two3four5.1", result);
     }
 
     @Test
@@ -244,5 +251,38 @@ public class TemplateUtilsTest {
         String template = "{{foo}}";
         TemplateUtils.format(template, Map.of());
         // This test doesn't assert anything, it just checks that no exception is thrown
+    }
+
+    private static class SimpleBeanForTest {
+        private String name;
+
+        public SimpleBeanForTest() {
+        }
+
+        @SuppressWarnings("unused")
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+    }
+
+    @Test
+    public void testNonMapObjectThrows() {
+        String template = "{{foo}}";
+        SimpleBeanForTest bean = new SimpleBeanForTest();
+        bean.setName("Mr. Bean");
+
+        assertThrows(FreeplayClientException.class, () -> TemplateUtils.format(template, Map.of("foo", bean)));
+    }
+
+    @Test
+    public void testFunctionValueThrows() {
+        String template = "{{foo}}";
+        Function<String, Integer> function = (String) -> 1;
+
+        assertThrows(FreeplayClientException.class, () -> TemplateUtils.format(template, Map.of("foo", function)));
     }
 }
