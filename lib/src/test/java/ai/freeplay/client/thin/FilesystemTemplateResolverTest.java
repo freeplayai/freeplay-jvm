@@ -187,7 +187,7 @@ public class FilesystemTemplateResolverTest extends HttpClientTestBase {
         FilesystemTemplateResolver resolver = new FilesystemTemplateResolver(getTestFilesDirectory());
         TemplatesDTO templates = resolver.getPrompts(projectId, "prod").get();
 
-        assertEquals(3, templates.getPromptTemplates().size());
+        assertEquals(4, templates.getPromptTemplates().size());
 
         TemplateDTO template = getTemplate(templates, "test-prompt");
 
@@ -222,7 +222,7 @@ public class FilesystemTemplateResolverTest extends HttpClientTestBase {
         FilesystemTemplateResolver resolver = new FilesystemTemplateResolver(getTestFilesDirectory());
         TemplatesDTO templates = resolver.getPrompts(projectId, "prod").get();
 
-        assertEquals(3, templates.getPromptTemplates().size());
+        assertEquals(4, templates.getPromptTemplates().size());
 
         TemplateDTO template = getTemplate(templates, "test-prompt-with-history");
 
@@ -257,7 +257,7 @@ public class FilesystemTemplateResolverTest extends HttpClientTestBase {
         FilesystemTemplateResolver resolver = new FilesystemTemplateResolver(getTestFilesDirectory());
         TemplatesDTO templates = resolver.getPrompts(projectId, "prod").get();
 
-        assertEquals(3, templates.getPromptTemplates().size());
+        assertEquals(4, templates.getPromptTemplates().size());
 
         TemplateDTO template = getTemplate(templates, "test-prompt-v3");
 
@@ -282,6 +282,55 @@ public class FilesystemTemplateResolverTest extends HttpClientTestBase {
                 ),
                 3,
                 projectId
+        );
+
+        assertEquals(expected, template);
+    }
+
+    @Test
+    public void testResolvesPromptWithToolSchema() throws ExecutionException, InterruptedException {
+        FilesystemTemplateResolver resolver = new FilesystemTemplateResolver(getTestFilesDirectory());
+        TemplatesDTO templates = resolver.getPrompts(projectId, "prod").get();
+
+        TemplateDTO template = getTemplate(templates, "my-anthropic-prompt");
+
+        TemplateDTO expected = new TemplateDTO(
+                "6252eca9-edb1-403c-a059-744cfc6e254e",
+                "ed3b96f5-0783-4d40-9ef3-35297c29529c",
+                "my-anthropic-prompt",
+                List.of(
+                        new TemplateDTO.Message(null, null, "history"),
+                        new TemplateDTO.Message("user", "What is the weather in {{location}}")
+                ),
+                new TemplateDTO.Metadata(
+                        "anthropic",
+                        "claude-3-sonnet-20240229",
+                        "anthropic_chat",
+                        Map.of(
+                                "max_tokens", 256,
+                                "temperature", 0.0
+                        ),
+                        Collections.emptyMap()
+                ),
+                3,
+                projectId,
+                List.of(
+                        new TemplateDTO.ToolSchema(
+                                "weather_of_location",
+                                "Get weather of a location",
+                                Map.of(
+                                        "type", "object",
+                                        "properties", Map.of(
+                                                "location", Map.of(
+                                                        "type", "string",
+                                                        "description", "Location to get the weather for"
+                                                )
+                                        ),
+                                        "required", List.of("location"),
+                                        "additionalProperties", false
+                                )
+                        )
+                )
         );
 
         assertEquals(expected, template);

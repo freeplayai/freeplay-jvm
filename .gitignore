@@ -3,3 +3,4 @@
 nohup.out
 **/build/
 .DS_Store
+.env

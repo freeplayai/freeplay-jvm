@@ -3,6 +3,7 @@ package ai.freeplay.client.thin;
 import ai.freeplay.client.exceptions.FreeplayConfigurationException;
 import ai.freeplay.client.internal.JSONUtil;
 import ai.freeplay.client.thin.internal.v2dto.TemplateDTO;
+import ai.freeplay.client.thin.internal.v2dto.TemplateDTO.ToolSchema;
 import ai.freeplay.client.thin.internal.v2dto.TemplatesDTO;
 import com.fasterxml.jackson.databind.JsonNode;
 
@@ -131,7 +132,8 @@ public class FilesystemTemplateResolver implements TemplateResolver {
                                 nodeToMap(templateNode.path("metadata").path("provider_info"))
                         ),
                         templateNode.get("format_version").asInt(),
-                        projectId
+                        projectId,
+                        extractToolSchemas(templateNode.path("tool_schema"))
                 );
             } else {
                 String flavorName = templateNode.path("metadata").path("flavor_name").textValue();
@@ -166,12 +168,28 @@ public class FilesystemTemplateResolver implements TemplateResolver {
                                 Collections.emptyMap()
                         ),
                         0,
-                        projectId
+                        projectId,
+                        extractToolSchemas(templateNode.path("tool_schema"))
                 );
             }
         } catch (IOException e) {
             throw new FreeplayConfigurationException("Unable to read prompt template. ", e);
         }
+    }
+
+    private static List<ToolSchema> extractToolSchemas(JsonNode toolSchemaNode) {
+        return Optional.ofNullable(toolSchemaNode)
+                .filter(JsonNode::isArray)
+                .map(schemas -> {
+                    List<ToolSchema> toolSchemas = new ArrayList<>();
+                    schemas.forEach(schema -> toolSchemas.add(new ToolSchema(
+                            schema.path("name").textValue(),
+                            schema.path("description").textValue(),
+                            nodeToMap(schema.path("parameters"))
+                    )));
+                    return toolSchemas;
+                })
+                .orElse(Collections.emptyList());
     }
 
     private List<TemplateDTO.Message> getV2Content(JsonNode content) {

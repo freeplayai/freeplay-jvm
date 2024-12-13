@@ -3,6 +3,7 @@ package ai.freeplay.client.thin.resources.prompts;
 import ai.freeplay.client.Freeplay;
 import ai.freeplay.client.exceptions.FreeplayClientException;
 import ai.freeplay.client.internal.TemplateUtils;
+import ai.freeplay.client.thin.internal.v2dto.TemplateDTO.ToolSchema;
 
 import java.util.List;
 import java.util.Map;
@@ -17,10 +18,16 @@ public class TemplatePrompt {
 
     private final PromptInfo promptInfo;
     private final List<ChatMessage> messages;
+    private final List<ToolSchema> toolSchema;
 
     public TemplatePrompt(PromptInfo promptInfo, List<ChatMessage> messages) {
+        this(promptInfo, messages, null);
+    }
+
+    public TemplatePrompt(PromptInfo promptInfo, List<ChatMessage> messages, List<ToolSchema> toolSchema) {
         this.promptInfo = promptInfo;
         this.messages = messages;
+        this.toolSchema = toolSchema;
     }
 
     public PromptInfo getPromptInfo() {
@@ -29,6 +36,10 @@ public class TemplatePrompt {
 
     public List<ChatMessage> getMessages() {
         return messages;
+    }
+
+    public List<ToolSchema> getToolSchema() {
+        return toolSchema;
     }
 
     public BoundPrompt bind(Map<String, Object> variables) {
@@ -63,7 +74,7 @@ public class TemplatePrompt {
                     }
                 }
         ).collect(toList());
-        return new BoundPrompt(promptInfo, messages);
+        return new BoundPrompt(promptInfo, messages, toolSchema);
     }
 
     private boolean hasHistoryPlaceholder() {

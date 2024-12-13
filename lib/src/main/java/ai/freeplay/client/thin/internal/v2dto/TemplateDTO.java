@@ -19,10 +19,11 @@ public class TemplateDTO {
 
     private int formatVersion = -1;
     private String projectId;
+    private List<ToolSchema> toolSchema;
 
     public TemplateDTO() {
     }
-
+    
     public TemplateDTO(
             String promptTemplateId,
             String promptTemplateVersionId,
@@ -39,6 +40,27 @@ public class TemplateDTO {
         this.metadata = metadata;
         this.formatVersion = formatVersion;
         this.projectId = projectId;
+        this.toolSchema = null;
+    }
+
+    public TemplateDTO(
+            String promptTemplateId,
+            String promptTemplateVersionId,
+            String promptTemplateName,
+            List<Message> content,
+            Metadata metadata,
+            int formatVersion,
+            String projectId,
+            List<ToolSchema> toolSchema
+    ) {
+        this.promptTemplateId = promptTemplateId;
+        this.promptTemplateVersionId = promptTemplateVersionId;
+        this.promptTemplateName = promptTemplateName;
+        this.content = content;
+        this.metadata = metadata;
+        this.formatVersion = formatVersion;
+        this.projectId = projectId;
+        this.toolSchema = toolSchema;
     }
 
     public String getPromptTemplateId() {
@@ -67,6 +89,10 @@ public class TemplateDTO {
 
     public String getProjectId() {
         return projectId;
+    }
+
+    public List<ToolSchema> getToolSchema() {
+        return toolSchema;
     }
 
     @Override
@@ -221,6 +247,58 @@ public class TemplateDTO {
                     "role='" + role + '\'' +
                     ", content='" + content + '\'' +
                     ", kind='" + kind + '\'' +
+                    '}';
+        }
+    }
+
+    @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
+    public static class ToolSchema {
+        private String description;
+        private String name; 
+        private Map<String, Object> parameters;
+
+        public ToolSchema() {
+        }
+
+        public ToolSchema(String name, String description,Map<String, Object> parameters) {
+            this.description = description;
+            this.name = name;
+            this.parameters = parameters;
+        }
+
+        public String getDescription() {
+            return description;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public Map<String, Object> getParameters() {
+            return parameters;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof ToolSchema)) return false;
+            ToolSchema that = (ToolSchema) o;
+            return Objects.equals(description, that.description) &&
+                   Objects.equals(name, that.name) &&
+                   Objects.equals(parameters, that.parameters);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(description, name, parameters);
+        }
+
+        @Override
+        public String toString() {
+            return "ToolSchema{" +
+                    "description='" + description + '\'' +
+                    ", name='" + name + '\'' + 
+                    ", parameters=" + parameters +
                     '}';
         }
     }

@@ -1,11 +1,12 @@
 package ai.freeplay.client.thin;
 
 import ai.freeplay.client.exceptions.FreeplayConfigurationException;
+import ai.freeplay.client.thin.internal.v2dto.TemplateDTO.ToolSchema;
 import ai.freeplay.client.thin.resources.prompts.ChatMessage;
 import com.google.cloud.vertexai.api.Content;
 import com.google.cloud.vertexai.generativeai.ContentMaker;
-
 import java.util.List;
+import java.util.Map;
 
 import static java.lang.String.format;
 import static java.util.stream.Collectors.joining;
@@ -14,8 +15,11 @@ import static java.util.stream.Collectors.toList;
 public class LLMAdapters {
     public interface LLMAdapter<LLMFormat> {
         String getProvider();
-
         LLMFormat toLLMSyntax(List<ChatMessage> messages);
+        
+        default Map<String, Object> toToolSchemaFormat(List<ToolSchema> toolSchema) {
+            throw new UnsupportedOperationException("Tool schema format not supported for this model and provider.");
+        }
     }
 
     public static LLMAdapter<?> adapterForFlavor(String flavor) {
@@ -47,6 +51,24 @@ public class LLMAdapters {
                     .stream()
                     .filter(message -> !message.getRole().equals("system"))
                     .collect(toList());
+        }
+
+        @Override
+        public Map<String, Object> toToolSchemaFormat(List<ToolSchema> toolSchema) {
+            if (toolSchema == null) {
+                return null;
+            }
+
+            return Map.of("tools", toolSchema.stream()
+                    .filter(schema -> schema.getName() != null 
+                            && schema.getDescription() != null 
+                            && schema.getParameters() != null)
+                    .map(schema -> Map.of(
+                            "name", schema.getName(),
+                            "description", schema.getDescription(),
+                            "input_schema", schema.getParameters()
+                    ))
+                    .collect(toList()));
         }
     }
 
@@ -112,6 +134,20 @@ public class LLMAdapters {
         @Override
         public List<ChatMessage> toLLMSyntax(List<ChatMessage> messages) {
             return messages;
+        }
+
+        @Override
+        public Map<String, Object> toToolSchemaFormat(List<ToolSchema> toolSchema) {
+            if (toolSchema == null) {
+                return null;
+            }
+
+            return Map.of("functions", toolSchema.stream()
+                    .map(schema -> Map.of(
+                            "function", schema,
+                            "type", "function"
+                    ))
+                    .collect(toList()));
         }
     }
 

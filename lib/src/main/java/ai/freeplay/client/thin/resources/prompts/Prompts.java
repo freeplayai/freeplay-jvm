@@ -43,11 +43,11 @@ public class Prompts {
     }
 
     public <LLMFormat> CompletableFuture<FormattedPrompt<LLMFormat>> getFormatted(
-            String projectId,
-            String templateName,
-            String environment,
-            Map<String, Object> variables,
-            String flavorName
+        String projectId,
+        String templateName,
+        String environment,
+        Map<String, Object> variables,
+        String flavorName
     ) {
         return getBound(projectId, templateName, environment, variables)
                 .thenApply(boundPrompt -> boundPrompt.format(flavorName));
@@ -138,7 +138,8 @@ public class Prompts {
 
         return new TemplatePrompt(
                 promptInfo,
-                messages
+                messages,
+                template.getToolSchema()
         );
     }
 }

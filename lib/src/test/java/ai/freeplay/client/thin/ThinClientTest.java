@@ -6,6 +6,7 @@ import ai.freeplay.client.exceptions.FreeplayConfigurationException;
 import ai.freeplay.client.internal.JSONUtil;
 import ai.freeplay.client.thin.internal.dto.RecordDTO;
 import ai.freeplay.client.thin.internal.dto.TraceInfoDTO;
+import ai.freeplay.client.thin.internal.v2dto.TemplateDTO.ToolSchema;
 import ai.freeplay.client.thin.resources.feedback.CustomerFeedbackResponse;
 import ai.freeplay.client.thin.resources.feedback.TraceFeedbackResponse;
 import ai.freeplay.client.thin.resources.prompts.*;
@@ -33,6 +34,7 @@ import static ai.freeplay.client.thin.Freeplay.Config;
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
+import static java.util.stream.Collectors.toList;
 
 public class ThinClientTest extends HttpClientTestBase {
 
@@ -872,6 +874,135 @@ public class ThinClientTest extends HttpClientTestBase {
                                     fixtures.getResponseInfo()
                             )).get());
             assertEquals("Error making call [401]", exception.getCause().getMessage());
+        });
+    }
+
+    @Test
+    public void testOpenAIToolSchemaFormatting() {
+        withMockedClient((HttpClient mockedClient) -> {
+            List<ToolSchema> toolSchema = List.of(
+                new ToolSchema("get_weather", "Get the weather for a location", Map.of(
+                    "type", "object",
+                    "properties", Map.of(
+                        "location", Map.of("type", "string"),
+                        "unit", Map.of("type", "string", "enum", List.of("celsius", "fahrenheit"))
+                    ),
+                    "required", List.of("location")
+                ))
+            );
+
+            TemplatePrompt templatePrompt = new TemplatePrompt(
+                new PromptInfo(promptTemplateId, promptTemplateVersionId, templateName, "prod", 
+                    openAILLMParameters, "openai", MODEL_GPT_35_TURBO, "openai_chat", projectId),
+                getChatPromptContentObjects().stream()
+                    .map(obj -> new ChatMessage(
+                        (String) ((Map<?, ?>) obj).get("role"), 
+                        (String) ((Map<?, ?>) obj).get("content")
+                    ))
+                    .collect(toList()),
+                toolSchema
+            );
+
+            FormattedPrompt<List<ChatMessage>> formatted = templatePrompt
+                .bind(variables)
+                .format("openai_chat");
+
+            Map<String, Object> expectedToolSchema = Map.of(
+                "functions", List.of(Map.of(
+                    "function", toolSchema.get(0),
+                    "type", "function"
+                ))
+            );
+
+            assertEquals(expectedToolSchema, formatted.getToolSchema());
+        });
+    }
+
+    @Test
+    public void testAnthropicToolSchemaFormatting() {
+        withMockedClient((HttpClient mockedClient) -> {
+            List<ToolSchema> toolSchema = List.of(
+                new ToolSchema("get_weather", "Get the weather for a location", Map.of(
+                    "type", "object",
+                    "properties", Map.of(
+                        "location", Map.of("type", "string"),
+                        "unit", Map.of("type", "string", "enum", List.of("celsius", "fahrenheit"))
+                    ),
+                    "required", List.of("location")
+                ))
+            );
+
+            TemplatePrompt templatePrompt = new TemplatePrompt(
+                new PromptInfo(promptTemplateId, promptTemplateVersionId, templateName, "prod", 
+                    anthropicLLMParameters, "anthropic", MODEL_CLAUDE_2, "anthropic_chat", projectId),
+                getChatPromptContentObjects().stream()
+                    .map(obj -> new ChatMessage(
+                        (String) ((Map<?, ?>) obj).get("role"), 
+                        (String) ((Map<?, ?>) obj).get("content")
+                    ))
+                    .collect(toList()),
+                toolSchema
+            );
+
+            FormattedPrompt<List<ChatMessage>> formatted = templatePrompt
+                .bind(variables)
+                .format("anthropic_chat");
+
+            Map<String, Object> expectedToolSchema = Map.of(
+                "tools", List.of(Map.of(
+                    "name", "get_weather",
+                    "description", "Get the weather for a location",
+                    "input_schema", toolSchema.get(0).getParameters()
+                ))
+            );
+
+            assertEquals(expectedToolSchema, formatted.getToolSchema());
+        });
+    }
+
+    @Test
+    public void testFormattingWithoutToolSchema() {
+        withMockedClient((HttpClient mockedClient) -> {
+            // Create template prompt with null tool schema
+            TemplatePrompt templatePrompt = new TemplatePrompt(
+                new PromptInfo(promptTemplateId, promptTemplateVersionId, templateName, "prod", 
+                    openAILLMParameters, "openai", MODEL_GPT_35_TURBO, "openai_chat", projectId),
+                getChatPromptContentObjects().stream()
+                    .map(obj -> new ChatMessage(
+                        (String) ((Map<?, ?>) obj).get("role"), 
+                        (String) ((Map<?, ?>) obj).get("content")
+                    ))
+                    .collect(toList()),
+                null
+            );
+
+            FormattedPrompt<List<ChatMessage>> formatted = templatePrompt
+                .bind(variables)
+                .format("openai_chat");
+
+            // Tool schema should be null when not provided
+            assertNull(formatted.getToolSchema());
+
+            // Create template prompt with empty tool schema list
+            TemplatePrompt templatePromptEmpty = new TemplatePrompt(
+                new PromptInfo(promptTemplateId, promptTemplateVersionId, templateName, "prod", 
+                    openAILLMParameters, "openai", MODEL_GPT_35_TURBO, "openai_chat", projectId),
+                getChatPromptContentObjects().stream()
+                    .map(obj -> new ChatMessage(
+                        (String) ((Map<?, ?>) obj).get("role"), 
+                        (String) ((Map<?, ?>) obj).get("content")
+                    ))
+                    .collect(toList()),
+                List.of()
+            );
+
+            FormattedPrompt<List<ChatMessage>> formattedEmpty = templatePromptEmpty
+                .bind(variables)
+                .format("openai_chat");
+
+            // Tool schema should be empty map when empty list provided
+            Map<String, Object> expectedEmptySchema = Map.of("functions", List.of());
+            assertEquals(expectedEmptySchema, formattedEmpty.getToolSchema());
         });
     }
 
