@@ -49,7 +49,18 @@ public class ThinExampleUtils {
             Map<String, Object> llmParameters,
             List<ChatMessage> messages
     ) {
-        return callOpenAI(objectMapper, openAIApiKey, model, llmParameters, messages, Collections.emptyList());
+        return callOpenAI(objectMapper, openAIApiKey, model, llmParameters, messages, null, null);
+    }
+
+    public static CompletableFuture<HttpResponse<String>> callOpenAI(
+        ObjectMapper objectMapper,
+        String openAIApiKey,
+        String model,
+        Map<String, Object> llmParameters,
+        List<ChatMessage> messages,
+        Map<String, Object> toolSchema
+    ) {
+        return callOpenAI(objectMapper, openAIApiKey, model, llmParameters, messages, null, toolSchema);
     }
 
     public static CompletableFuture<HttpResponse<String>> callOpenAI(
@@ -60,14 +71,29 @@ public class ThinExampleUtils {
             List<ChatMessage> messages,
             List<OpenAIFunctionCallDTO> functionCalls
     ) {
+        return callOpenAI(objectMapper, openAIApiKey, model, llmParameters, messages, functionCalls, null);
+    }
+
+    public static CompletableFuture<HttpResponse<String>> callOpenAI(
+            ObjectMapper objectMapper,
+            String openAIApiKey,
+            String model,
+            Map<String, Object> llmParameters,
+            List<ChatMessage> messages,
+            List<OpenAIFunctionCallDTO> functionCalls,
+            Map<String, Object> toolSchema
+    ) {
         try {
             String openAIChatURL = "https://api.openai.com/v1/chat/completions";
 
             Map<String, Object> bodyMap = new LinkedHashMap<>();
             bodyMap.put("model", model);
             bodyMap.put("messages", messages);
-            if (!functionCalls.isEmpty()) {
+            if (functionCalls != null && !functionCalls.isEmpty()) {
                 bodyMap.put("functions", functionCalls);
+            }
+            if (toolSchema != null) {
+                bodyMap.putAll(toolSchema);
             }
             bodyMap.putAll(llmParameters);
             String body = objectMapper.writeValueAsString(bodyMap);
@@ -94,6 +120,18 @@ public class ThinExampleUtils {
             List<ChatMessage> messages,
             String systemContent
     ) {
+        return callAnthropic(objectMapper, anthropicApiKey, model, llmParameters, messages, systemContent, Collections.emptyMap());
+    }
+
+    public static CompletableFuture<HttpResponse<String>> callAnthropic(
+            ObjectMapper objectMapper,
+            String anthropicApiKey,
+            String model,
+            Map<String, Object> llmParameters,
+            List<ChatMessage> messages,
+            String systemContent,
+            Map<String, Object> toolSchema
+    ) {
         try {
             String anthropicMessagesURL = "https://api.anthropic.com/v1/messages";
 
@@ -103,6 +141,7 @@ public class ThinExampleUtils {
             if (systemContent != null) {
                 bodyMap.put("system", systemContent);
             }
+            bodyMap.putAll(toolSchema);
             bodyMap.putAll(llmParameters);
             String body = objectMapper.writeValueAsString(bodyMap);
 

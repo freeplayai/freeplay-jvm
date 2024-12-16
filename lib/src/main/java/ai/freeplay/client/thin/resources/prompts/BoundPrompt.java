@@ -1,5 +1,6 @@
 package ai.freeplay.client.thin.resources.prompts;
 
+import ai.freeplay.client.exceptions.FreeplayClientException;
 import ai.freeplay.client.thin.LLMAdapters;
 import ai.freeplay.client.thin.internal.ThinCallSupport;
 import ai.freeplay.client.thin.internal.v2dto.TemplateDTO.ToolSchema;
@@ -34,6 +35,10 @@ public class BoundPrompt {
     }
 
     public <ContentFormat> FormattedPrompt<ContentFormat> format(String flavorName) {
+        if (getMessages().stream().anyMatch(message -> message.isStructuredMessage() || message.isCompletionMessage())) {
+            throw new FreeplayClientException("Structured or Completion message is not allowed when formatting a prompt");
+        }
+
         String finalFlavor = ThinCallSupport.getActiveFlavorName(flavorName, promptInfo.getFlavorName());
         LLMAdapters.LLMAdapter<?> llmAdapter = LLMAdapters.adapterForFlavor(finalFlavor);
         //noinspection unchecked

@@ -47,6 +47,10 @@ public class TemplatePrompt {
     }
 
     public BoundPrompt bind(Map<String, Object> variables, List<ChatMessage> history) {
+        if (getMessages().stream().anyMatch(message -> message.isStructuredMessage() || message.isCompletionMessage())) {
+            throw new FreeplayClientException("StructuredMessage or CompletionMessage is not allowed when binding a prompt");
+        }
+
         if (!hasHistoryPlaceholder() && history != null) {
             throw new FreeplayClientException(format(
                     "Received history but prompt '%s' does not have a history placeholder.",

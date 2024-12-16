@@ -142,7 +142,7 @@ public class LLMAdapters {
                 return null;
             }
 
-            return Map.of("functions", toolSchema.stream()
+            return Map.of("tools", toolSchema.stream()
                     .map(schema -> Map.of(
                             "function", schema,
                             "type", "function"

@@ -14,6 +14,7 @@ import java.util.concurrent.ExecutionException;
 
 import static ai.freeplay.client.thin.Freeplay.Config;
 import static ai.freeplay.example.java.ThinExampleUtils.callAnthropic;
+import static java.lang.String.format;
 
 public class ThinBundleExample {
     private static final ObjectMapper objectMapper = new ObjectMapper();
@@ -22,22 +23,23 @@ public class ThinBundleExample {
         String freeplayApiKey = System.getenv("FREEPLAY_API_KEY");
         String anthropicApiKey = System.getenv("ANTHROPIC_API_KEY");
         String projectId = System.getenv("FREEPLAY_PROJECT_ID");
-        String customerDomain = System.getenv("FREEPLAY_CUSTOMER_NAME");
+        String apiRoot = System.getenv("FREEPLAY_API_URL");
+        String baseUrl = format("%s/api", apiRoot);
         String templateDirectory = System.getenv("FREEPLAY_TEMPLATE_DIRECTORY");
 
         Freeplay fpClient = new Freeplay(Config()
                 .freeplayAPIKey(freeplayApiKey)
-                .customerDomain(customerDomain)
+                .baseUrl(baseUrl)
                 .templateResolver(new FilesystemTemplateResolver(Paths.get(templateDirectory)))
         );
 
-        Map<String, Object> variables = Map.of("question", "Why isn't my window working?");
+        Map<String, Object> variables = Map.of("location", "New York");
 
         fpClient.prompts()
                 .<List<ChatMessage>>getFormatted(
                         projectId,
-                        "my-prompt-anthropic",
-                        "prod",
+                        "my-anthropic-prompt",
+                        "latest",
                         variables,
                         null
                 ).thenCompose((FormattedPrompt<List<ChatMessage>> formattedPrompt) ->
@@ -47,7 +49,8 @@ public class ThinBundleExample {
                                 formattedPrompt.getPromptInfo().getModel(),
                                 formattedPrompt.getPromptInfo().getModelParameters(),
                                 formattedPrompt.getFormattedPrompt(),
-                                formattedPrompt.getSystemContent().orElse(null)
+                                formattedPrompt.getSystemContent().orElse(null),
+                                formattedPrompt.getToolSchema()
                         )
                 ).thenAccept((HttpResponse<String> response) ->
                         System.out.printf("Got response from Anthropic [%s]: %s%n", response.statusCode(), response.body())

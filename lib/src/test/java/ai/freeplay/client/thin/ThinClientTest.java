@@ -652,6 +652,95 @@ public class ThinClientTest extends HttpClientTestBase {
     }
 
     @Test
+    public void testRecordWithStructuredToolCall() {
+        withMockedClient((HttpClient mockedClient) -> {
+            mockRecordAsync(mockedClient);
+            Freeplay fpClient = new Freeplay(Config().freeplayAPIKey(freeplayApiKey).baseUrl(baseUrl));
+
+            List<Object> toolCall = List.of(Map.of(
+                    "type", "tool_use",
+                    "id", "toolu_01A09q90qw90lq917835lq9",
+                    "name", "get_weather",
+                    "input", Map.of(
+                            "location", "San Francisco",
+                            "unit", "celsius"
+                    )
+            ));
+            ChatMessage toolCallMessage = new ChatMessage("assistant", toolCall);
+
+            StubbedRecordFixtures fixtures = new StubbedRecordFixtures(
+                    "openai", MODEL_GPT_35_TURBO, "openai_chat", null
+            );
+
+            Session session = fpClient.sessions().create();
+            List<ChatMessage> messages = fixtures.getBoundPrompt()
+                    .format(fixtures.getPromptInfo().getFlavorName())
+                    .allMessages(toolCallMessage);
+
+            CompletableFuture<RecordResponse> recordFuture = fpClient.recordings().create(
+                    new RecordInfo(
+                            messages,
+                            variables,
+                            session.getSessionInfo(),
+                            fixtures.getPromptInfo(),
+                            fixtures.getCallInfo(),
+                            fixtures.getResponseInfo()
+                    ));
+
+            // Assertions
+            assertNotNull(recordFuture.get().getCompletionId());
+            String body = getCapturedAsyncBody(mockedClient, 1, 0);
+            assertTrue(body.contains("\"content\":" + JSONUtil.toString(toolCall)));
+        });
+    }
+
+    @Test
+    public void testRecordWithCompletionToolCall() {
+        withMockedClient((HttpClient mockedClient) -> {
+            mockRecordAsync(mockedClient);
+            Freeplay fpClient = new Freeplay(Config().freeplayAPIKey(freeplayApiKey).baseUrl(baseUrl));
+
+            // Create a completion message with tool call
+            Map<String, Object> toolCallCompletion = Map.of(
+                    "role", "assistant",
+                    "tool_calls", List.of(Map.of(
+                            "id", "call_123",
+                            "type", "function",
+                            "name", "get_weather",
+                            "arguments", Map.of(
+                                    "location", "San Francisco"
+                            )
+                    ))
+            );
+            ChatMessage toolCallMessage = new ChatMessage(toolCallCompletion);
+
+            StubbedRecordFixtures fixtures = new StubbedRecordFixtures(
+                    "openai", MODEL_GPT_35_TURBO, "openai_chat", null
+            );
+
+            Session session = fpClient.sessions().create();
+            List<ChatMessage> messages = fixtures.getBoundPrompt()
+                    .format(fixtures.getPromptInfo().getFlavorName())
+                    .allMessages(toolCallMessage);
+
+            CompletableFuture<RecordResponse> recordFuture = fpClient.recordings().create(
+                    new RecordInfo(
+                            messages,
+                            variables,
+                            session.getSessionInfo(),
+                            fixtures.getPromptInfo(),
+                            fixtures.getCallInfo(),
+                            fixtures.getResponseInfo()
+                    ));
+
+            assertNotNull(recordFuture.get().getCompletionId());
+            Map<String, Object> bodyJson = JSONUtil.parseMap(getCapturedAsyncBody(mockedClient, 1, 0));
+            assertTrue(((List<Map<String, Object>>) bodyJson.get("messages")).contains(toolCallCompletion));
+        });
+    }
+
+
+    @Test
     public void testTestRunCreated() {
         withMockedClient((HttpClient mockedClient) -> {
             mockCreateTestRunAsync(mockedClient);
@@ -881,37 +970,37 @@ public class ThinClientTest extends HttpClientTestBase {
     public void testOpenAIToolSchemaFormatting() {
         withMockedClient((HttpClient mockedClient) -> {
             List<ToolSchema> toolSchema = List.of(
-                new ToolSchema("get_weather", "Get the weather for a location", Map.of(
-                    "type", "object",
-                    "properties", Map.of(
-                        "location", Map.of("type", "string"),
-                        "unit", Map.of("type", "string", "enum", List.of("celsius", "fahrenheit"))
-                    ),
-                    "required", List.of("location")
-                ))
+                    new ToolSchema("get_weather", "Get the weather for a location", Map.of(
+                            "type", "object",
+                            "properties", Map.of(
+                                    "location", Map.of("type", "string"),
+                                    "unit", Map.of("type", "string", "enum", List.of("celsius", "fahrenheit"))
+                            ),
+                            "required", List.of("location")
+                    ))
             );
 
             TemplatePrompt templatePrompt = new TemplatePrompt(
-                new PromptInfo(promptTemplateId, promptTemplateVersionId, templateName, "prod", 
-                    openAILLMParameters, "openai", MODEL_GPT_35_TURBO, "openai_chat", projectId),
-                getChatPromptContentObjects().stream()
-                    .map(obj -> new ChatMessage(
-                        (String) ((Map<?, ?>) obj).get("role"), 
-                        (String) ((Map<?, ?>) obj).get("content")
-                    ))
-                    .collect(toList()),
-                toolSchema
+                    new PromptInfo(promptTemplateId, promptTemplateVersionId, templateName, "prod",
+                            openAILLMParameters, "openai", MODEL_GPT_35_TURBO, "openai_chat", projectId),
+                    getChatPromptContentObjects().stream()
+                            .map(obj -> new ChatMessage(
+                                    (String) ((Map<?, ?>) obj).get("role"),
+                                    (String) ((Map<?, ?>) obj).get("content")
+                            ))
+                            .collect(toList()),
+                    toolSchema
             );
 
             FormattedPrompt<List<ChatMessage>> formatted = templatePrompt
-                .bind(variables)
-                .format("openai_chat");
+                    .bind(variables)
+                    .format("openai_chat");
 
             Map<String, Object> expectedToolSchema = Map.of(
-                "functions", List.of(Map.of(
-                    "function", toolSchema.get(0),
-                    "type", "function"
-                ))
+                    "tools", List.of(Map.of(
+                            "function", toolSchema.get(0),
+                            "type", "function"
+                    ))
             );
 
             assertEquals(expectedToolSchema, formatted.getToolSchema());
@@ -922,38 +1011,38 @@ public class ThinClientTest extends HttpClientTestBase {
     public void testAnthropicToolSchemaFormatting() {
         withMockedClient((HttpClient mockedClient) -> {
             List<ToolSchema> toolSchema = List.of(
-                new ToolSchema("get_weather", "Get the weather for a location", Map.of(
-                    "type", "object",
-                    "properties", Map.of(
-                        "location", Map.of("type", "string"),
-                        "unit", Map.of("type", "string", "enum", List.of("celsius", "fahrenheit"))
-                    ),
-                    "required", List.of("location")
-                ))
+                    new ToolSchema("get_weather", "Get the weather for a location", Map.of(
+                            "type", "object",
+                            "properties", Map.of(
+                                    "location", Map.of("type", "string"),
+                                    "unit", Map.of("type", "string", "enum", List.of("celsius", "fahrenheit"))
+                            ),
+                            "required", List.of("location")
+                    ))
             );
 
             TemplatePrompt templatePrompt = new TemplatePrompt(
-                new PromptInfo(promptTemplateId, promptTemplateVersionId, templateName, "prod", 
-                    anthropicLLMParameters, "anthropic", MODEL_CLAUDE_2, "anthropic_chat", projectId),
-                getChatPromptContentObjects().stream()
-                    .map(obj -> new ChatMessage(
-                        (String) ((Map<?, ?>) obj).get("role"), 
-                        (String) ((Map<?, ?>) obj).get("content")
-                    ))
-                    .collect(toList()),
-                toolSchema
+                    new PromptInfo(promptTemplateId, promptTemplateVersionId, templateName, "prod",
+                            anthropicLLMParameters, "anthropic", MODEL_CLAUDE_2, "anthropic_chat", projectId),
+                    getChatPromptContentObjects().stream()
+                            .map(obj -> new ChatMessage(
+                                    (String) ((Map<?, ?>) obj).get("role"),
+                                    (String) ((Map<?, ?>) obj).get("content")
+                            ))
+                            .collect(toList()),
+                    toolSchema
             );
 
             FormattedPrompt<List<ChatMessage>> formatted = templatePrompt
-                .bind(variables)
-                .format("anthropic_chat");
+                    .bind(variables)
+                    .format("anthropic_chat");
 
             Map<String, Object> expectedToolSchema = Map.of(
-                "tools", List.of(Map.of(
-                    "name", "get_weather",
-                    "description", "Get the weather for a location",
-                    "input_schema", toolSchema.get(0).getParameters()
-                ))
+                    "tools", List.of(Map.of(
+                            "name", "get_weather",
+                            "description", "Get the weather for a location",
+                            "input_schema", toolSchema.get(0).getParameters()
+                    ))
             );
 
             assertEquals(expectedToolSchema, formatted.getToolSchema());
@@ -965,43 +1054,43 @@ public class ThinClientTest extends HttpClientTestBase {
         withMockedClient((HttpClient mockedClient) -> {
             // Create template prompt with null tool schema
             TemplatePrompt templatePrompt = new TemplatePrompt(
-                new PromptInfo(promptTemplateId, promptTemplateVersionId, templateName, "prod", 
-                    openAILLMParameters, "openai", MODEL_GPT_35_TURBO, "openai_chat", projectId),
-                getChatPromptContentObjects().stream()
-                    .map(obj -> new ChatMessage(
-                        (String) ((Map<?, ?>) obj).get("role"), 
-                        (String) ((Map<?, ?>) obj).get("content")
-                    ))
-                    .collect(toList()),
-                null
+                    new PromptInfo(promptTemplateId, promptTemplateVersionId, templateName, "prod",
+                            openAILLMParameters, "openai", MODEL_GPT_35_TURBO, "openai_chat", projectId),
+                    getChatPromptContentObjects().stream()
+                            .map(obj -> new ChatMessage(
+                                    (String) ((Map<?, ?>) obj).get("role"),
+                                    (String) ((Map<?, ?>) obj).get("content")
+                            ))
+                            .collect(toList()),
+                    null
             );
 
             FormattedPrompt<List<ChatMessage>> formatted = templatePrompt
-                .bind(variables)
-                .format("openai_chat");
+                    .bind(variables)
+                    .format("openai_chat");
 
             // Tool schema should be null when not provided
             assertNull(formatted.getToolSchema());
 
             // Create template prompt with empty tool schema list
             TemplatePrompt templatePromptEmpty = new TemplatePrompt(
-                new PromptInfo(promptTemplateId, promptTemplateVersionId, templateName, "prod", 
-                    openAILLMParameters, "openai", MODEL_GPT_35_TURBO, "openai_chat", projectId),
-                getChatPromptContentObjects().stream()
-                    .map(obj -> new ChatMessage(
-                        (String) ((Map<?, ?>) obj).get("role"), 
-                        (String) ((Map<?, ?>) obj).get("content")
-                    ))
-                    .collect(toList()),
-                List.of()
+                    new PromptInfo(promptTemplateId, promptTemplateVersionId, templateName, "prod",
+                            openAILLMParameters, "openai", MODEL_GPT_35_TURBO, "openai_chat", projectId),
+                    getChatPromptContentObjects().stream()
+                            .map(obj -> new ChatMessage(
+                                    (String) ((Map<?, ?>) obj).get("role"),
+                                    (String) ((Map<?, ?>) obj).get("content")
+                            ))
+                            .collect(toList()),
+                    List.of()
             );
 
             FormattedPrompt<List<ChatMessage>> formattedEmpty = templatePromptEmpty
-                .bind(variables)
-                .format("openai_chat");
+                    .bind(variables)
+                    .format("openai_chat");
 
             // Tool schema should be empty map when empty list provided
-            Map<String, Object> expectedEmptySchema = Map.of("functions", List.of());
+            Map<String, Object> expectedEmptySchema = Map.of("tools", List.of());
             assertEquals(expectedEmptySchema, formattedEmpty.getToolSchema());
         });
     }

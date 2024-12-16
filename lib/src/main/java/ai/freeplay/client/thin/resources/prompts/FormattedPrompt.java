@@ -35,11 +35,16 @@ public class FormattedPrompt<LLMContentFormat> {
     }
 
     public Optional<String> getSystemContent() {
-        return boundMessages
-                .stream()
-                .filter(msg -> msg.getRole().equals("system"))
-                .findFirst()
-                .map(ChatMessage::getContent);
+        try {
+            return boundMessages
+                    .stream()
+                    .filter(msg -> msg.getRole().equals("system"))
+                    .findFirst()
+                    .map(ChatMessage::getContent);
+        } catch (IllegalStateException e) {
+            // System message must be a string
+            throw new IllegalStateException("System message must be a string");
+        }
     }
 
     public Map<String, Object> getToolSchema() {
@@ -49,6 +54,12 @@ public class FormattedPrompt<LLMContentFormat> {
     public List<ChatMessage> allMessages(ChatMessage message) {
         List<ChatMessage> newList = new ArrayList<>(boundMessages);
         newList.add(message);
+        return newList;
+    }
+
+    public List<ChatMessage> allMessages(Object completionMessage) {
+        List<ChatMessage> newList = new ArrayList<>(boundMessages);
+        newList.add(new ChatMessage(completionMessage));
         return newList;
     }
 }

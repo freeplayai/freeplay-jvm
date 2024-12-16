@@ -20,27 +20,29 @@ import java.util.concurrent.ExecutionException;
 
 import static ai.freeplay.client.thin.Freeplay.Config;
 import static ai.freeplay.example.java.ThinExampleUtils.callAnthropic;
+import static java.lang.String.format;
 
-public class ThinExample {
+public class ThinAnthropicExample {
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     public static void main(String[] args) throws ExecutionException, InterruptedException {
         String freeplayApiKey = System.getenv("FREEPLAY_API_KEY");
         String projectId = System.getenv("FREEPLAY_PROJECT_ID");
-        String customerDomain = System.getenv("FREEPLAY_CUSTOMER_NAME");
+        String apiRoot = System.getenv("FREEPLAY_API_URL");
+        String baseUrl = format("%s/api", apiRoot);
         String anthropicApiKey = System.getenv("ANTHROPIC_API_KEY");
 
         Freeplay fpClient = new Freeplay(Config()
                 .freeplayAPIKey(freeplayApiKey)
-                .customerDomain(customerDomain)
+                .baseUrl(baseUrl)
         );
 
-        Map<String, Object> variables = Map.of("question", "Why isn't my window working?");
+        Map<String, Object> variables = Map.of("location", "New York");
 
         fpClient.prompts()
                 .<List<ChatMessage>>getFormatted(
                         projectId,
-                        "my-prompt-anthropic",
+                        "my-anthropic-prompt",
                         "latest",
                         variables,
                         null
@@ -52,7 +54,8 @@ public class ThinExample {
                                     formattedPrompt.getPromptInfo().getModel(),
                                     formattedPrompt.getPromptInfo().getModelParameters(),
                                     formattedPrompt.getFormattedPrompt(),
-                                    formattedPrompt.getSystemContent().orElse(null)
+                                    formattedPrompt.getSystemContent().orElse(null),
+                                    formattedPrompt.getToolSchema()
                             ).thenApply((HttpResponse<String> response) ->
                                     new Tuple3<>(formattedPrompt, response, startTime)
                             );
@@ -69,8 +72,10 @@ public class ThinExample {
                                 throw new RuntimeException("Unable to parse response body.", e);
                             }
 
+                            List<Object> content = objectMapper.convertValue(bodyNode.get("content"), List.class);
+
                             List<ChatMessage> allMessages = formattedPrompt.allMessages(
-                                    new ChatMessage("assistant", bodyNode.path("content").get(0).path("text").asText())
+                                    new ChatMessage("assistant", content)
                             );
 
                             CallInfo callInfo = CallInfo.from(
