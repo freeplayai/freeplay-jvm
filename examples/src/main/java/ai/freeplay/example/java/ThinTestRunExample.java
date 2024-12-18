@@ -1,5 +1,6 @@
 package ai.freeplay.example.java;
 
+import ai.freeplay.client.internal.JSONUtil;
 import ai.freeplay.client.thin.Freeplay;
 import ai.freeplay.client.thin.resources.prompts.ChatMessage;
 import ai.freeplay.client.thin.resources.prompts.FormattedPrompt;
@@ -8,15 +9,19 @@ import ai.freeplay.client.thin.resources.recordings.CallInfo;
 import ai.freeplay.client.thin.resources.recordings.RecordInfo;
 import ai.freeplay.client.thin.resources.recordings.RecordResponse;
 import ai.freeplay.client.thin.resources.recordings.ResponseInfo;
+import ai.freeplay.client.thin.resources.sessions.Session;
 import ai.freeplay.client.thin.resources.sessions.SessionInfo;
 import ai.freeplay.client.thin.resources.testruns.TestCase;
 import ai.freeplay.client.thin.resources.testruns.TestRun;
+import ai.freeplay.client.thin.resources.testruns.TestRunRequest;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.net.http.HttpResponse;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -24,6 +29,7 @@ import java.util.concurrent.ExecutionException;
 import static ai.freeplay.client.thin.Freeplay.Config;
 import static ai.freeplay.example.java.ThinExampleUtils.callAnthropic;
 import static java.util.stream.Collectors.toList;
+import static java.lang.String.format;
 
 public class ThinTestRunExample {
     private static final ObjectMapper objectMapper = new ObjectMapper();
@@ -31,23 +37,25 @@ public class ThinTestRunExample {
     public static void main(String[] args) throws ExecutionException, InterruptedException {
         String freeplayApiKey = System.getenv("FREEPLAY_API_KEY");
         String projectId = System.getenv("FREEPLAY_PROJECT_ID");
-        String customerDomain = System.getenv("FREEPLAY_CUSTOMER_NAME");
+        String apiRoot = System.getenv("FREEPLAY_API_URL");
+        String baseUrl = format("%s/api", apiRoot);
 
-        //noinspection unused
-        String openAIApiKey = System.getenv("OPENAI_API_KEY");
-        //noinspection unused
         String anthropicApiKey = System.getenv("ANTHROPIC_API_KEY");
 
         Freeplay fpClient = new Freeplay(Config()
                 .freeplayAPIKey(freeplayApiKey)
-                .customerDomain(customerDomain)
+                .baseUrl(baseUrl)
         );
         String testRunName = "Test run: " + UUID.randomUUID();
-        List<RecordResponse> recordResponses = fpClient.testRuns().create(projectId, "20-q", false, testRunName, "Run from JVM examples")
-                .thenCompose(testRun ->
-                        fpClient.prompts().get(projectId, "my-prompt-anthropic", "prod")
-                                .thenCompose(templatePrompt -> {
 
+        TestRunRequest testRunRequest = fpClient.testRuns().createRequest(projectId, "core-tests")
+                .name(testRunName)
+                .description("Run from JVM examples")
+                .build();
+
+        List<RecordResponse> recordResponses = fpClient.testRuns().create(testRunRequest).thenCompose(testRun ->
+                        fpClient.prompts().get(projectId, "my-anthropic-prompt", "latest")
+                                .thenCompose(templatePrompt -> {
                                     var futures =
                                             testRun.getTestCases().stream()
                                                     .map(testCase ->
@@ -79,24 +87,73 @@ public class ThinTestRunExample {
             TestCase testCase
     ) {
         FormattedPrompt<List<ChatMessage>> formattedPrompt =
-                templatePrompt.bind(testCase.getVariables()).format();
+                templatePrompt.bind(testCase.getVariables(), testCase.getHistory()).format();
 
         long startTime = System.currentTimeMillis();
+        Session session = fpClient.sessions().create();
         return callAnthropic(
                 objectMapper,
                 anthropicApiKey,
                 formattedPrompt.getPromptInfo().getModel(),
                 formattedPrompt.getPromptInfo().getModelParameters(),
                 formattedPrompt.getFormattedPrompt(),
-                formattedPrompt.getSystemContent().orElse(null)
+                formattedPrompt.getSystemContent().orElse(null),
+                formattedPrompt.getToolSchema()
         ).thenCompose((HttpResponse<String> response) ->
-                recordAnthropic(fpClient, testRun, testCase, formattedPrompt, startTime, response)
+                recordAnthropic(fpClient, testRun, session, testCase, formattedPrompt, startTime, response)
+                .thenCompose(recordResponse -> {
+                    JsonNode firstBodyNode;
+                    try {
+                        firstBodyNode = objectMapper.readTree(response.body());
+                    } catch (JsonProcessingException e) {
+                        throw new RuntimeException("Unable to parse first response body.", e);
+                    }
+
+                    List<ChatMessage> messages = formattedPrompt.getFormattedPrompt();
+                    // Add tool response message if there was a tool call
+                    if (firstBodyNode.has("tool_calls") && firstBodyNode.get("tool_calls").size() > 0) {
+                        JsonNode toolCall = firstBodyNode.get("tool_calls").get(0);
+                        // Convert to Map<String, Object>
+                        Map<String, Object> toolCallMap = objectMapper.convertValue(toolCall, Map.class);
+                        messages.add(new ChatMessage(toolCallMap));
+                    }
+
+                    // Create new prompt with updated messages
+                    FormattedPrompt<List<ChatMessage>> newPrompt = 
+                            templatePrompt.bind(testCase.getVariables(), messages).format();
+                    
+                    return callAnthropic(
+                            objectMapper,
+                            anthropicApiKey,
+                            newPrompt.getPromptInfo().getModel(),
+                            newPrompt.getPromptInfo().getModelParameters(),
+                            newPrompt.getFormattedPrompt(),
+                            newPrompt.getSystemContent().orElse(null),
+                            newPrompt.getToolSchema()
+                    ).thenCompose(secondResponse -> {
+                        JsonNode secondBodyNode;
+                        try {
+                            secondBodyNode = objectMapper.readTree(secondResponse.body());
+                        } catch (JsonProcessingException e) {
+                            throw new RuntimeException("Unable to parse second response body.", e);
+                        }
+                        
+                        System.out.println("Second Completion: " + secondBodyNode.path("completion").asText());
+                        
+                        formattedPrompt.allMessages(
+                            new ChatMessage("assistant", secondBodyNode.path("completion").asText())
+                        );
+
+                        return recordAnthropic(fpClient, testRun, session, testCase, formattedPrompt, startTime, secondResponse);
+                    });
+                })
         );
     }
 
     private static CompletableFuture<RecordResponse> recordAnthropic(
             Freeplay fpClient,
             TestRun testRun,
+            Session session,
             TestCase testCase,
             FormattedPrompt<List<ChatMessage>> formattedPrompt,
             long startTime,
@@ -109,9 +166,11 @@ public class ThinTestRunExample {
             throw new RuntimeException("Unable to parse response body.", e);
         }
 
+        List<Object> content = objectMapper.convertValue(bodyNode.get("content"), List.class);
         List<ChatMessage> allMessages = formattedPrompt.allMessages(
-                new ChatMessage("Assistant", bodyNode.path("completion").asText())
+                new ChatMessage("assistant", content)
         );
+
         CallInfo callInfo = CallInfo.from(
                 formattedPrompt.getPromptInfo(),
                 startTime,
@@ -120,7 +179,7 @@ public class ThinTestRunExample {
         ResponseInfo responseInfo = new ResponseInfo(
                 "stop_sequence".equals(bodyNode.path("stop_reason").asText())
         );
-        SessionInfo sessionInfo = fpClient.sessions().create().getSessionInfo();
+        SessionInfo sessionInfo = session.getSessionInfo();
 
         System.out.println("Completion: " + bodyNode.path("completion").asText());
 
@@ -132,6 +191,7 @@ public class ThinTestRunExample {
                         formattedPrompt.getPromptInfo(),
                         callInfo,
                         responseInfo
-                ).testRunInfo(testRun.getTestRunInfo(testCase.getTestCaseId())));
+                ).toolSchema(formattedPrompt.getToolSchema())
+                        .testRunInfo(testRun.getTestRunInfo(testCase.getTestCaseId())));
     }
 }

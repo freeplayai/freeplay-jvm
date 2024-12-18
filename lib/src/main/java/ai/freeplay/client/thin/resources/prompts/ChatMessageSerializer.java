@@ -32,7 +32,7 @@ public class ChatMessageSerializer extends JsonSerializer<ChatMessage> {
             gen.writeStartObject();
             gen.writeStringField("role", message.getRole());
             
-            if (message.isStringMessage()) {
+            if (message.isEmptyMessage() || message.isStringMessage()) {
                 gen.writeStringField("content", message.getContent());
             } else {
                 gen.writeObjectField("content", message.getStructuredContent());

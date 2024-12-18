@@ -35,9 +35,6 @@ public class BoundPrompt {
     }
 
     public <ContentFormat> FormattedPrompt<ContentFormat> format(String flavorName) {
-        if (getMessages().stream().anyMatch(message -> message.isStructuredMessage() || message.isCompletionMessage())) {
-            throw new FreeplayClientException("Structured or Completion message is not allowed when formatting a prompt");
-        }
 
         String finalFlavor = ThinCallSupport.getActiveFlavorName(flavorName, promptInfo.getFlavorName());
         LLMAdapters.LLMAdapter<?> llmAdapter = LLMAdapters.adapterForFlavor(finalFlavor);

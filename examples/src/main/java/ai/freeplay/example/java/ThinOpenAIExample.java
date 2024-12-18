@@ -19,7 +19,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 import static ai.freeplay.client.thin.Freeplay.Config;
-import static ai.freeplay.example.java.ThinExampleUtils.callOpenAI;
+import static ai.freeplay.example.java.ThinExampleUtils.callOpenAIWithTools;
 import static java.lang.String.format;
 
 public class ThinOpenAIExample {
@@ -48,7 +48,7 @@ public class ThinOpenAIExample {
                         null
                 ).thenCompose((FormattedPrompt<List<ChatMessage>> formattedPrompt) -> {
                             long startTime = System.currentTimeMillis();
-                            return callOpenAI(
+                            return callOpenAIWithTools(
                                     objectMapper,
                                     openaiApiKey,
                                     formattedPrompt.getPromptInfo().getModel(),
@@ -100,7 +100,7 @@ public class ThinOpenAIExample {
                                             formattedPrompt.getPromptInfo(),
                                             callInfo,
                                             responseInfo
-                                    ));
+                                    ).toolSchema(formattedPrompt.getToolSchema()));
                         }
                 )
                 .exceptionally(exception -> {

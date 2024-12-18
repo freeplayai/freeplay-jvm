@@ -21,6 +21,8 @@ public class RecordInfo {
 
     private TraceInfo traceInfo;
 
+    private List<Map<String, Object>> toolSchema;
+
     public RecordInfo(
             List<ChatMessage> allMessages,
             Map<String, Object> inputs,
@@ -48,6 +50,11 @@ public class RecordInfo {
     }
     public RecordInfo traceInfo(TraceInfo traceInfo){
         this.traceInfo = traceInfo;
+        return this;
+    }
+
+    public RecordInfo toolSchema(List<Map<String, Object>> toolSchema) {
+        this.toolSchema = toolSchema;
         return this;
     }
 
@@ -85,6 +92,10 @@ public class RecordInfo {
 
     public TraceInfo getTraceInfo() {return traceInfo;}
 
+    public List<Map<String, Object>> getToolSchema() {
+        return toolSchema;
+    }
+
     @Override
     public String toString() {
         return "RecordInfo{" +
@@ -97,6 +108,7 @@ public class RecordInfo {
                 ", testRunInfo=" + testRunInfo +
                 ", evalResults=" + evalResults +
                 ", traceInfo=" + traceInfo +
+                ", toolSchema=" + toolSchema +
                 '}';
     }
 }

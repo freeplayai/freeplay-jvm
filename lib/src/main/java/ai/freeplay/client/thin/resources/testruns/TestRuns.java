@@ -11,16 +11,52 @@ public class TestRuns {
         this.callSupport = callSupport;
     }
 
+    /**
+     * Creates a new TestRunRequest.Builder to help construct a test run request.
+     */
+    public TestRunRequest.Builder createRequest(String projectId, String testList) {
+        return new TestRunRequest.Builder(projectId, testList);
+    }
+
+    /**
+     * @deprecated Use {@link #createRequest(String, String)} instead to construct a request
+     */
+    @Deprecated
     public CompletableFuture<TestRun> create(String projectId, String testList) {
-        return this.create(projectId, testList, false, null, null);
+        return create(new TestRunRequest.Builder(projectId, testList).build());
     }
 
+    /**
+     * @deprecated Use {@link #createRequest(String, String)} instead to construct a request
+     */
+    @Deprecated
     public CompletableFuture<TestRun> create(String projectId, String testList, boolean includeOutputs) {
-        return this.create(projectId, testList, includeOutputs, null, null);
+        return create(new TestRunRequest.Builder(projectId, testList)
+                .includeOutputs(includeOutputs)
+                .build());
     }
 
+    /**
+     * @deprecated Use {@link #createRequest(String, String)} instead to construct a request
+     */
+    @Deprecated
     public CompletableFuture<TestRun> create(String projectId, String testList, boolean includeOutputs, String name, String description) {
-        return callSupport.createTestRun(projectId, testList, includeOutputs, name, description);
+        return create(new TestRunRequest.Builder(projectId, testList)
+                .includeOutputs(includeOutputs)
+                .name(name)
+                .description(description)
+                .build());
+    }
+
+    public CompletableFuture<TestRun> create(TestRunRequest request) {
+        return callSupport.createTestRun(
+            request.getProjectId(),
+            request.getTestList(),
+            request.includeOutputs(),
+            request.getName(),
+            request.getDescription(),
+            request.getFlavorName()
+        );
     }
 
     public CompletableFuture<TestRunResults> get(String projectId, String testRunId) {

@@ -14,6 +14,7 @@ import ai.freeplay.client.thin.resources.recordings.*;
 import ai.freeplay.client.thin.resources.sessions.Session;
 import ai.freeplay.client.thin.resources.sessions.TraceInfo;
 import ai.freeplay.client.thin.resources.testruns.TestRun;
+import ai.freeplay.client.thin.resources.testruns.TestRunRequest;
 import ai.freeplay.client.thin.resources.testruns.TestRunResults;
 import com.google.cloud.vertexai.api.Content;
 import com.google.cloud.vertexai.generativeai.ContentMaker;
@@ -336,6 +337,7 @@ public class ThinClientTest extends HttpClientTestBase {
                             responseInfo.getPromptTokens(), responseInfo.getResponseTokens()),
                     null,
                     Map.of("bool_value", true, "float_value", 0.23),
+                    null,
                     null
             );
             RecordDTO apiPayload = JSONUtil.parse(requestBody, RecordDTO.class);
@@ -399,6 +401,7 @@ public class ThinClientTest extends HttpClientTestBase {
                             fixtures.getResponseInfo().getPromptTokens(), fixtures.getResponseInfo().getResponseTokens()),
                     null,
                     null,
+                    null,
                     null
             );
             RecordDTO actualPayload = JSONUtil.parse(
@@ -453,6 +456,7 @@ public class ThinClientTest extends HttpClientTestBase {
                     new RecordDTO.ResponseInfoDTO(fixtures.getResponseInfo().isComplete(), null,
                             fixtures.getResponseInfo().getPromptTokens(), fixtures.getResponseInfo().getResponseTokens()),
                     new RecordDTO.TestRunInfoDTO(testRunId, testCaseId),
+                    null,
                     null,
                     null
             );
@@ -580,7 +584,8 @@ public class ThinClientTest extends HttpClientTestBase {
                             responseInfo.getPromptTokens(), responseInfo.getResponseTokens()),
                     null,
                     Map.of("bool_value", true, "float_value", 0.23),
-                    new RecordDTO.TraceInfoDTO(traceInfo.getTraceId())
+                    new RecordDTO.TraceInfoDTO(traceInfo.getTraceId()),
+                    null
             );
             RecordDTO apiPayload = JSONUtil.parse(requestBody, RecordDTO.class);
             assertEquals(expectedPayload, apiPayload);
@@ -642,6 +647,7 @@ public class ThinClientTest extends HttpClientTestBase {
                             responseInfo.getPromptTokens(), responseInfo.getResponseTokens()),
                     null,
                     null,
+                    null,
                     null
             );
             RecordDTO actualPayload = JSONUtil.parse(
@@ -658,7 +664,7 @@ public class ThinClientTest extends HttpClientTestBase {
             Freeplay fpClient = new Freeplay(Config().freeplayAPIKey(freeplayApiKey).baseUrl(baseUrl));
 
             List<Object> toolCall = List.of(Map.of(
-                    "type", "tool_use",
+                    "type", "tool_use", 
                     "id", "toolu_01A09q90qw90lq917835lq9",
                     "name", "get_weather",
                     "input", Map.of(
@@ -685,12 +691,20 @@ public class ThinClientTest extends HttpClientTestBase {
                             fixtures.getPromptInfo(),
                             fixtures.getCallInfo(),
                             fixtures.getResponseInfo()
-                    ));
+                    ).toolSchema(fixtures.getToolSchema()));
 
             // Assertions
             assertNotNull(recordFuture.get().getCompletionId());
-            String body = getCapturedAsyncBody(mockedClient, 1, 0);
-            assertTrue(body.contains("\"content\":" + JSONUtil.toString(toolCall)));
+            Map<String, Object> request = JSONUtil.parseMap(getCapturedAsyncBody(mockedClient, 1, 0));
+            
+            // Assert that the last message in the request is the tool call message
+            List<Map<String, Object>> requestMessages = (List<Map<String, Object>>) request.get("messages");
+            Map<String, Object> lastMessage = requestMessages.get(requestMessages.size() - 1);
+            assertEquals("assistant", lastMessage.get("role"));
+            assertEquals(toolCall, lastMessage.get("content"));
+
+            // Assert that the tool schema is included in the request
+            assertEquals(fixtures.getToolSchema(), request.get("tool_schema"));
         });
     }
 
@@ -731,11 +745,12 @@ public class ThinClientTest extends HttpClientTestBase {
                             fixtures.getPromptInfo(),
                             fixtures.getCallInfo(),
                             fixtures.getResponseInfo()
-                    ));
+                    ).toolSchema(fixtures.getToolSchema()));
 
             assertNotNull(recordFuture.get().getCompletionId());
-            Map<String, Object> bodyJson = JSONUtil.parseMap(getCapturedAsyncBody(mockedClient, 1, 0));
-            assertTrue(((List<Map<String, Object>>) bodyJson.get("messages")).contains(toolCallCompletion));
+            Map<String, Object> request = JSONUtil.parseMap(getCapturedAsyncBody(mockedClient, 1, 0));
+            assertTrue(((List<Map<String, Object>>) request.get("messages")).contains(toolCallCompletion));
+            assertTrue(request.get("tool_schema").equals(fixtures.getToolSchema()));
         });
     }
 
@@ -996,12 +1011,10 @@ public class ThinClientTest extends HttpClientTestBase {
                     .bind(variables)
                     .format("openai_chat");
 
-            Map<String, Object> expectedToolSchema = Map.of(
-                    "tools", List.of(Map.of(
-                            "function", toolSchema.get(0),
-                            "type", "function"
-                    ))
-            );
+            List<Map<String, Object>> expectedToolSchema = List.of(Map.of(
+                    "function", toolSchema.get(0),
+                    "type", "function"
+            ));
 
             assertEquals(expectedToolSchema, formatted.getToolSchema());
         });
@@ -1037,13 +1050,11 @@ public class ThinClientTest extends HttpClientTestBase {
                     .bind(variables)
                     .format("anthropic_chat");
 
-            Map<String, Object> expectedToolSchema = Map.of(
-                    "tools", List.of(Map.of(
-                            "name", "get_weather",
-                            "description", "Get the weather for a location",
-                            "input_schema", toolSchema.get(0).getParameters()
-                    ))
-            );
+            List<Map<String, Object>> expectedToolSchema = List.of(Map.of(
+                    "name", "get_weather",
+                    "description", "Get the weather for a location",
+                    "input_schema", toolSchema.get(0).getParameters()
+            ));
 
             assertEquals(expectedToolSchema, formatted.getToolSchema());
         });
@@ -1089,9 +1100,39 @@ public class ThinClientTest extends HttpClientTestBase {
                     .bind(variables)
                     .format("openai_chat");
 
-            // Tool schema should be empty map when empty list provided
-            Map<String, Object> expectedEmptySchema = Map.of("tools", List.of());
+            // Tool schema should be empty list when empty list provided
+            List<Map<String, Object>> expectedEmptySchema = List.of();
             assertEquals(expectedEmptySchema, formattedEmpty.getToolSchema());
+        });
+    }
+
+    @Test
+    public void testTestRunCreatedWithFlavorName() {
+        withMockedClient((HttpClient mockedClient) -> {
+            mockCreateTestRunAsync(mockedClient);
+
+            String testListName = "core-tests";
+            String flavorName = "anthropic_chat";
+            Freeplay fpClient = new Freeplay(Config().freeplayAPIKey(freeplayApiKey).baseUrl(baseUrl));
+            
+            TestRunRequest testRunRequest = fpClient.testRuns()
+                .createRequest(projectId, testListName)
+                .flavorName(flavorName)
+                .includeOutputs(true)
+                .build();
+
+            TestRun testRun = fpClient.testRuns().create(testRunRequest).get();
+                
+            assertEquals(2, testRun.getTestCases().size());
+            assertNotNull(testRun.getTestCases().get(0).getTestCaseId());
+            assertEquals("Why isn't my sink working?", testRun.getTestCases().get(0).getVariables().get("question"));
+            assertEquals("It took PTO today", testRun.getTestCases().get(0).getOutput());
+            assertNotNull(testRun.getTestCases().get(1).getTestCaseId());
+            assertEquals("Why isn't my internet working?", testRun.getTestCases().get(1).getVariables().get("question"));
+            assertEquals("It's playing golf with the sink", testRun.getTestCases().get(1).getOutput());
+
+            String requestBody = getCapturedAsyncBody(mockedClient, 1, 0);
+            assertTrue(requestBody.contains("\"flavor_name\":\"" + flavorName + "\""));
         });
     }
 
@@ -1104,7 +1145,7 @@ public class ThinClientTest extends HttpClientTestBase {
         private final ResponseInfo responseInfo = new ResponseInfo(true);
         private final Map<String, Object> modelParameters;
         private final Map<String, Object> providerInfo;
-
+        private final List<Map<String, Object>> toolSchema;
         public StubbedRecordFixtures(
                 String provider,
                 String model,
@@ -1141,6 +1182,20 @@ public class ThinClientTest extends HttpClientTestBase {
                             new ChatMessage("assistant", "How may I help you?"),
                             new ChatMessage("user", "{{question}}")
                     )).bind(variables);
+            toolSchema = List.of(
+                Map.of(
+                    "name", "get_weather",
+                    "description", "Get the weather for a location",
+                    "input_schema", Map.of(
+                        "type", "object",
+                        "properties", Map.of(
+                            "location", Map.of("type", "string"),
+                            "unit", Map.of("type", "string", "enum", List.of("celsius", "fahrenheit"))
+                        ),
+                        "required", List.of("location")
+                    )
+                )
+            );
         }
 
         @SuppressWarnings("unused")
@@ -1172,6 +1227,10 @@ public class ThinClientTest extends HttpClientTestBase {
 
         public BoundPrompt getBoundPrompt() {
             return boundPrompt;
+        }
+
+        public List<Map<String, Object>> getToolSchema() {
+            return toolSchema;
         }
 
         public List<ChatMessage> getAllMessages() {

@@ -22,6 +22,7 @@ public class RecordDTO {
     private TestRunInfoDTO testRunInfo;
     private Map<String, Object> evalResults;
     private TraceInfoDTO traceInfo;
+    private List<Map<String, Object>> toolSchema;
 
     public RecordDTO() {
     }
@@ -35,7 +36,8 @@ public class RecordDTO {
             ResponseInfoDTO responseInfo,
             TestRunInfoDTO testRunInfo,
             Map<String, Object> evalResults,
-            TraceInfoDTO traceInfo
+            TraceInfoDTO traceInfo,
+            List<Map<String, Object>> toolSchema
     ) {
         this.messages = messages;
         this.inputs = inputs;
@@ -46,6 +48,7 @@ public class RecordDTO {
         this.testRunInfo = testRunInfo;
         this.evalResults = evalResults;
         this.traceInfo = traceInfo;
+        this.toolSchema = toolSchema;
     }
 
     public List<ChatMessage> getMessages() {
@@ -75,7 +78,10 @@ public class RecordDTO {
     public TestRunInfoDTO getTestRunInfo() {
         return testRunInfo;
     }
+
     public TraceInfoDTO getTraceInfo(){return traceInfo;}
+
+    public List<Map<String, Object>> getToolSchema(){return toolSchema;}
 
     @Override
     public String toString() {
@@ -88,6 +94,7 @@ public class RecordDTO {
                 ", responseInfo=" + responseInfo +
                 ", testRunInfo=" + testRunInfo +
                 ", evalResults=" + evalResults +
+                ", toolSchema=" + toolSchema +
                 '}';
     }
 
@@ -96,12 +103,12 @@ public class RecordDTO {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         RecordDTO recordDTO = (RecordDTO) o;
-        return Objects.equals(messages, recordDTO.messages) && Objects.equals(inputs, recordDTO.inputs) && Objects.equals(sessionInfo, recordDTO.sessionInfo) && Objects.equals(promptInfo, recordDTO.promptInfo) && Objects.equals(callInfo, recordDTO.callInfo) && Objects.equals(responseInfo, recordDTO.responseInfo) && Objects.equals(testRunInfo, recordDTO.testRunInfo) && Objects.equals(evalResults, recordDTO.evalResults);
+        return Objects.equals(messages, recordDTO.messages) && Objects.equals(inputs, recordDTO.inputs) && Objects.equals(sessionInfo, recordDTO.sessionInfo) && Objects.equals(promptInfo, recordDTO.promptInfo) && Objects.equals(callInfo, recordDTO.callInfo) && Objects.equals(responseInfo, recordDTO.responseInfo) && Objects.equals(testRunInfo, recordDTO.testRunInfo) && Objects.equals(evalResults, recordDTO.evalResults) && Objects.equals(toolSchema, recordDTO.toolSchema);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(messages, inputs, sessionInfo, promptInfo, callInfo, responseInfo, testRunInfo, evalResults);
+        return Objects.hash(messages, inputs, sessionInfo, promptInfo, callInfo, responseInfo, testRunInfo, evalResults, toolSchema);
     }
 
     public Map<String, Object> getEvalResults() {

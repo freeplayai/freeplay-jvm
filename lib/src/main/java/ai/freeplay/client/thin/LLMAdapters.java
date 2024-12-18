@@ -17,7 +17,7 @@ public class LLMAdapters {
         String getProvider();
         LLMFormat toLLMSyntax(List<ChatMessage> messages);
         
-        default Map<String, Object> toToolSchemaFormat(List<ToolSchema> toolSchema) {
+        default List<Map<String, Object>> toToolSchemaFormat(List<ToolSchema> toolSchema) {
             throw new UnsupportedOperationException("Tool schema format not supported for this model and provider.");
         }
     }
@@ -54,12 +54,12 @@ public class LLMAdapters {
         }
 
         @Override
-        public Map<String, Object> toToolSchemaFormat(List<ToolSchema> toolSchema) {
+        public List<Map<String, Object>> toToolSchemaFormat(List<ToolSchema> toolSchema) {
             if (toolSchema == null) {
                 return null;
             }
 
-            return Map.of("tools", toolSchema.stream()
+            return toolSchema.stream()
                     .filter(schema -> schema.getName() != null 
                             && schema.getDescription() != null 
                             && schema.getParameters() != null)
@@ -68,7 +68,7 @@ public class LLMAdapters {
                             "description", schema.getDescription(),
                             "input_schema", schema.getParameters()
                     ))
-                    .collect(toList()));
+                    .collect(toList());
         }
     }
 
@@ -137,17 +137,17 @@ public class LLMAdapters {
         }
 
         @Override
-        public Map<String, Object> toToolSchemaFormat(List<ToolSchema> toolSchema) {
+        public List<Map<String, Object>> toToolSchemaFormat(List<ToolSchema> toolSchema) {
             if (toolSchema == null) {
                 return null;
             }
 
-            return Map.of("tools", toolSchema.stream()
+            return toolSchema.stream()
                     .map(schema -> Map.of(
                             "function", schema,
                             "type", "function"
                     ))
-                    .collect(toList()));
+                    .collect(toList());
         }
     }
 

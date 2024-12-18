@@ -14,15 +14,18 @@ public class TestListDTO {
 
     private String testRunDescription;
 
+    private String flavorName;
+
     @SuppressWarnings("unused")
     public TestListDTO() {
     }
 
-    public TestListDTO(String datasetName, boolean includeOutputs, String testRunName, String testRunDescription) {
+    public TestListDTO(String datasetName, boolean includeOutputs, String testRunName, String testRunDescription, String flavorName) {
         this.datasetName = datasetName;
         this.includeOutputs = includeOutputs;
         this.testRunName = testRunName;
         this.testRunDescription = testRunDescription;
+        this.flavorName = flavorName;
     }
 
     @SuppressWarnings("unused")
@@ -42,6 +45,11 @@ public class TestListDTO {
     @SuppressWarnings("unused")
     public String getTestRunDescription() {
         return testRunDescription;
+    }
+
+    @SuppressWarnings("unused")
+    public String getFlavorName() {
+        return flavorName;
     }
 
 

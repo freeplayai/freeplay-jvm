@@ -2,6 +2,7 @@ package ai.freeplay.client.thin.resources.prompts;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
@@ -10,6 +11,7 @@ import java.util.Objects;
 
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 @JsonSerialize(using = ChatMessageSerializer.class)
+@JsonDeserialize(using = ChatMessageDeserializer.class)
 public class ChatMessage {
     private String role;
     private String content;
@@ -38,11 +40,15 @@ public class ChatMessage {
     }
 
     public String getContent() {
-        if (completionMessage != null) {
-            throw new IllegalStateException("Message is not a string, use getWholeMessage() instead");
+        if (this.isEmptyMessage()) {
+            return null;
         }
 
-        if (structuredContent != null) {
+        if (this.isCompletionMessage()) {
+            throw new IllegalStateException("Message is not a string, use getCompletionMessage() instead");
+        }
+
+        if (this.isStructuredMessage()) {
             throw new IllegalStateException("Message is not a string, use getStructuredContent() instead");
         }
 
@@ -50,23 +56,31 @@ public class ChatMessage {
     }
 
     public List<Object> getStructuredContent() {
-        if (completionMessage != null) {
-            throw new IllegalStateException("Message is not a list, use getWholeMessage() instead");
+        if (this.isEmptyMessage()) {
+            return null;
         }
 
-        if (content != null) {
+        if (this.isStringMessage()) {
             throw new IllegalStateException("Message is not a list, use getContent() instead");
+        }
+
+        if (this.isCompletionMessage()) {
+            throw new IllegalStateException("Message is not a list, use getCompletionMessage() instead");
         }
 
         return structuredContent;
     }
 
     public Object getCompletionMessage() {
-        if (content != null) {
-            throw new IllegalStateException("Message is not a string, use getContent() instead");
+        if (this.isEmptyMessage()) {
+            return null;
         }
 
-        if (structuredContent != null) {
+        if (this.isStringMessage()) {
+            throw new IllegalStateException("Message is not a completion message, use getContent() instead");
+        }
+
+        if (this.isStructuredMessage()) {
             throw new IllegalStateException("Message is not a string, use getStructuredContent() instead");
         }
 
@@ -78,16 +92,20 @@ public class ChatMessage {
         return false;
     }
 
+    protected boolean isEmptyMessage() {
+        return this.content == null && this.structuredContent == null && this.completionMessage == null;
+    }
+
     protected boolean isStringMessage() {
-        return content != null;
+        return this.content != null;
     }
 
     protected boolean isStructuredMessage() {
-        return structuredContent != null;
+        return this.structuredContent != null;
     }
 
     protected boolean isCompletionMessage() {
-        return completionMessage != null;
+        return this.completionMessage != null;
     }
 
     @Override

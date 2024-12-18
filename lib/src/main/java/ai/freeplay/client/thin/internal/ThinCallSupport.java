@@ -109,7 +109,8 @@ public class ThinCallSupport {
                 responseInfo,
                 testRunId != null ? new RecordDTO.TestRunInfoDTO(testRunId, testCaseId) : null,
                 recordPayload.getEvalResults(),
-                recordPayload.getTraceInfo() != null ? new RecordDTO.TraceInfoDTO(recordPayload.getTraceInfo().traceId) : null
+                recordPayload.getTraceInfo() != null ? new RecordDTO.TraceInfoDTO(recordPayload.getTraceInfo().traceId) : null,
+                recordPayload.getToolSchema()
         );
 
         return AsyncHttp.postJson(
@@ -144,20 +145,20 @@ public class ThinCallSupport {
         });
     }
 
-    public CompletableFuture<TestRun> createTestRun(String projectId, String testList, boolean includeOutputs, String name, String description) {
+    public CompletableFuture<TestRun> createTestRun(String projectId, String testList, boolean includeOutputs, String name, String description, String flavorName) {
         String url = String.format("%s/v2/projects/%s/test-runs", baseUrl, projectId);
         return AsyncHttp.postJson(
                 url,
                 freeplayApiKey,
                 httpConfig,
-                new TestListDTO(testList, includeOutputs, name, description)
+                new TestListDTO(testList, includeOutputs, name, description, flavorName)
         ).thenApply(httpResponse -> {
             throwFreeplayIfError(httpResponse, 201);
 
             TestRunDTO testRun =
                     JSONUtil.parse(
-                            httpResponse.body(),
-                            TestRunDTO.class);
+                        httpResponse.body(),
+                        TestRunDTO.class);
 
             return new TestRun(
                     testRun.getTestRunId(),

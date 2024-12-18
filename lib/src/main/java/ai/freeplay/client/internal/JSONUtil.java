@@ -2,6 +2,7 @@ package ai.freeplay.client.internal;
 
 import ai.freeplay.client.exceptions.FreeplayException;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -14,7 +15,8 @@ import java.util.Map;
 
 public class JSONUtil {
     private static final ObjectMapper objectMapper = new ObjectMapper()
-            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+            .enable(JsonParser.Feature.INCLUDE_SOURCE_IN_LOCATION);
 
     public static Map<String, Object> parseMap(String json) {
         try {
