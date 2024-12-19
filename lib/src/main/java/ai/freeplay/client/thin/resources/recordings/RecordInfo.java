@@ -7,6 +7,7 @@ import ai.freeplay.client.thin.resources.sessions.TraceInfo;
 
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 public class RecordInfo {
     private final List<ChatMessage> allMessages;
@@ -20,6 +21,7 @@ public class RecordInfo {
     private Map<String, Object> evalResults;
 
     private TraceInfo traceInfo;
+    private UUID completionId;
 
     private List<Map<String, Object>> toolSchema;
 
@@ -55,6 +57,11 @@ public class RecordInfo {
 
     public RecordInfo toolSchema(List<Map<String, Object>> toolSchema) {
         this.toolSchema = toolSchema;
+        return this;
+    }
+
+    public RecordInfo completionId(UUID id) {
+        this.completionId = id;
         return this;
     }
 
@@ -96,10 +103,16 @@ public class RecordInfo {
         return toolSchema;
     }
 
+    public UUID getCompletionId() {
+        return completionId;
+    }
+
+
     @Override
     public String toString() {
         return "RecordInfo{" +
                 "allMessages=" + allMessages +
+                ", completionId=" + completionId +
                 ", inputs=" + inputs +
                 ", sessionInfo=" + sessionInfo +
                 ", promptInfo=" + promptInfo +

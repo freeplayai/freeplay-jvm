@@ -23,6 +23,7 @@ public class RecordDTO {
     private Map<String, Object> evalResults;
     private TraceInfoDTO traceInfo;
     private List<Map<String, Object>> toolSchema;
+    private UUID completionId;
 
     public RecordDTO() {
     }
@@ -37,7 +38,8 @@ public class RecordDTO {
             TestRunInfoDTO testRunInfo,
             Map<String, Object> evalResults,
             TraceInfoDTO traceInfo,
-            List<Map<String, Object>> toolSchema
+            List<Map<String, Object>> toolSchema,
+            UUID completionId
     ) {
         this.messages = messages;
         this.inputs = inputs;
@@ -49,6 +51,7 @@ public class RecordDTO {
         this.evalResults = evalResults;
         this.traceInfo = traceInfo;
         this.toolSchema = toolSchema;
+        this.completionId = completionId;
     }
 
     public List<ChatMessage> getMessages() {

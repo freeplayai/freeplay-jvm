@@ -110,7 +110,8 @@ public class ThinCallSupport {
                 testRunId != null ? new RecordDTO.TestRunInfoDTO(testRunId, testCaseId) : null,
                 recordPayload.getEvalResults(),
                 recordPayload.getTraceInfo() != null ? new RecordDTO.TraceInfoDTO(recordPayload.getTraceInfo().traceId) : null,
-                recordPayload.getToolSchema()
+                recordPayload.getToolSchema(),
+                recordPayload.getCompletionId()
         );
 
         return AsyncHttp.postJson(

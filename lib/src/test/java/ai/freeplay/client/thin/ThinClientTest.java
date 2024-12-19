@@ -338,6 +338,7 @@ public class ThinClientTest extends HttpClientTestBase {
                     null,
                     Map.of("bool_value", true, "float_value", 0.23),
                     null,
+                    null,
                     null
             );
             RecordDTO apiPayload = JSONUtil.parse(requestBody, RecordDTO.class);
@@ -402,6 +403,7 @@ public class ThinClientTest extends HttpClientTestBase {
                     null,
                     null,
                     null,
+                    null,
                     null
             );
             RecordDTO actualPayload = JSONUtil.parse(
@@ -456,6 +458,7 @@ public class ThinClientTest extends HttpClientTestBase {
                     new RecordDTO.ResponseInfoDTO(fixtures.getResponseInfo().isComplete(), null,
                             fixtures.getResponseInfo().getPromptTokens(), fixtures.getResponseInfo().getResponseTokens()),
                     new RecordDTO.TestRunInfoDTO(testRunId, testCaseId),
+                    null,
                     null,
                     null,
                     null
@@ -554,7 +557,6 @@ public class ThinClientTest extends HttpClientTestBase {
             Session session = fpClient.sessions().create()
                     .customMetadata(customMetadata);
             TraceInfo traceInfo = session.createTrace(input);
-
             RecordInfo recordInfo = new RecordInfo(
                     allMessages,
                     variables,
@@ -562,7 +564,9 @@ public class ThinClientTest extends HttpClientTestBase {
                     prompt.getPromptInfo(),
                     callInfo,
                     responseInfo
-            ).evalResults(evalResults).traceInfo(traceInfo);
+            )
+                    .evalResults(evalResults)
+                    .traceInfo(traceInfo);
             CompletableFuture<RecordResponse> recordFuture = fpClient.recordings().create(recordInfo);
 
             // Assertions
@@ -585,7 +589,7 @@ public class ThinClientTest extends HttpClientTestBase {
                     null,
                     Map.of("bool_value", true, "float_value", 0.23),
                     new RecordDTO.TraceInfoDTO(traceInfo.getTraceId()),
-                    null
+                    null,null
             );
             RecordDTO apiPayload = JSONUtil.parse(requestBody, RecordDTO.class);
             assertEquals(expectedPayload, apiPayload);
@@ -645,6 +649,7 @@ public class ThinClientTest extends HttpClientTestBase {
                             fixtures.getCallInfo().getStartTime(), fixtures.getCallInfo().getEndTime(), fixtures.getCallInfo().getProviderInfo()),
                     new RecordDTO.ResponseInfoDTO(responseInfo.isComplete(), new RecordDTO.OpenAIFunctionCallDTO(responseInfo.getFunctionCall().getName(), responseInfo.getFunctionCall().getArguments()),
                             responseInfo.getPromptTokens(), responseInfo.getResponseTokens()),
+                    null,
                     null,
                     null,
                     null,
