@@ -105,7 +105,16 @@ public class ThinCallSupport {
                         recordPayload.getPromptInfo().getProvider(), recordPayload.getPromptInfo().getModel(),
                         recordPayload.getPromptInfo().getFlavorName(), recordPayload.getPromptInfo().getProjectId()),
                 new RecordDTO.CallInfoDTO(recordPayload.getCallInfo().getProvider(), recordPayload.getCallInfo().getModel(),
-                        recordPayload.getCallInfo().getStartTime(), recordPayload.getCallInfo().getEndTime(), recordPayload.getCallInfo().getProviderInfo()),
+                        recordPayload.getCallInfo().getStartTime(), recordPayload.getCallInfo().getEndTime(), recordPayload.getCallInfo().getModelParameters()
+                ).providerInfo(
+                        recordPayload.getCallInfo().getProviderInfo()
+                ).usage(
+                        recordPayload.getCallInfo().getUsage() != null ?
+                                new RecordDTO.CallInfoDTO.UsageTokensDTO(
+                                        recordPayload.getCallInfo().getUsage().getPromptTokens(),
+                                        recordPayload.getCallInfo().getUsage().getCompletionTokens()
+                                ) : null
+                ),
                 responseInfo,
                 testRunId != null ? new RecordDTO.TestRunInfoDTO(testRunId, testCaseId) : null,
                 recordPayload.getEvalResults(),
@@ -127,8 +136,8 @@ public class ThinCallSupport {
     }
 
     @SuppressWarnings("unused")
-    public CompletableFuture<TraceRecordResponse> recordTrace(String projectId, TraceInfo traceInfo){
-        if (traceInfo.input.isEmpty()){
+    public CompletableFuture<TraceRecordResponse> recordTrace(String projectId, TraceInfo traceInfo) {
+        if (traceInfo.input.isEmpty()) {
             throw new FreeplayClientException("Input needed to record a trace");
         }
         TraceInfoDTO payload = new TraceInfoDTO(
@@ -158,8 +167,8 @@ public class ThinCallSupport {
 
             TestRunDTO testRun =
                     JSONUtil.parse(
-                        httpResponse.body(),
-                        TestRunDTO.class);
+                            httpResponse.body(),
+                            TestRunDTO.class);
 
             return new TestRun(
                     testRun.getTestRunId(),

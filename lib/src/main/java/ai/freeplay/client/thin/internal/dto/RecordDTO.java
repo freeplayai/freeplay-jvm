@@ -82,9 +82,13 @@ public class RecordDTO {
         return testRunInfo;
     }
 
-    public TraceInfoDTO getTraceInfo(){return traceInfo;}
+    public TraceInfoDTO getTraceInfo() {
+        return traceInfo;
+    }
 
-    public List<Map<String, Object>> getToolSchema(){return toolSchema;}
+    public List<Map<String, Object>> getToolSchema() {
+        return toolSchema;
+    }
 
     @Override
     public String toString() {
@@ -134,6 +138,7 @@ public class RecordDTO {
         public String getSessionId() {
             return sessionId;
         }
+
         public Map<String, Object> getCustomMetadata() {
             return customMetadata;
         }
@@ -235,7 +240,10 @@ public class RecordDTO {
         public String getFlavorName() {
             return flavorName;
         }
-        public String getProjectId() { return projectId; }
+
+        public String getProjectId() {
+            return projectId;
+        }
 
 
         @Override
@@ -243,7 +251,7 @@ public class RecordDTO {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             PromptInfoDTO that = (PromptInfoDTO) o;
-            return Objects.equals(promptTemplateId, that.promptTemplateId) && Objects.equals(promptTemplateVersionId, that.promptTemplateVersionId) && Objects.equals(templateName, that.templateName) && Objects.equals(environment, that.environment) && Objects.equals(modelParameters, that.modelParameters)  && Objects.equals(providerInfo, that.providerInfo) && Objects.equals(provider, that.provider) && Objects.equals(model, that.model) && Objects.equals(flavorName, that.flavorName);
+            return Objects.equals(promptTemplateId, that.promptTemplateId) && Objects.equals(promptTemplateVersionId, that.promptTemplateVersionId) && Objects.equals(templateName, that.templateName) && Objects.equals(environment, that.environment) && Objects.equals(modelParameters, that.modelParameters) && Objects.equals(providerInfo, that.providerInfo) && Objects.equals(provider, that.provider) && Objects.equals(model, that.model) && Objects.equals(flavorName, that.flavorName);
         }
 
         @Override
@@ -276,6 +284,8 @@ public class RecordDTO {
         private Map<String, Object> modelParameters;
         private Map<String, Object> providerInfo;
 
+        private UsageTokensDTO usage;
+
         public CallInfoDTO() {
         }
 
@@ -295,6 +305,11 @@ public class RecordDTO {
 
         public CallInfoDTO providerInfo(Map<String, Object> providerInfo) {
             this.providerInfo = providerInfo;
+            return this;
+        }
+
+        public CallInfoDTO usage(UsageTokensDTO usage) {
+            this.usage = usage;
             return this;
         }
 
@@ -322,17 +337,21 @@ public class RecordDTO {
             return providerInfo;
         }
 
+        public UsageTokensDTO getUsage() {
+            return usage;
+        }
+
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             CallInfoDTO that = (CallInfoDTO) o;
-            return Objects.equals(provider, that.provider) && Objects.equals(model, that.model) && Objects.equals(startTime, that.startTime) && Objects.equals(endTime, that.endTime) && Objects.equals(modelParameters, that.modelParameters)  && Objects.equals(providerInfo, that.providerInfo);
+            return Double.compare(startTime, that.startTime) == 0 && Double.compare(endTime, that.endTime) == 0 && Objects.equals(provider, that.provider) && Objects.equals(model, that.model) && Objects.equals(modelParameters, that.modelParameters) && Objects.equals(providerInfo, that.providerInfo) && Objects.equals(usage, that.usage);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(provider, model, startTime, endTime, modelParameters, providerInfo);
+            return Objects.hash(provider, model, startTime, endTime, modelParameters, providerInfo, usage);
         }
 
         @Override
@@ -340,12 +359,55 @@ public class RecordDTO {
             return "CallInfoDTO{" +
                     "provider='" + provider + '\'' +
                     ", model='" + model + '\'' +
-                    ", startTime='" + startTime + '\'' +
-                    ", endTime='" + endTime + '\'' +
+                    ", startTime=" + startTime +
+                    ", endTime=" + endTime +
                     ", modelParameters=" + modelParameters +
                     ", providerInfo=" + providerInfo +
+                    ", usage=" + usage +
                     '}';
         }
+
+        @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
+        public static class UsageTokensDTO {
+            private final Integer completionTokens;
+            private final Integer promptTokens;
+
+            // This empty constructor is for Jackson.
+            protected UsageTokensDTO() {
+                this.promptTokens = null;
+                this.completionTokens = null;
+            }
+
+            public UsageTokensDTO(
+                    Integer promptTokens,
+                    Integer completionTokens
+            ) {
+                this.completionTokens = completionTokens;
+                this.promptTokens = promptTokens;
+            }
+
+            public Integer getCompletionTokens() {
+                return completionTokens;
+            }
+
+            public Integer getPromptTokens() {
+                return promptTokens;
+            }
+
+            @Override
+            public boolean equals(Object o) {
+                if (this == o) return true;
+                if (o == null || getClass() != o.getClass()) return false;
+                UsageTokensDTO that = (UsageTokensDTO) o;
+                return Objects.equals(completionTokens, that.completionTokens) && Objects.equals(promptTokens, that.promptTokens);
+            }
+
+            @Override
+            public int hashCode() {
+                return Objects.hash(completionTokens, promptTokens);
+            }
+        }
+
     }
 
     @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
@@ -490,6 +552,7 @@ public class RecordDTO {
         public String getName() {
             return name;
         }
+
         public String getArguments() {
             return arguments;
         }
@@ -530,11 +593,13 @@ public class RecordDTO {
         public TraceInfoDTO() {
         }
 
-        public TraceInfoDTO(UUID traceId){
+        public TraceInfoDTO(UUID traceId) {
             this.traceId = traceId;
         }
 
-        public UUID getTraceId(){return traceId;}
+        public UUID getTraceId() {
+            return traceId;
+        }
 
         @Override
         public boolean equals(Object o) {

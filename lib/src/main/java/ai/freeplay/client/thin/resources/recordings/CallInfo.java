@@ -16,6 +16,7 @@ public class CallInfo {
     private final double endTime;
     private final Map<String, Object> modelParameters;
     private Map<String, Object> providerInfo;
+    private UsageTokens usage;
 
     public static double instantToDouble(Instant instant) {
         return Double.parseDouble(instant.getEpochSecond() + "." + instant.getNano());
@@ -45,8 +46,14 @@ public class CallInfo {
         this.modelParameters = modelParameters;
     }
 
+
     public CallInfo providerInfo(Map<String, Object> providerInfo) {
         this.providerInfo = providerInfo;
+        return this;
+    }
+
+    public CallInfo usage(UsageTokens usage) {
+        this.usage = usage;
         return this;
     }
 
@@ -73,4 +80,30 @@ public class CallInfo {
     public Map<String, Object> getProviderInfo() {
         return providerInfo;
     }
+
+    public UsageTokens getUsage() {
+        return usage;
+    }
+
+    public static class UsageTokens {
+        private final Integer completionTokens;
+        private final Integer promptTokens;
+
+        public UsageTokens(
+                Integer promptTokens,
+                Integer completionTokens
+        ) {
+            this.completionTokens = completionTokens;
+            this.promptTokens = promptTokens;
+        }
+
+        public Integer getCompletionTokens() {
+            return completionTokens;
+        }
+
+        public Integer getPromptTokens() {
+            return promptTokens;
+        }
+    }
+
 }

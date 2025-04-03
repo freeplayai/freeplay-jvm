@@ -32,10 +32,10 @@ import java.util.concurrent.ExecutionException;
 import static ai.freeplay.client.internal.utilities.MockFixtures.*;
 import static ai.freeplay.client.internal.utilities.MockMethods.getCapturedAsyncBody;
 import static ai.freeplay.client.thin.Freeplay.Config;
+import static java.util.stream.Collectors.toList;
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
-import static java.util.stream.Collectors.toList;
 
 public class ThinClientTest extends HttpClientTestBase {
 
@@ -296,11 +296,12 @@ public class ThinClientTest extends HttpClientTestBase {
             );
             FormattedPrompt<String> prompt = future.get();
 
+            CallInfo.UsageTokens usageTokens = new CallInfo.UsageTokens(123, 456);
             CallInfo callInfo = CallInfo.from(
                     prompt.getPromptInfo(),
                     startTime,
                     endTime
-            );
+            ).usage(usageTokens);
             ResponseInfo responseInfo = new ResponseInfo(true);
             List<ChatMessage> allMessages = prompt.allMessages(new ChatMessage("Assistant", completion));
             Map<String, Object> evalResults = Map.of("bool_value", true, "float_value", 0.23);
@@ -331,8 +332,17 @@ public class ThinClientTest extends HttpClientTestBase {
                             prompt.getPromptInfo().getModelParameters(), prompt.getPromptInfo().getProviderInfo(),
                             prompt.getPromptInfo().getProvider(), prompt.getPromptInfo().getModel(),
                             prompt.getPromptInfo().getFlavorName(), prompt.getPromptInfo().getProjectId()),
-                    new RecordDTO.CallInfoDTO(callInfo.getProvider(), callInfo.getModel(),
-                            callInfo.getStartTime(), callInfo.getEndTime(), callInfo.getProviderInfo()),
+                    new RecordDTO.CallInfoDTO(
+                            callInfo.getProvider(),
+                            callInfo.getModel(),
+                            callInfo.getStartTime(),
+                            callInfo.getEndTime(),
+                            callInfo.getModelParameters()
+                    ).providerInfo(
+                            callInfo.getProviderInfo()
+                    ).usage(
+                            new RecordDTO.CallInfoDTO.UsageTokensDTO(callInfo.getUsage().getPromptTokens(), callInfo.getUsage().getCompletionTokens())
+                    ),
                     new RecordDTO.ResponseInfoDTO(responseInfo.isComplete(), null,
                             responseInfo.getPromptTokens(), responseInfo.getResponseTokens()),
                     null,
@@ -397,7 +407,7 @@ public class ThinClientTest extends HttpClientTestBase {
                             fixtures.getPromptInfo().getProvider(), fixtures.getPromptInfo().getModel(),
                             fixtures.getPromptInfo().getFlavorName(), fixtures.getPromptInfo().getProjectId()),
                     new RecordDTO.CallInfoDTO(fixtures.getCallInfo().getProvider(), fixtures.getCallInfo().getModel(),
-                            fixtures.getCallInfo().getStartTime(), fixtures.getCallInfo().getEndTime(), fixtures.getCallInfo().getProviderInfo()),
+                            fixtures.getCallInfo().getStartTime(), fixtures.getCallInfo().getEndTime(), fixtures.getCallInfo().getModelParameters()).providerInfo(fixtures.getCallInfo().getProviderInfo()),
                     new RecordDTO.ResponseInfoDTO(fixtures.getResponseInfo().isComplete(), null,
                             fixtures.getResponseInfo().getPromptTokens(), fixtures.getResponseInfo().getResponseTokens()),
                     null,
@@ -454,7 +464,8 @@ public class ThinClientTest extends HttpClientTestBase {
                             fixtures.getPromptInfo().getProvider(), fixtures.getPromptInfo().getModel(),
                             fixtures.getPromptInfo().getFlavorName(), fixtures.getPromptInfo().getProjectId()),
                     new RecordDTO.CallInfoDTO(fixtures.getCallInfo().getProvider(), fixtures.getCallInfo().getModel(),
-                            fixtures.getCallInfo().getStartTime(), fixtures.getCallInfo().getEndTime(), fixtures.getCallInfo().getProviderInfo()),
+                            fixtures.getCallInfo().getStartTime(), fixtures.getCallInfo().getEndTime(), fixtures.getCallInfo().getModelParameters()).providerInfo(fixtures
+                            .getCallInfo().getProviderInfo()),
                     new RecordDTO.ResponseInfoDTO(fixtures.getResponseInfo().isComplete(), null,
                             fixtures.getResponseInfo().getPromptTokens(), fixtures.getResponseInfo().getResponseTokens()),
                     new RecordDTO.TestRunInfoDTO(testRunId, testCaseId),
@@ -583,13 +594,14 @@ public class ThinClientTest extends HttpClientTestBase {
                             prompt.getPromptInfo().getProvider(), prompt.getPromptInfo().getModel(),
                             prompt.getPromptInfo().getFlavorName(), prompt.getPromptInfo().getProjectId()),
                     new RecordDTO.CallInfoDTO(callInfo.getProvider(), callInfo.getModel(),
-                            callInfo.getStartTime(), callInfo.getEndTime(), callInfo.getProviderInfo()),
+                            callInfo.getStartTime(), callInfo.getEndTime(), callInfo.getModelParameters()).providerInfo(callInfo
+                            .getProviderInfo()),
                     new RecordDTO.ResponseInfoDTO(responseInfo.isComplete(), null,
                             responseInfo.getPromptTokens(), responseInfo.getResponseTokens()),
                     null,
                     Map.of("bool_value", true, "float_value", 0.23),
                     new RecordDTO.TraceInfoDTO(traceInfo.getTraceId()),
-                    null,null
+                    null, null
             );
             RecordDTO apiPayload = JSONUtil.parse(requestBody, RecordDTO.class);
             assertEquals(expectedPayload, apiPayload);
@@ -646,7 +658,8 @@ public class ThinClientTest extends HttpClientTestBase {
                             fixtures.getPromptInfo().getProvider(), fixtures.getPromptInfo().getModel(),
                             fixtures.getPromptInfo().getFlavorName(), fixtures.getPromptInfo().getProjectId()),
                     new RecordDTO.CallInfoDTO(fixtures.getCallInfo().getProvider(), fixtures.getCallInfo().getModel(),
-                            fixtures.getCallInfo().getStartTime(), fixtures.getCallInfo().getEndTime(), fixtures.getCallInfo().getProviderInfo()),
+                            fixtures.getCallInfo().getStartTime(), fixtures.getCallInfo().getEndTime(), fixtures.getCallInfo().getModelParameters()).providerInfo(fixtures
+                            .getCallInfo().getProviderInfo()),
                     new RecordDTO.ResponseInfoDTO(responseInfo.isComplete(), new RecordDTO.OpenAIFunctionCallDTO(responseInfo.getFunctionCall().getName(), responseInfo.getFunctionCall().getArguments()),
                             responseInfo.getPromptTokens(), responseInfo.getResponseTokens()),
                     null,
@@ -669,7 +682,7 @@ public class ThinClientTest extends HttpClientTestBase {
             Freeplay fpClient = new Freeplay(Config().freeplayAPIKey(freeplayApiKey).baseUrl(baseUrl));
 
             List<Object> toolCall = List.of(Map.of(
-                    "type", "tool_use", 
+                    "type", "tool_use",
                     "id", "toolu_01A09q90qw90lq917835lq9",
                     "name", "get_weather",
                     "input", Map.of(
@@ -701,7 +714,7 @@ public class ThinClientTest extends HttpClientTestBase {
             // Assertions
             assertNotNull(recordFuture.get().getCompletionId());
             Map<String, Object> request = JSONUtil.parseMap(getCapturedAsyncBody(mockedClient, 1, 0));
-            
+
             // Assert that the last message in the request is the tool call message
             List<Map<String, Object>> requestMessages = (List<Map<String, Object>>) request.get("messages");
             Map<String, Object> lastMessage = requestMessages.get(requestMessages.size() - 1);
@@ -1119,15 +1132,15 @@ public class ThinClientTest extends HttpClientTestBase {
             String testListName = "core-tests";
             String flavorName = "anthropic_chat";
             Freeplay fpClient = new Freeplay(Config().freeplayAPIKey(freeplayApiKey).baseUrl(baseUrl));
-            
+
             TestRunRequest testRunRequest = fpClient.testRuns()
-                .createRequest(projectId, testListName)
-                .flavorName(flavorName)
-                .includeOutputs(true)
-                .build();
+                    .createRequest(projectId, testListName)
+                    .flavorName(flavorName)
+                    .includeOutputs(true)
+                    .build();
 
             TestRun testRun = fpClient.testRuns().create(testRunRequest).get();
-                
+
             assertEquals(2, testRun.getTestCases().size());
             assertNotNull(testRun.getTestCases().get(0).getTestCaseId());
             assertEquals("Why isn't my sink working?", testRun.getTestCases().get(0).getVariables().get("question"));
@@ -1151,6 +1164,7 @@ public class ThinClientTest extends HttpClientTestBase {
         private final Map<String, Object> modelParameters;
         private final Map<String, Object> providerInfo;
         private final List<Map<String, Object>> toolSchema;
+
         public StubbedRecordFixtures(
                 String provider,
                 String model,
@@ -1188,18 +1202,18 @@ public class ThinClientTest extends HttpClientTestBase {
                             new ChatMessage("user", "{{question}}")
                     )).bind(variables);
             toolSchema = List.of(
-                Map.of(
-                    "name", "get_weather",
-                    "description", "Get the weather for a location",
-                    "input_schema", Map.of(
-                        "type", "object",
-                        "properties", Map.of(
-                            "location", Map.of("type", "string"),
-                            "unit", Map.of("type", "string", "enum", List.of("celsius", "fahrenheit"))
-                        ),
-                        "required", List.of("location")
+                    Map.of(
+                            "name", "get_weather",
+                            "description", "Get the weather for a location",
+                            "input_schema", Map.of(
+                                    "type", "object",
+                                    "properties", Map.of(
+                                            "location", Map.of("type", "string"),
+                                            "unit", Map.of("type", "string", "enum", List.of("celsius", "fahrenheit"))
+                                    ),
+                                    "required", List.of("location")
+                            )
                     )
-                )
             );
         }
 

@@ -82,7 +82,10 @@ public class ThinAnthropicExample {
                                     formattedPrompt.getPromptInfo(),
                                     startTime,
                                     System.currentTimeMillis()
-                            );
+                            ).usage(new CallInfo.UsageTokens(
+                                    bodyNode.get("usage").get("input_tokens").asInt(),
+                                    bodyNode.get("usage").get("output_tokens").asInt()
+                            ));
                             ResponseInfo responseInfo = new ResponseInfo(
                                     "stop_sequence".equals(bodyNode.path("stop_reason").asText())
                             );
