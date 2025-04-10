@@ -1,6 +1,8 @@
 package ai.freeplay.client.thin.internal.dto;
 
 import ai.freeplay.client.thin.resources.prompts.ChatMessage;
+import ai.freeplay.client.thin.resources.recordings.CallInfo;
+import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 
@@ -283,8 +285,8 @@ public class RecordDTO {
         private double endTime;
         private Map<String, Object> modelParameters;
         private Map<String, Object> providerInfo;
-
         private UsageTokensDTO usage;
+        private ApiStyleDTO apiStyle;
 
         public CallInfoDTO() {
         }
@@ -310,6 +312,14 @@ public class RecordDTO {
 
         public CallInfoDTO usage(UsageTokensDTO usage) {
             this.usage = usage;
+            return this;
+        }
+
+        public CallInfoDTO apiStyle(CallInfo.ApiStyle apiStyle) {
+            if (apiStyle == null) {
+                return this;
+            }
+            this.apiStyle = ApiStyleDTO.valueOf(apiStyle.toString());
             return this;
         }
 
@@ -341,30 +351,23 @@ public class RecordDTO {
             return usage;
         }
 
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            CallInfoDTO that = (CallInfoDTO) o;
-            return Double.compare(startTime, that.startTime) == 0 && Double.compare(endTime, that.endTime) == 0 && Objects.equals(provider, that.provider) && Objects.equals(model, that.model) && Objects.equals(modelParameters, that.modelParameters) && Objects.equals(providerInfo, that.providerInfo) && Objects.equals(usage, that.usage);
+        public ApiStyleDTO getApiStyle() {
+            return apiStyle;
         }
 
-        @Override
-        public int hashCode() {
-            return Objects.hash(provider, model, startTime, endTime, modelParameters, providerInfo, usage);
-        }
+        public enum ApiStyleDTO {
+            BATCH("batch"), DEFAULT("default");
 
-        @Override
-        public String toString() {
-            return "CallInfoDTO{" +
-                    "provider='" + provider + '\'' +
-                    ", model='" + model + '\'' +
-                    ", startTime=" + startTime +
-                    ", endTime=" + endTime +
-                    ", modelParameters=" + modelParameters +
-                    ", providerInfo=" + providerInfo +
-                    ", usage=" + usage +
-                    '}';
+            private final String value;
+
+            ApiStyleDTO(String value) {
+                this.value = value;
+            }
+
+            @JsonValue
+            public String getValue() {
+                return value;
+            }
         }
 
         @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
@@ -408,6 +411,18 @@ public class RecordDTO {
             }
         }
 
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            CallInfoDTO that = (CallInfoDTO) o;
+            return Double.compare(startTime, that.startTime) == 0 && Double.compare(endTime, that.endTime) == 0 && Objects.equals(provider, that.provider) && Objects.equals(model, that.model) && Objects.equals(modelParameters, that.modelParameters) && Objects.equals(providerInfo, that.providerInfo) && Objects.equals(usage, that.usage) && apiStyle == that.apiStyle;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(provider, model, startTime, endTime, modelParameters, providerInfo, usage, apiStyle);
+        }
     }
 
     @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)

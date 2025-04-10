@@ -114,7 +114,7 @@ public class ThinCallSupport {
                                         recordPayload.getCallInfo().getUsage().getPromptTokens(),
                                         recordPayload.getCallInfo().getUsage().getCompletionTokens()
                                 ) : null
-                ),
+                ).apiStyle(recordPayload.getCallInfo().getApiStyle()),
                 responseInfo,
                 testRunId != null ? new RecordDTO.TestRunInfoDTO(testRunId, testCaseId) : null,
                 recordPayload.getEvalResults(),

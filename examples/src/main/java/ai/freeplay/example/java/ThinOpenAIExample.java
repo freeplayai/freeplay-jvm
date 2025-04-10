@@ -4,6 +4,7 @@ import ai.freeplay.client.thin.Freeplay;
 import ai.freeplay.client.thin.resources.prompts.ChatMessage;
 import ai.freeplay.client.thin.resources.prompts.FormattedPrompt;
 import ai.freeplay.client.thin.resources.recordings.CallInfo;
+import ai.freeplay.client.thin.resources.recordings.CallInfo.ApiStyle;
 import ai.freeplay.client.thin.resources.recordings.RecordInfo;
 import ai.freeplay.client.thin.resources.recordings.RecordResponse;
 import ai.freeplay.client.thin.resources.recordings.ResponseInfo;
@@ -42,7 +43,7 @@ public class ThinOpenAIExample {
         fpClient.prompts()
                 .<List<ChatMessage>>getFormatted(
                         projectId,
-                        "my-openai-prompt",
+                        "my-chat-template",
                         "latest",
                         variables,
                         null
@@ -82,7 +83,7 @@ public class ThinOpenAIExample {
                                     formattedPrompt.getPromptInfo(),
                                     startTime,
                                     System.currentTimeMillis()
-                            );
+                            ).apiStyle(ApiStyle.BATCH);
                             ResponseInfo responseInfo = new ResponseInfo(
                                     "stop".equals(bodyNode.path("choices").get(0).path("finish_reason").asText())
                             );

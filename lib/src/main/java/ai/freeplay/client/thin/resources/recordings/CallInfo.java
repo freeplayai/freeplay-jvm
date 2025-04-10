@@ -17,6 +17,8 @@ public class CallInfo {
     private final Map<String, Object> modelParameters;
     private Map<String, Object> providerInfo;
     private UsageTokens usage;
+    private ApiStyle apiStyle;
+
 
     public static double instantToDouble(Instant instant) {
         return Double.parseDouble(instant.getEpochSecond() + "." + instant.getNano());
@@ -57,6 +59,11 @@ public class CallInfo {
         return this;
     }
 
+    public CallInfo apiStyle(ApiStyle apiStyle) {
+        this.apiStyle = apiStyle;
+        return this;
+    }
+
     public String getProvider() {
         return provider;
     }
@@ -84,6 +91,15 @@ public class CallInfo {
     public UsageTokens getUsage() {
         return usage;
     }
+
+    public ApiStyle getApiStyle() {
+        return apiStyle;
+    }
+
+    public enum ApiStyle {
+        BATCH, DEFAULT
+    }
+
 
     public static class UsageTokens {
         private final Integer completionTokens;

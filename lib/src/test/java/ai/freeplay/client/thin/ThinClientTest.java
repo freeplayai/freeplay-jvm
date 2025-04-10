@@ -297,11 +297,12 @@ public class ThinClientTest extends HttpClientTestBase {
             FormattedPrompt<String> prompt = future.get();
 
             CallInfo.UsageTokens usageTokens = new CallInfo.UsageTokens(123, 456);
+            CallInfo.ApiStyle apiStyle = CallInfo.ApiStyle.BATCH;
             CallInfo callInfo = CallInfo.from(
                     prompt.getPromptInfo(),
                     startTime,
                     endTime
-            ).usage(usageTokens);
+            ).usage(usageTokens).apiStyle(apiStyle);
             ResponseInfo responseInfo = new ResponseInfo(true);
             List<ChatMessage> allMessages = prompt.allMessages(new ChatMessage("Assistant", completion));
             Map<String, Object> evalResults = Map.of("bool_value", true, "float_value", 0.23);
@@ -342,7 +343,7 @@ public class ThinClientTest extends HttpClientTestBase {
                             callInfo.getProviderInfo()
                     ).usage(
                             new RecordDTO.CallInfoDTO.UsageTokensDTO(callInfo.getUsage().getPromptTokens(), callInfo.getUsage().getCompletionTokens())
-                    ),
+                    ).apiStyle(CallInfo.ApiStyle.BATCH),
                     new RecordDTO.ResponseInfoDTO(responseInfo.isComplete(), null,
                             responseInfo.getPromptTokens(), responseInfo.getResponseTokens()),
                     null,
