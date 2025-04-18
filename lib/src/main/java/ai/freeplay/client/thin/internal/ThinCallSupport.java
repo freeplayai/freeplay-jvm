@@ -141,8 +141,11 @@ public class ThinCallSupport {
             throw new FreeplayClientException("Input needed to record a trace");
         }
         TraceInfoDTO payload = new TraceInfoDTO(
-                traceInfo.input,
-                traceInfo.output
+                traceInfo.getInput(),
+                traceInfo.getOutput(),
+                traceInfo.getAgentName(),
+                traceInfo.getCustomMetadata(),
+                traceInfo.getEvalResults()
         );
         return AsyncHttp.postJson(
                 format("%s/v2/projects/%s/sessions/%s/traces/id/%s", baseUrl, projectId, traceInfo.sessionId, traceInfo.traceId),

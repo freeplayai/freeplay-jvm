@@ -111,12 +111,13 @@ public class ThinTrace {
                 })
                 .join();
     }
-    public static void main(String[] args) throws ExecutionException, InterruptedException{
+
+    public static void main(String[] args) throws ExecutionException, InterruptedException {
         String input = "What is the meaning of life?";
         Map<String, Object> inputVars = Map.of("question", input);
 
         Session session = fpClient.sessions().create();
-        TraceInfo traceInfo = session.createTrace(input);
+        TraceInfo traceInfo = session.createTrace(input, "agent_name", Map.of("some_custom_metadata", "hello"));
 
         String response = call(
                 projectId,
@@ -137,7 +138,7 @@ public class ThinTrace {
                 session,
                 traceInfo
         );
-        traceInfo.recordOutput(projectId, response);
+        traceInfo.recordOutput(projectId, response, Map.of("bool_field", true, "float_value", 0.2));
         System.out.println("Second Completion: " + category);
 
         System.out.println("Recorded Trace " + traceInfo.traceId + " to session " + traceInfo.sessionId + " with input " + traceInfo.input + " and output " + response);

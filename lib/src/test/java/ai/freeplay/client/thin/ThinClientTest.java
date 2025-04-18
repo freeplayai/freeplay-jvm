@@ -543,6 +543,7 @@ public class ThinClientTest extends HttpClientTestBase {
             long startTime = System.currentTimeMillis();
             long endTime = System.currentTimeMillis() + 5;
             Map<String, Object> customMetadata = Map.of("customer_id", 123);
+            Map<String, Object> traceCustomMetadata = Map.of("bool_field", true);
 
             mockGetPromptV2Async(
                     mockedClient, templateName, "prod", getChatPromptContentObjects(), anthropicLLMParameters, "anthropic_chat"
@@ -565,10 +566,11 @@ public class ThinClientTest extends HttpClientTestBase {
             ResponseInfo responseInfo = new ResponseInfo(true);
             List<ChatMessage> allMessages = prompt.allMessages(new ChatMessage("Assistant", completion));
             Map<String, Object> evalResults = Map.of("bool_value", true, "float_value", 0.23);
+            Map<String, Object> traceEvalResults = Map.of("bool_value", false, "float_value", 0.45);
 
             Session session = fpClient.sessions().create()
                     .customMetadata(customMetadata);
-            TraceInfo traceInfo = session.createTrace(input);
+            TraceInfo traceInfo = session.createTrace(input, "agent_name", traceCustomMetadata);
             RecordInfo recordInfo = new RecordInfo(
                     allMessages,
                     variables,
@@ -607,12 +609,15 @@ public class ThinClientTest extends HttpClientTestBase {
             RecordDTO apiPayload = JSONUtil.parse(requestBody, RecordDTO.class);
             assertEquals(expectedPayload, apiPayload);
 
-            traceInfo.recordOutput(projectId, completion);
+            traceInfo.recordOutput(projectId, completion, traceEvalResults);
 
             String traceRequestBody = getCapturedAsyncBody(mockedClient, 3, 2);
             TraceInfoDTO expectedTracePayload = new TraceInfoDTO(
                     traceInfo.getInput(),
-                    traceInfo.getOutput()
+                    traceInfo.getOutput(),
+                    traceInfo.getAgentName(),
+                    traceInfo.getCustomMetadata(),
+                    traceEvalResults
             );
             TraceInfoDTO actualTracePayload = JSONUtil.parse(traceRequestBody, TraceInfoDTO.class);
             assertEquals(expectedTracePayload, actualTracePayload);

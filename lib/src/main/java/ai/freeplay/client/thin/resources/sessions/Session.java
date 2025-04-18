@@ -45,12 +45,21 @@ public class Session {
         return new SessionInfo(sessionId.toString(), customMetadata);
     }
 
-    public TraceInfo createTrace(String input){
+    public TraceInfo createTrace(String input) {
         return new TraceInfo(
                 this.sessionId,
                 UUID.randomUUID(),
                 input,
                 this.callSupport
         );
+    }
+
+    public TraceInfo createTrace(String input, String agentName, Map<String, Object> customMetadata) {
+        return new TraceInfo(
+                this.sessionId,
+                UUID.randomUUID(),
+                input,
+                this.callSupport
+        ).agentName(agentName).customMetadata(customMetadata);
     }
 }

@@ -2,6 +2,7 @@ package ai.freeplay.client.thin.resources.sessions;
 
 import ai.freeplay.client.thin.internal.ThinCallSupport;
 
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -10,6 +11,13 @@ public class TraceInfo {
     public UUID traceId;
     public String input;
     public String output;
+
+    public String agentName;
+
+    public Map<String, Object> customMetadata;
+
+    private Map<String, Object> evalResults;
+
     private final ThinCallSupport callSupport;
 
     public TraceInfo(
@@ -25,21 +33,58 @@ public class TraceInfo {
         this.callSupport = callSupport;
     }
 
+    public TraceInfo agentName(
+            String agentName
+    ) {
+        this.agentName = agentName;
+        return this;
+    }
+
+    public TraceInfo customMetadata(
+            Map<String, Object> customMetadata
+    ) {
+        this.customMetadata = customMetadata;
+        return this;
+    }
+
+
     public UUID getSessionId() {
         return sessionId;
     }
+
     public UUID getTraceId() {
         return traceId;
     }
+
     public String getInput() {
         return input;
     }
-    public String getOutput(){
+
+    public String getOutput() {
         return output;
     }
 
-    public void recordOutput(String projectId, String output){
+    public String getAgentName() {
+        return agentName;
+    }
+
+    public Map<String, Object> getCustomMetadata() {
+        return customMetadata;
+    }
+
+    public Map<String, Object> getEvalResults() {
+        return evalResults;
+    }
+
+    @SuppressWarnings("unused")
+    public void recordOutput(String projectId, String output) {
         this.output = output;
+        callSupport.recordTrace(projectId, this);
+    }
+
+    public void recordOutput(String projectId, String output, Map<String, Object> evalResults) {
+        this.output = output;
+        this.evalResults = evalResults;
         callSupport.recordTrace(projectId, this);
     }
 
@@ -50,7 +95,6 @@ public class TraceInfo {
         TraceInfo that = (TraceInfo) o;
         return Objects.equals(traceId, that.traceId) && Objects.equals(sessionId, that.sessionId) && Objects.equals(input, that.input) && Objects.equals(output, that.output);
     }
-
 
 
 }
