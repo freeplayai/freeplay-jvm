@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
+import ai.freeplay.client.thin.resources.prompts.MediaSlot;
+import ai.freeplay.client.thin.resources.prompts.MediaType;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -54,5 +56,14 @@ public class ChatMessageDeserializerTest {
         
         assertEquals("user", message.getRole());
         assertNull(message.getContent());
+    }
+
+    @Test
+    public void testDeserializeMediaSlots() throws IOException {
+        String json = "{\"role\":\"user\",\"content\":\"What do you see?\", \"media_slots\": [{\"type\": \"audio\", \"placeholder_name\": \"some-audio\"}]}";
+
+        ChatMessage message = mapper.readValue(json, ChatMessage.class);
+
+        assertEquals(List.of(new MediaSlot(MediaType.AUDIO, "some-audio")), message.getMediaSlots());
     }
 }

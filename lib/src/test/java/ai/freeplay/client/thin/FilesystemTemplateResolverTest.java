@@ -34,9 +34,9 @@ public class FilesystemTemplateResolverTest extends HttpClientTestBase {
                 "6fe8af2e-defe-41b8-bdf2-7b2ec23592f5",
                 "test-prompt-with-params",
                 List.of(
-                        new TemplateDTO.Message("system", "You are a support agent"),
-                        new TemplateDTO.Message("assistant", "How can I help you?"),
-                        new TemplateDTO.Message("user", "{{question}}")
+                        new TemplateDTO.Message("system", "You are a support agent", List.of()),
+                        new TemplateDTO.Message("assistant", "How can I help you?", List.of()),
+                        new TemplateDTO.Message("user", "{{question}}", List.of())
                 ),
                 new TemplateDTO.Metadata(
                         "openai",
@@ -64,9 +64,9 @@ public class FilesystemTemplateResolverTest extends HttpClientTestBase {
                 "6fe8af2e-defe-41b8-bdf2-7b2ec23592f5",
                 "test-prompt-with-params",
                 List.of(
-                        new TemplateDTO.Message("system", "You are a support agent"),
-                        new TemplateDTO.Message("assistant", "How can I help you?"),
-                        new TemplateDTO.Message("user", "{{question}}")
+                        new TemplateDTO.Message("system", "You are a support agent", List.of()),
+                        new TemplateDTO.Message("assistant", "How can I help you?", List.of()),
+                        new TemplateDTO.Message("user", "{{question}}", List.of())
                 ),
                 new TemplateDTO.Metadata(
                         "openai",
@@ -96,9 +96,9 @@ public class FilesystemTemplateResolverTest extends HttpClientTestBase {
                 templateVersionId,
                 "test-prompt-with-params",
                 List.of(
-                        new TemplateDTO.Message("system", "You are a support agent"),
-                        new TemplateDTO.Message("assistant", "How can I help you?"),
-                        new TemplateDTO.Message("user", "{{question}}")
+                        new TemplateDTO.Message("system", "You are a support agent", List.of()),
+                        new TemplateDTO.Message("assistant", "How can I help you?", List.of()),
+                        new TemplateDTO.Message("user", "{{question}}", List.of())
                 ),
                 new TemplateDTO.Metadata(
                         "openai",
@@ -130,9 +130,9 @@ public class FilesystemTemplateResolverTest extends HttpClientTestBase {
                 "11e12956-d8d4-448a-af92-66b1dc2155e0",
                 "test-prompt-no-params",
                 List.of(
-                        new TemplateDTO.Message("user", "You are a support agent."),
-                        new TemplateDTO.Message("assistant", "How may I help you?"),
-                        new TemplateDTO.Message("user", "{{question}}")
+                        new TemplateDTO.Message("user", "You are a support agent.", List.of()),
+                        new TemplateDTO.Message("assistant", "How may I help you?", List.of()),
+                        new TemplateDTO.Message("user", "{{question}}", List.of())
                 ),
                 new TemplateDTO.Metadata(
                         "anthropic",
@@ -162,9 +162,9 @@ public class FilesystemTemplateResolverTest extends HttpClientTestBase {
                 "5a0fa56d-add1-41e2-b376-8c820bf95903",
                 "test-prompt-with-params",
                 List.of(
-                        new TemplateDTO.Message("system", "You are a support agent"),
-                        new TemplateDTO.Message("assistant", "How can I help you?"),
-                        new TemplateDTO.Message("user", "{{question}}")
+                        new TemplateDTO.Message("system", "You are a support agent", List.of()),
+                        new TemplateDTO.Message("assistant", "How can I help you?", List.of()),
+                        new TemplateDTO.Message("user", "{{question}}", List.of())
                 ),
                 new TemplateDTO.Metadata(
                         "openai",
@@ -187,7 +187,7 @@ public class FilesystemTemplateResolverTest extends HttpClientTestBase {
         FilesystemTemplateResolver resolver = new FilesystemTemplateResolver(getTestFilesDirectory());
         TemplatesDTO templates = resolver.getPrompts(projectId, "prod").get();
 
-        assertEquals(4, templates.getPromptTemplates().size());
+        assertEquals(5, templates.getPromptTemplates().size());
 
         TemplateDTO template = getTemplate(templates, "test-prompt");
 
@@ -196,9 +196,9 @@ public class FilesystemTemplateResolverTest extends HttpClientTestBase {
                 "f4811249-4384-4d71-a1e9-1e8390d5501d",
                 "test-prompt",
                 List.of(
-                        new TemplateDTO.Message("user", "Answer the question to the best of your ability with truthful information, while being entertaining."),
-                        new TemplateDTO.Message("assistant", "How may I help you?"),
-                        new TemplateDTO.Message("user", "{{question}}")
+                        new TemplateDTO.Message("user", "Answer the question to the best of your ability with truthful information, while being entertaining.", List.of()),
+                        new TemplateDTO.Message("assistant", "How may I help you?", List.of()),
+                        new TemplateDTO.Message("user", "{{question}}", List.of())
                 ),
                 new TemplateDTO.Metadata(
                         "anthropic",
@@ -222,7 +222,7 @@ public class FilesystemTemplateResolverTest extends HttpClientTestBase {
         FilesystemTemplateResolver resolver = new FilesystemTemplateResolver(getTestFilesDirectory());
         TemplatesDTO templates = resolver.getPrompts(projectId, "prod").get();
 
-        assertEquals(4, templates.getPromptTemplates().size());
+        assertEquals(5, templates.getPromptTemplates().size());
 
         TemplateDTO template = getTemplate(templates, "test-prompt-with-history");
 
@@ -231,9 +231,9 @@ public class FilesystemTemplateResolverTest extends HttpClientTestBase {
                 "41ee9a25-0e7a-4c0b-a42b-4b5239721d7b",
                 "test-prompt-with-history",
                 List.of(
-                        new TemplateDTO.Message("user", "Answer the question to the best of your ability with truthful information, while being entertaining."),
-                        new TemplateDTO.Message(null, null, "history"),
-                        new TemplateDTO.Message("user", "{{question}}")
+                        new TemplateDTO.Message("user", "Answer the question to the best of your ability with truthful information, while being entertaining.", List.of()),
+                        new TemplateDTO.Message(null, null, "history", List.of()),
+                        new TemplateDTO.Message("user", "{{question}}", List.of())
                 ),
                 new TemplateDTO.Metadata(
                         "anthropic",
@@ -257,7 +257,7 @@ public class FilesystemTemplateResolverTest extends HttpClientTestBase {
         FilesystemTemplateResolver resolver = new FilesystemTemplateResolver(getTestFilesDirectory());
         TemplatesDTO templates = resolver.getPrompts(projectId, "prod").get();
 
-        assertEquals(4, templates.getPromptTemplates().size());
+        assertEquals(5, templates.getPromptTemplates().size());
 
         TemplateDTO template = getTemplate(templates, "test-prompt-v3");
 
@@ -266,9 +266,9 @@ public class FilesystemTemplateResolverTest extends HttpClientTestBase {
                 "f4811249-4384-4d71-a1e9-1e8390d5501d",
                 "test-prompt-v3",
                 List.of(
-                        new TemplateDTO.Message("user", "Answer the question to the best of your ability with truthful information, while being entertaining."),
-                        new TemplateDTO.Message("assistant", "How may I help you?"),
-                        new TemplateDTO.Message("user", "{{question}}")
+                        new TemplateDTO.Message("user", "Answer the question to the best of your ability with truthful information, while being entertaining.", List.of()),
+                        new TemplateDTO.Message("assistant", "How may I help you?", List.of()),
+                        new TemplateDTO.Message("user", "{{question}}", List.of())
                 ),
                 new TemplateDTO.Metadata(
                         "anthropic",
@@ -288,6 +288,21 @@ public class FilesystemTemplateResolverTest extends HttpClientTestBase {
     }
 
     @Test
+    public void testResolvesV3PromptWithMedia() throws ExecutionException, InterruptedException {
+        FilesystemTemplateResolver resolver = new FilesystemTemplateResolver(getTestFilesDirectory());
+        TemplatesDTO templates = resolver.getPrompts(projectId, "prod").get();
+        TemplateDTO template = getTemplate(templates, "test-prompt-v3-media");
+
+        assertEquals(List.of(
+                new TemplateDTO.Message("user", "Answer the question to the best of your ability with truthful information, while being entertaining.", List.of()),
+                new TemplateDTO.Message("assistant", "How may I help you?", List.of()),
+                new TemplateDTO.Message("user", "{{question}}", List.of(new TemplateDTO.MediaSlot(
+                        "image", "some-image"
+                )))
+        ), template.getContent());
+    }
+
+    @Test
     public void testResolvesPromptWithToolSchema() throws ExecutionException, InterruptedException {
         FilesystemTemplateResolver resolver = new FilesystemTemplateResolver(getTestFilesDirectory());
         TemplatesDTO templates = resolver.getPrompts(projectId, "prod").get();
@@ -299,8 +314,8 @@ public class FilesystemTemplateResolverTest extends HttpClientTestBase {
                 "ed3b96f5-0783-4d40-9ef3-35297c29529c",
                 "my-anthropic-prompt",
                 List.of(
-                        new TemplateDTO.Message(null, null, "history"),
-                        new TemplateDTO.Message("user", "What is the weather in {{location}}")
+                        new TemplateDTO.Message(null, null, "history", List.of()),
+                        new TemplateDTO.Message("user", "What is the weather in {{location}}", List.of())
                 ),
                 new TemplateDTO.Metadata(
                         "anthropic",
@@ -390,7 +405,7 @@ public class FilesystemTemplateResolverTest extends HttpClientTestBase {
 
     private TemplateDTO getTemplate(TemplatesDTO templates, String name) {
         Optional<TemplateDTO> maybeTemplate = getTemplateWithName(templates, name);
-        assertTrue(maybeTemplate.isPresent());
+        assertTrue(String.format("Unable to find template %s", name), maybeTemplate.isPresent());
         return maybeTemplate.get();
     }
 

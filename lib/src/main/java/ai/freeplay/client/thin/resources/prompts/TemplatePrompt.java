@@ -3,8 +3,12 @@ package ai.freeplay.client.thin.resources.prompts;
 import ai.freeplay.client.Freeplay;
 import ai.freeplay.client.exceptions.FreeplayClientException;
 import ai.freeplay.client.internal.TemplateUtils;
+import ai.freeplay.client.media.MediaInputBase64;
+import ai.freeplay.client.media.MediaInputCollection;
+import ai.freeplay.client.media.MediaInputUrl;
 import ai.freeplay.client.thin.internal.v2dto.TemplateDTO.ToolSchema;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
@@ -42,11 +46,24 @@ public class TemplatePrompt {
         return toolSchema;
     }
 
+    /**
+     * @deprecated use {@link #bind(TemplatePrompt.BindRequest)} instead.
+     */
+    @Deprecated
     public BoundPrompt bind(Map<String, Object> variables) {
-        return bind(variables, null);
+        return bind(new BindRequest(variables));
     }
 
+    /**
+     * @deprecated use {@link #bind(TemplatePrompt.BindRequest)} instead.
+     */
+    @Deprecated
     public BoundPrompt bind(Map<String, Object> variables, List<ChatMessage> history) {
+        return bind(new BindRequest(variables).history(history));
+    }
+
+    public BoundPrompt bind(BindRequest bindRequest) {
+        var history = bindRequest.getHistory();
         if (getMessages().stream().anyMatch(message -> message.isStructuredMessage() || message.isCompletionMessage())) {
             throw new FreeplayClientException("StructuredMessage or CompletionMessage is not allowed when binding a prompt");
         }
@@ -71,14 +88,86 @@ public class TemplatePrompt {
                             return Stream.of();
                         }
                     } else {
-                        return Stream.of(new ChatMessage(
-                                chatMessage.getRole(),
-                                TemplateUtils.format(chatMessage.getContent(), variables)
-                        ));
+                        var contentParts = extractContentParts(chatMessage, bindRequest.getMediaInputs());
+                        String substitutedContent = TemplateUtils.format(chatMessage.getContent(), bindRequest.getVariables());
+
+                        if (contentParts.isEmpty()) {
+                            return Stream.of(new ChatMessage(chatMessage.getRole(), substitutedContent));
+                        } else {
+                            List<Object> messageContent = new ArrayList<>(contentParts.size() + 1);
+                            messageContent.add(new ContentPartText(substitutedContent));
+                            messageContent.addAll(contentParts);
+
+                            return Stream.of(new ChatMessage(
+                                    chatMessage.getRole(),
+                                    messageContent
+                            ));
+                        }
                     }
                 }
         ).collect(toList());
         return new BoundPrompt(promptInfo, messages, toolSchema);
+    }
+
+    public static class BindRequest {
+        private Map<String, Object> variables;
+        private List<ChatMessage> history;
+        private MediaInputCollection mediaInputs;
+
+        public BindRequest(Map<String, Object> variables) {
+            this.variables = variables;
+        }
+
+        public BindRequest history(List<ChatMessage> history) {
+            this.history = history;
+            return this;
+        }
+
+        public BindRequest mediaInputs(MediaInputCollection mediaInputs) {
+            this.mediaInputs = mediaInputs;
+            return this;
+        }
+
+        public Map<String, Object> getVariables() {
+            return variables;
+        }
+
+        public List<ChatMessage> getHistory() {
+            return history;
+        }
+
+        public MediaInputCollection getMediaInputs() {
+            return mediaInputs;
+        }
+
+        @Override
+        public String toString() {
+            return "BindRequest{" +
+                    "variables=" + variables +
+                    ", history=" + history +
+                    ", mediaInputs=" + mediaInputs +
+                    '}';
+        }
+    }
+
+    private List<ContentPart> extractContentParts(ChatMessage message, MediaInputCollection mediaInputs) {
+        List<ContentPart> result = new ArrayList<>();
+        for (MediaSlot slot : message.getMediaSlots()) {
+            var maybeMatch = mediaInputs.get(slot.getPlaceholderName());
+            if (maybeMatch.isEmpty()) {
+                continue;
+            }
+            var match = maybeMatch.get();
+            if (match instanceof MediaInputUrl) {
+                MediaInputUrl url = (MediaInputUrl) match;
+                result.add(new ContentPartUrl(slot.getPlaceholderName(), slot.getType(), url.getUrl()));
+            } else if (match instanceof MediaInputBase64) {
+                MediaInputBase64 base64 = (MediaInputBase64) match;
+                result.add(new ContentPartBase64(slot.getPlaceholderName(), slot.getType(), base64.getContentType(), base64.getData()));
+            }
+        }
+
+        return result;
     }
 
     private boolean hasHistoryPlaceholder() {

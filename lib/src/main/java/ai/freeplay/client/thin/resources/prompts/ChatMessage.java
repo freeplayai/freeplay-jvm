@@ -17,6 +17,8 @@ public class ChatMessage {
     private String content;
     private List<Object> structuredContent;
     private Object completionMessage;
+    private List<MediaSlot> mediaSlots;
+    private boolean isGemini = false;
 
     public ChatMessage() {
     }
@@ -24,11 +26,28 @@ public class ChatMessage {
     public ChatMessage(String role, String content) {
         this.role = role;
         this.content = content;
+        this.mediaSlots = List.of();
+    }
+
+    public ChatMessage(String role, String content, List<MediaSlot> mediaSlots) {
+        this.role = role;
+        this.content = content;
+        this.mediaSlots = mediaSlots;
     }
 
     public ChatMessage(String role, List<Object> structuredContent) {
         this.role = role;
         this.structuredContent = structuredContent;
+    }
+
+    private ChatMessage(String role, List<Object> structuredContent, boolean isGemini) {
+        this.role = role;
+        this.structuredContent = structuredContent;
+        this.isGemini = isGemini;
+    }
+
+    public static ChatMessage newForGemini(String role, List<Object> structuredContent) {
+        return new ChatMessage(role, structuredContent, true);
     }
 
     public ChatMessage(Object completionMessage) {
@@ -87,41 +106,50 @@ public class ChatMessage {
         return completionMessage;
     }
 
+    public List<MediaSlot> getMediaSlots() {
+        return mediaSlots;
+    }
+
+    @JsonIgnore
+    public boolean isGemini() {
+        return isGemini;
+    }
+
     @JsonIgnore
     public boolean isKind() {
         return false;
     }
 
-    protected boolean isEmptyMessage() {
+    @JsonIgnore
+    public boolean isEmptyMessage() {
         return this.content == null && this.structuredContent == null && this.completionMessage == null;
     }
 
-    protected boolean isStringMessage() {
+    @JsonIgnore
+    public boolean isStringMessage() {
         return this.content != null;
     }
 
-    protected boolean isStructuredMessage() {
+    @JsonIgnore
+    public boolean isStructuredMessage() {
         return this.structuredContent != null;
     }
 
-    protected boolean isCompletionMessage() {
+    @JsonIgnore
+    public boolean isCompletionMessage() {
         return this.completionMessage != null;
     }
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         ChatMessage that = (ChatMessage) o;
-        return Objects.equals(role, that.role)
-                && Objects.equals(content, that.content)
-                && Objects.equals(structuredContent, that.structuredContent)
-                && Objects.equals(completionMessage, that.completionMessage);
+        return Objects.equals(role, that.role) && Objects.equals(content, that.content) && Objects.equals(structuredContent, that.structuredContent) && Objects.equals(completionMessage, that.completionMessage) && Objects.equals(mediaSlots, that.mediaSlots);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(role, content, structuredContent, completionMessage);
+        return Objects.hash(role, content, structuredContent, completionMessage, mediaSlots);
     }
 
     @Override
@@ -129,8 +157,9 @@ public class ChatMessage {
         return "ChatMessage{" +
                 "role='" + role + '\'' +
                 ", content='" + content + '\'' +
-                ", structuredContent='" + structuredContent + '\'' +
-                ", completionMessage='" + completionMessage + '\'' +
+                ", structuredContent=" + structuredContent +
+                ", completionMessage=" + completionMessage +
+                ", mediaSlots=" + mediaSlots +
                 '}';
     }
 }

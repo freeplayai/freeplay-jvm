@@ -87,7 +87,7 @@ public class ThinTestRunExample {
             TestCase testCase
     ) {
         FormattedPrompt<List<ChatMessage>> formattedPrompt =
-                templatePrompt.bind(testCase.getVariables(), testCase.getHistory()).format();
+                templatePrompt.bind(new TemplatePrompt.BindRequest(testCase.getVariables()).history(testCase.getHistory())).format();
 
         long startTime = System.currentTimeMillis();
         Session session = fpClient.sessions().create();
@@ -120,7 +120,7 @@ public class ThinTestRunExample {
 
                     // Create new prompt with updated messages
                     FormattedPrompt<List<ChatMessage>> newPrompt = 
-                            templatePrompt.bind(testCase.getVariables(), messages).format();
+                            templatePrompt.bind(new TemplatePrompt.BindRequest(testCase.getVariables()).history(messages)).format();
                     
                     return callAnthropic(
                             objectMapper,

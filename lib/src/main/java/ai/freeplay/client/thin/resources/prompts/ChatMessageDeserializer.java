@@ -17,10 +17,19 @@ public class ChatMessageDeserializer extends JsonDeserializer<ChatMessage> {
 
         String role = node.get("role").asText();
         JsonNode contentNode = node.get("content");
+        JsonNode mediaNode = node.get("media_slots");
+        List<MediaSlot> mediaSlots = new ArrayList<>();
+
+        if (mediaNode != null && mediaNode.isArray()) {
+            ArrayNode arrayNode = (ArrayNode) mediaNode;
+            for (JsonNode item : arrayNode) {
+                mediaSlots.add(p.getCodec().treeToValue(item, MediaSlot.class));
+            }
+        }
 
         // Handle null content
         if (contentNode.isNull()) {
-            return new ChatMessage(role, (String)null);
+            return new ChatMessage(role, null, mediaSlots);
         }
 
         // Handle array content
@@ -32,10 +41,10 @@ public class ChatMessageDeserializer extends JsonDeserializer<ChatMessage> {
             }
             return new ChatMessage(role, structuredContent);
         }
-        
+
         // Handle string content
         if (contentNode.isTextual()) {
-            return new ChatMessage(role, contentNode.asText());
+            return new ChatMessage(role, contentNode.asText(), mediaSlots);
         }
 
         // Handle object content (treat as structured)

@@ -26,7 +26,7 @@ public class ChatMessageSerializerTest {
     
     @Test
     public void testSerializeStringMessage() throws IOException {
-        ChatMessage message = new ChatMessage("user", "Hello, world!");
+        ChatMessage message = new ChatMessage("user", "Hello, world!", List.of());
         
         String json = mapper.writeValueAsString(message);
         
@@ -69,7 +69,7 @@ public class ChatMessageSerializerTest {
     
     @Test
     public void testSerializeNullContent() throws IOException {
-        ChatMessage message = new ChatMessage("user", (String)null);
+        ChatMessage message = new ChatMessage("user", null, List.of());
         
         String json = mapper.writeValueAsString(message);
         

@@ -2,6 +2,7 @@ package ai.freeplay.example.kotlin
 
 import ai.freeplay.client.thin.Freeplay
 import ai.freeplay.client.thin.resources.prompts.ChatMessage
+import ai.freeplay.client.thin.resources.prompts.TemplatePrompt
 import ai.freeplay.client.thin.resources.recordings.CallInfo
 import ai.freeplay.client.thin.resources.recordings.RecordInfo
 import ai.freeplay.client.thin.resources.recordings.ResponseInfo
@@ -28,7 +29,7 @@ fun main(): Unit = runBlocking {
     val testRun = fpClient.testRuns().create(projectId, "core-tests").await()
 
     for (testCase in testRun.testCases) {
-        val formattedPrompt = templatePrompt.bind(testCase.variables).format<List<ChatMessage>>()
+        val formattedPrompt = templatePrompt.bind(TemplatePrompt.BindRequest(testCase.variables)).format<List<ChatMessage>>()
 
         val startTime = System.currentTimeMillis()
         val llmResponse = callAnthropic(

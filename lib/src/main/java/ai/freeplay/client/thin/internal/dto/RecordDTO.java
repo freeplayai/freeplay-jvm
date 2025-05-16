@@ -1,7 +1,11 @@
 package ai.freeplay.client.thin.internal.dto;
 
+import ai.freeplay.client.media.MediaInput;
+import ai.freeplay.client.media.MediaInputBase64;
+import ai.freeplay.client.media.MediaInputUrl;
 import ai.freeplay.client.thin.resources.prompts.ChatMessage;
 import ai.freeplay.client.thin.resources.recordings.CallInfo;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
@@ -26,6 +30,7 @@ public class RecordDTO {
     private TraceInfoDTO traceInfo;
     private List<Map<String, Object>> toolSchema;
     private UUID completionId;
+    private Map<String, MediaInputDTO> mediaInputs;
 
     public RecordDTO() {
     }
@@ -41,7 +46,8 @@ public class RecordDTO {
             Map<String, Object> evalResults,
             TraceInfoDTO traceInfo,
             List<Map<String, Object>> toolSchema,
-            UUID completionId
+            UUID completionId,
+            Map<String, MediaInputDTO> mediaInputs
     ) {
         this.messages = messages;
         this.inputs = inputs;
@@ -54,6 +60,7 @@ public class RecordDTO {
         this.traceInfo = traceInfo;
         this.toolSchema = toolSchema;
         this.completionId = completionId;
+        this.mediaInputs = mediaInputs;
     }
 
     public List<ChatMessage> getMessages() {
@@ -92,6 +99,10 @@ public class RecordDTO {
         return toolSchema;
     }
 
+    public Map<String, MediaInputDTO> getMediaInputs() {
+        return mediaInputs;
+    }
+
     @Override
     public String toString() {
         return "RecordDTO{" +
@@ -103,21 +114,23 @@ public class RecordDTO {
                 ", responseInfo=" + responseInfo +
                 ", testRunInfo=" + testRunInfo +
                 ", evalResults=" + evalResults +
+                ", traceInfo=" + traceInfo +
                 ", toolSchema=" + toolSchema +
+                ", completionId=" + completionId +
+                ", mediaInputs=" + mediaInputs +
                 '}';
     }
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         RecordDTO recordDTO = (RecordDTO) o;
-        return Objects.equals(messages, recordDTO.messages) && Objects.equals(inputs, recordDTO.inputs) && Objects.equals(sessionInfo, recordDTO.sessionInfo) && Objects.equals(promptInfo, recordDTO.promptInfo) && Objects.equals(callInfo, recordDTO.callInfo) && Objects.equals(responseInfo, recordDTO.responseInfo) && Objects.equals(testRunInfo, recordDTO.testRunInfo) && Objects.equals(evalResults, recordDTO.evalResults) && Objects.equals(toolSchema, recordDTO.toolSchema);
+        return Objects.equals(messages, recordDTO.messages) && Objects.equals(inputs, recordDTO.inputs) && Objects.equals(sessionInfo, recordDTO.sessionInfo) && Objects.equals(promptInfo, recordDTO.promptInfo) && Objects.equals(callInfo, recordDTO.callInfo) && Objects.equals(responseInfo, recordDTO.responseInfo) && Objects.equals(testRunInfo, recordDTO.testRunInfo) && Objects.equals(evalResults, recordDTO.evalResults) && Objects.equals(traceInfo, recordDTO.traceInfo) && Objects.equals(toolSchema, recordDTO.toolSchema) && Objects.equals(completionId, recordDTO.completionId) && Objects.equals(mediaInputs, recordDTO.mediaInputs);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(messages, inputs, sessionInfo, promptInfo, callInfo, responseInfo, testRunInfo, evalResults, toolSchema);
+        return Objects.hash(messages, inputs, sessionInfo, promptInfo, callInfo, responseInfo, testRunInfo, evalResults, traceInfo, toolSchema, completionId, mediaInputs);
     }
 
     public Map<String, Object> getEvalResults() {
@@ -633,6 +646,77 @@ public class RecordDTO {
         public String toString() {
             return "TraceInfoDTO{" +
                     "traceId='" + traceId + '\'' +
+                    '}';
+        }
+    }
+
+    @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public static class MediaInputDTO {
+        private String data;
+        private String contentType;
+        private String url;
+        private String type;
+
+        public MediaInputDTO(String data, String contentType) {
+            this.type = "base64";
+            this.data = data;
+            this.contentType = contentType;
+        }
+
+        public MediaInputDTO(String url) {
+            this.type = "url";
+            this.url = url;
+        }
+
+        public static MediaInputDTO fromMediaInput(MediaInput input) {
+            if (input instanceof MediaInputUrl) {
+                MediaInputUrl url = (MediaInputUrl) input;
+                return new MediaInputDTO(url.getUrl());
+            } else {
+                MediaInputBase64 base64 = (MediaInputBase64) input;
+                return new MediaInputDTO(
+                        new String(base64.getData()),
+                        base64.getContentType()
+                );
+            }
+        }
+
+        public String getData() {
+            return data;
+        }
+
+        public String getContentType() {
+            return contentType;
+        }
+
+        public String getUrl() {
+            return url;
+        }
+
+        public String getType() {
+            return type;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (o == null || getClass() != o.getClass()) return false;
+            MediaInputDTO that = (MediaInputDTO) o;
+            return Objects.equals(data, that.data) && Objects.equals(contentType, that.contentType) && Objects.equals(url, that.url) && Objects.equals(type, that.type);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(data, contentType, url, type);
+        }
+
+        @Override
+        public String toString() {
+            return "MediaInputDTO{" +
+                    "data='" + data + '\'' +
+                    ", contentType='" + contentType + '\'' +
+                    ", url='" + url + '\'' +
+                    ", type='" + type + '\'' +
                     '}';
         }
     }

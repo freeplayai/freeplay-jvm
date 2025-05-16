@@ -57,6 +57,27 @@ java {
     withSourcesJar()
 }
 
+tasks.test {
+    description = "Runs the fast tests."
+    useJUnit {
+        excludeCategories("ai.freeplay.client.SlowTest")
+    }
+}
+
+tasks.register<Test>("slowTest") {
+    group = "verification"
+    description = "Runs the slow tests."
+    useJUnit {
+        includeCategories("ai.freeplay.client.SlowTest")
+    }
+}
+
+tasks.register("testAll") {
+    group = "verification"
+    description = "Runs the entire test suite."
+    dependsOn("test", "slowTest")
+}
+
 publishing {
     publications {
         create<MavenPublication>("mavenJava") {

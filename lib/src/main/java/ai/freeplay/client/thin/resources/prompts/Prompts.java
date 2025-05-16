@@ -1,6 +1,7 @@
 package ai.freeplay.client.thin.resources.prompts;
 
 import ai.freeplay.client.exceptions.FreeplayConfigurationException;
+import ai.freeplay.client.media.MediaInputCollection;
 import ai.freeplay.client.thin.LLMAdapters;
 import ai.freeplay.client.thin.LLMAdapters.LLMAdapter;
 import ai.freeplay.client.thin.internal.ThinCallSupport;
@@ -42,25 +43,39 @@ public class Prompts {
                 .thenApply(template -> getTemplateFromDTO(projectId, null, template));
     }
 
+    /**
+     * @deprecated use {@link #getFormatted(GetFormattedRequest)} instead.
+     */
+    @Deprecated
     public <LLMFormat> CompletableFuture<FormattedPrompt<LLMFormat>> getFormatted(
-        String projectId,
-        String templateName,
-        String environment,
-        Map<String, Object> variables,
-        String flavorName
+            String projectId,
+            String templateName,
+            String environment,
+            Map<String, Object> variables,
+            String flavorName
     ) {
-        return getBound(projectId, templateName, environment, variables)
+        return getBound(projectId, templateName, environment, variables, null, null)
                 .thenApply(boundPrompt -> boundPrompt.format(flavorName));
     }
 
+    /**
+     * @deprecated use {@link #getFormatted(GetFormattedRequest)} instead.
+     */
+    @Deprecated
     public <LLMFormat> CompletableFuture<FormattedPrompt<LLMFormat>> getFormatted(
             String projectId,
             String templateName,
             String environment,
             Map<String, Object> variables
     ) {
-        return getBound(projectId, templateName, environment, variables)
+        return getBound(projectId, templateName, environment, variables, null, null)
                 .thenApply(BoundPrompt::format);
+    }
+
+    public <LLMFormat> CompletableFuture<FormattedPrompt<LLMFormat>> getFormatted(GetFormattedRequest request) {
+        return getBound(request.getProjectId(), request.getTemplateName(), request.getEnvironment(),
+                request.getVariables(), request.getHistory(), request.getMediaInputs())
+                .thenApply(boundPrompt -> boundPrompt.format(request.getFlavorName()));
     }
 
     public <LLMFormat> CompletableFuture<FormattedPrompt<LLMFormat>> getFormattedByVersionId(
@@ -71,17 +86,8 @@ public class Prompts {
             String flavorName
     ) {
         return this.getByVersionId(projectId, templateId, templateVersionId)
-                .thenApply(templatePrompt -> templatePrompt.bind(variables))
+                .thenApply(templatePrompt -> templatePrompt.bind(new TemplatePrompt.BindRequest(variables)))
                 .thenApply(boundPrompt -> boundPrompt.format(flavorName));
-    }
-
-    private CompletableFuture<BoundPrompt> getBound(
-            String projectId,
-            String templateName,
-            String environment,
-            Map<String, Object> variables
-    ) {
-        return getBound(projectId, templateName, environment, variables, null);
     }
 
     @SuppressWarnings("SameParameterValue")
@@ -90,10 +96,11 @@ public class Prompts {
             String templateName,
             String environment,
             Map<String, Object> variables,
-            List<ChatMessage> history
+            List<ChatMessage> history,
+            MediaInputCollection mediaInputs
     ) {
         return get(projectId, templateName, environment)
-                .thenApply(templatePrompt -> templatePrompt.bind(variables, history));
+                .thenApply(templatePrompt -> templatePrompt.bind(new TemplatePrompt.BindRequest(variables).history(history).mediaInputs(mediaInputs)));
     }
 
     private void validateReturnedTemplate(TemplateDTO template) {
@@ -107,6 +114,79 @@ public class Prompts {
         }
     }
 
+    public static class GetFormattedRequest {
+        private final String projectId;
+        private final String templateName;
+        private final String environment;
+        private final Map<String, Object> variables;
+        private List<ChatMessage> history;
+        private String flavorName;
+
+        private MediaInputCollection mediaInputs;
+
+        public GetFormattedRequest(String projectId, String templateName, String environment, Map<String, Object> variables) {
+            this.projectId = projectId;
+            this.templateName = templateName;
+            this.environment = environment;
+            this.variables = variables;
+        }
+
+        public GetFormattedRequest flavorName(String flavorName) {
+            this.flavorName = flavorName;
+            return this;
+        }
+
+        public GetFormattedRequest history(List<ChatMessage> history) {
+            this.history = history;
+            return this;
+        }
+
+        public GetFormattedRequest mediaInputs(MediaInputCollection mediaInputs) {
+            this.mediaInputs = mediaInputs;
+            return this;
+        }
+
+        public String getProjectId() {
+            return projectId;
+        }
+
+        public String getTemplateName() {
+            return templateName;
+        }
+
+        public String getEnvironment() {
+            return environment;
+        }
+
+        public Map<String, Object> getVariables() {
+            return variables;
+        }
+
+        public String getFlavorName() {
+            return flavorName;
+        }
+
+        public List<ChatMessage> getHistory() {
+            return history;
+        }
+
+        public MediaInputCollection getMediaInputs() {
+            return mediaInputs;
+        }
+
+        @Override
+        public String toString() {
+            return "GetFormattedRequest{" +
+                    "projectId='" + projectId + '\'' +
+                    ", templateName='" + templateName + '\'' +
+                    ", environment='" + environment + '\'' +
+                    ", variables=" + variables +
+                    ", history=" + history +
+                    ", flavorName='" + flavorName + '\'' +
+                    ", mediaInputs=" + mediaInputs +
+                    '}';
+        }
+    }
 
     private TemplatePrompt getTemplateFromDTO(String projectId, String environment, TemplateDTO template) {
         validateReturnedTemplate(template);
@@ -120,7 +200,15 @@ public class Prompts {
             if (message.isKind()) {
                 return new KindMessage(message.getKind());
             } else {
-                return new ChatMessage(message.getRole(), message.getContent());
+                List<TemplateDTO.MediaSlot> parsedMediaSlots = message.getMediaSlots();
+                List<MediaSlot> mediaSlots = List.of();
+                if (parsedMediaSlots != null) {
+                    mediaSlots = parsedMediaSlots.stream()
+                            .map((slot ->
+                                    new MediaSlot(MediaType.valueOf(slot.getType().toUpperCase()), slot.getPlaceholderName())))
+                            .collect(toList());
+                }
+                return new ChatMessage(message.getRole(), message.getContent(), mediaSlots);
             }
         }).collect(toList());
 

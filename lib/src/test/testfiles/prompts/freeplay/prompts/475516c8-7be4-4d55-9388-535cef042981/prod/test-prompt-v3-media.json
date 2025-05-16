@@ -1,0 +1,36 @@
+{
+  "content": [
+    {
+      "content": "Answer the question to the best of your ability with truthful information, while being entertaining.",
+      "role": "user"
+    },
+    {
+      "content": "How may I help you?",
+      "role": "assistant"
+    },
+    {
+      "content": "{{question}}",
+      "role": "user",
+      "media_slots": [
+        {
+          "placeholder_name": "some-image",
+          "type": "image"
+        }
+      ]
+    }
+  ],
+  "format_version": 3,
+  "metadata": {
+    "flavor": "anthropic_chat",
+    "model": "claude-2.1",
+    "params": {
+      "max_tokens": 12,
+      "temperature": 0.15
+    },
+    "provider": "anthropic",
+    "provider_info": {}
+  },
+  "prompt_template_id": "f4758834-9e93-448f-97a4-1cb126f7e111",
+  "prompt_template_name": "test-prompt-v3-media",
+  "prompt_template_version_id": "f4811249-4384-4d71-a1e9-1e8390d55111"
+}

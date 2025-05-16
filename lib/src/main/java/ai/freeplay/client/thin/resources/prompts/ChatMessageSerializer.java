@@ -35,7 +35,12 @@ public class ChatMessageSerializer extends JsonSerializer<ChatMessage> {
             if (message.isEmptyMessage() || message.isStringMessage()) {
                 gen.writeStringField("content", message.getContent());
             } else {
-                gen.writeObjectField("content", message.getStructuredContent());
+                String contentKey = "content";
+                if (message.isGemini()) {
+                    contentKey = "parts";
+                }
+
+                gen.writeObjectField(contentKey, message.getStructuredContent());
             }
             gen.writeEndObject();
         }

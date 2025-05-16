@@ -2,15 +2,13 @@ package ai.freeplay.client.thin;
 
 import ai.freeplay.client.exceptions.FreeplayConfigurationException;
 import ai.freeplay.client.thin.internal.v2dto.TemplateDTO.ToolSchema;
-import ai.freeplay.client.thin.resources.prompts.ChatMessage;
-import com.google.cloud.vertexai.api.Content;
-import com.google.cloud.vertexai.generativeai.ContentMaker;
+import ai.freeplay.client.thin.resources.prompts.*;
+
 import java.util.List;
 import java.util.Map;
 
 import static java.lang.String.format;
 import static java.util.stream.Collectors.joining;
-import static java.util.stream.Collectors.toList;
 
 public class LLMAdapters {
     public interface LLMAdapter<LLMFormat> {
@@ -39,70 +37,6 @@ public class LLMAdapters {
         }
     }
 
-    public static class AnthropicLLMAdapter implements LLMAdapter<List<ChatMessage>> {
-        @Override
-        public String getProvider() {
-            return "anthropic";
-        }
-
-        @Override
-        public List<ChatMessage> toLLMSyntax(List<ChatMessage> messages) {
-            return messages
-                    .stream()
-                    .filter(message -> !message.getRole().equals("system"))
-                    .collect(toList());
-        }
-
-        @Override
-        public List<Map<String, Object>> toToolSchemaFormat(List<ToolSchema> toolSchema) {
-            if (toolSchema == null) {
-                return null;
-            }
-
-            return toolSchema.stream()
-                    .filter(schema -> schema.getName() != null 
-                            && schema.getDescription() != null 
-                            && schema.getParameters() != null)
-                    .map(schema -> Map.of(
-                            "name", schema.getName(),
-                            "description", schema.getDescription(),
-                            "input_schema", schema.getParameters()
-                    ))
-                    .collect(toList());
-        }
-    }
-
-    public static class GeminiLLMAdapter implements LLMAdapter<List<Content>> {
-        @Override
-        public String getProvider() {
-            return "vertex";
-        }
-
-        @Override
-        public List<Content> toLLMSyntax(List<ChatMessage> messages) {
-            return messages
-                    .stream()
-                    .filter(message -> !message.getRole().equals("system"))
-                    .map(message ->
-                            ContentMaker.forRole(translateRole(message.getRole())).fromString(message.getContent())
-                    )
-                    .collect(toList());
-        }
-
-        private String translateRole(String role) {
-            switch (role) {
-                case "user":
-                    return "user";
-                case "assistant":
-                    return "model";
-                default:
-                    throw new FreeplayConfigurationException(
-                            format("Unknown role in prompt template for Gemini: %s", role)
-                    );
-            }
-        }
-    }
-
     public static class Llama3LLMAdapter implements LLMAdapter<String> {
         @Override
         public String getProvider() {
@@ -122,32 +56,6 @@ public class LLMAdapters {
                             )
                             .collect(joining("")) +
                     "<|start_header_id|>assistant<|end_header_id|>";
-        }
-    }
-
-    public static class OpenAILLMAdapter implements LLMAdapter<List<ChatMessage>> {
-        @Override
-        public String getProvider() {
-            return "openai";
-        }
-
-        @Override
-        public List<ChatMessage> toLLMSyntax(List<ChatMessage> messages) {
-            return messages;
-        }
-
-        @Override
-        public List<Map<String, Object>> toToolSchemaFormat(List<ToolSchema> toolSchema) {
-            if (toolSchema == null) {
-                return null;
-            }
-
-            return toolSchema.stream()
-                    .map(schema -> Map.of(
-                            "function", schema,
-                            "type", "function"
-                    ))
-                    .collect(toList());
         }
     }
 

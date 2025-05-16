@@ -1,13 +1,17 @@
 package ai.freeplay.client.thin.resources.recordings;
 
+import ai.freeplay.client.media.MediaInputCollection;
+import ai.freeplay.client.thin.GeminiLLMAdapter;
 import ai.freeplay.client.thin.resources.prompts.ChatMessage;
 import ai.freeplay.client.thin.resources.prompts.PromptInfo;
 import ai.freeplay.client.thin.resources.sessions.SessionInfo;
 import ai.freeplay.client.thin.resources.sessions.TraceInfo;
+import com.google.cloud.vertexai.api.Content;
 
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 public class RecordInfo {
     private final List<ChatMessage> allMessages;
@@ -24,6 +28,7 @@ public class RecordInfo {
     private UUID completionId;
 
     private List<Map<String, Object>> toolSchema;
+    private MediaInputCollection mediaInputCollection;
 
     public RecordInfo(
             List<ChatMessage> allMessages,
@@ -41,6 +46,21 @@ public class RecordInfo {
         this.responseInfo = responseInfo;
     }
 
+    public static RecordInfo fromGeminiContent(
+            List<Content> contents,
+            Map<String, Object> inputs,
+            SessionInfo sessionInfo,
+            PromptInfo promptInfo,
+            CallInfo callInfo,
+            ResponseInfo responseInfo
+    ) {
+        List<ChatMessage> messages = contents.stream()
+                .map(GeminiLLMAdapter::chatMessageFromContent)
+                .collect(Collectors.toList());
+
+        return new RecordInfo(messages, inputs, sessionInfo, promptInfo, callInfo, responseInfo);
+    }
+
     public RecordInfo testRunInfo(TestRunInfo testRunInfo) {
         this.testRunInfo = testRunInfo;
         return this;
@@ -50,7 +70,8 @@ public class RecordInfo {
         this.evalResults = evalResults;
         return this;
     }
-    public RecordInfo traceInfo(TraceInfo traceInfo){
+
+    public RecordInfo traceInfo(TraceInfo traceInfo) {
         this.traceInfo = traceInfo;
         return this;
     }
@@ -62,6 +83,11 @@ public class RecordInfo {
 
     public RecordInfo completionId(UUID id) {
         this.completionId = id;
+        return this;
+    }
+
+    public RecordInfo mediaInputCollection(MediaInputCollection mediaInputCollection) {
+        this.mediaInputCollection = mediaInputCollection;
         return this;
     }
 
@@ -97,7 +123,9 @@ public class RecordInfo {
         return evalResults;
     }
 
-    public TraceInfo getTraceInfo() {return traceInfo;}
+    public TraceInfo getTraceInfo() {
+        return traceInfo;
+    }
 
     public List<Map<String, Object>> getToolSchema() {
         return toolSchema;
@@ -107,6 +135,9 @@ public class RecordInfo {
         return completionId;
     }
 
+    public MediaInputCollection getMediaInputCollection() {
+        return mediaInputCollection;
+    }
 
     @Override
     public String toString() {
@@ -122,6 +153,7 @@ public class RecordInfo {
                 ", evalResults=" + evalResults +
                 ", traceInfo=" + traceInfo +
                 ", toolSchema=" + toolSchema +
+                ", mediaInputCollection=" + mediaInputCollection +
                 '}';
     }
 }

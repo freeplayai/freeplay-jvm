@@ -97,7 +97,7 @@ public class ThinClientTest extends HttpClientTestBase {
 
             TemplatePrompt templatePrompt = fpClient.prompts().get(projectId, templateName, "prod").get();
             FormattedPrompt<List<ChatMessage>> anthropicPrompt = templatePrompt
-                    .bind(variables)
+                    .bind(new TemplatePrompt.BindRequest(variables))
                     .format(templatePrompt.getPromptInfo().getFlavorName());
 
             List<ChatMessage> expectedMessages = List.of(
@@ -115,7 +115,7 @@ public class ThinClientTest extends HttpClientTestBase {
 
             // Overriding flavor_name
             FormattedPrompt<List<ChatMessage>> openAIPrompt = templatePrompt
-                    .bind(variables)
+                    .bind(new TemplatePrompt.BindRequest(variables))
                     .format("openai_chat");
 
             assertEquals(expectedMessages, openAIPrompt.getFormattedPrompt());
@@ -168,7 +168,7 @@ public class ThinClientTest extends HttpClientTestBase {
 
             TemplatePrompt templatePrompt = fpClient.prompts().get(projectId, templateName, "latest").get();
             FormattedPrompt<String> sagemakerPrompt = templatePrompt
-                    .bind(variables)
+                    .bind(new TemplatePrompt.BindRequest(variables))
                     .format(templatePrompt.getPromptInfo().getFlavorName());
 
             assertEquals(
@@ -203,7 +203,7 @@ public class ThinClientTest extends HttpClientTestBase {
 
             TemplatePrompt templatePrompt = fpClient.prompts().get(projectId, templateName, "prod").get();
             FormattedPrompt<List<ChatMessage>> anthropicPrompt = templatePrompt
-                    .bind(variables)
+                    .bind(new TemplatePrompt.BindRequest(variables))
                     .format(templatePrompt.getPromptInfo().getFlavorName());
 
             assertEquals(List.of(
@@ -228,7 +228,7 @@ public class ThinClientTest extends HttpClientTestBase {
             Map<String, Object> variables = Map.of("number", "2");
 
             // No history given
-            BoundPrompt boundPrompt = templatePrompt.bind(variables);
+            BoundPrompt boundPrompt = templatePrompt.bind(new TemplatePrompt.BindRequest(variables));
             List<ChatMessage> expectedMessages = List.of(
                     new ChatMessage("system", "You are a support agent."),
                     new ChatMessage("user", "User message 2")
@@ -236,10 +236,10 @@ public class ThinClientTest extends HttpClientTestBase {
             assertEquals(expectedMessages, boundPrompt.getMessages());
 
             // History given
-            BoundPrompt boundPrompt2 = templatePrompt.bind(variables, List.of(
+            BoundPrompt boundPrompt2 = templatePrompt.bind(new TemplatePrompt.BindRequest(variables).history(List.of(
                     new ChatMessage("user", "User message 1"),
                     new ChatMessage("assistant", "assistant message 1")
-            ));
+            )));
             List<ChatMessage> expectedMessages2 = List.of(
                     new ChatMessage("system", "You are a support agent."),
                     new ChatMessage("user", "User message 1"),
@@ -263,9 +263,9 @@ public class ThinClientTest extends HttpClientTestBase {
 
             // No history placeholder in the prompt
             try {
-                templatePrompt.bind(variables, List.of(
+                templatePrompt.bind(new TemplatePrompt.BindRequest(variables).history(List.of(
                         new ChatMessage("user", "User message 1")
-                ));
+                )));
                 fail("Should have gotten an exception");
             } catch (Exception e) {
                 assertEquals(
@@ -350,7 +350,8 @@ public class ThinClientTest extends HttpClientTestBase {
                     Map.of("bool_value", true, "float_value", 0.23),
                     null,
                     null,
-                    null
+                    null,
+                    Map.of()
             );
             RecordDTO apiPayload = JSONUtil.parse(requestBody, RecordDTO.class);
             assertEquals(expectedPayload, apiPayload);
@@ -415,7 +416,8 @@ public class ThinClientTest extends HttpClientTestBase {
                     null,
                     null,
                     null,
-                    null
+                    null,
+                    Map.of()
             );
             RecordDTO actualPayload = JSONUtil.parse(
                     getCapturedAsyncBody(mockedClient, 1, 0), RecordDTO.class
@@ -473,7 +475,8 @@ public class ThinClientTest extends HttpClientTestBase {
                     null,
                     null,
                     null,
-                    null
+                    null,
+                    Map.of()
             );
             RecordDTO actualPayload = JSONUtil.parse(
                     getCapturedAsyncBody(mockedClient, 1, 0), RecordDTO.class
@@ -604,7 +607,8 @@ public class ThinClientTest extends HttpClientTestBase {
                     null,
                     Map.of("bool_value", true, "float_value", 0.23),
                     new RecordDTO.TraceInfoDTO(traceInfo.getTraceId()),
-                    null, null
+                    null, null,
+                    Map.of()
             );
             RecordDTO apiPayload = JSONUtil.parse(requestBody, RecordDTO.class);
             assertEquals(expectedPayload, apiPayload);
@@ -672,7 +676,8 @@ public class ThinClientTest extends HttpClientTestBase {
                     null,
                     null,
                     null,
-                    null
+                    null,
+                    Map.of()
             );
             RecordDTO actualPayload = JSONUtil.parse(
                     getCapturedAsyncBody(mockedClient, 1, 0), RecordDTO.class
@@ -946,7 +951,7 @@ public class ThinClientTest extends HttpClientTestBase {
             FreeplayConfigurationException exception = assertThrows(
                     FreeplayConfigurationException.class,
                     () -> templatePrompt
-                            .bind(variables)
+                            .bind(new TemplatePrompt.BindRequest(variables))
                             .format("not_a_flavor")
             );
             String expectedExceptionMessage = "Unable to create LLMAdapter for name 'not_a_flavor'.\n";
@@ -1032,7 +1037,7 @@ public class ThinClientTest extends HttpClientTestBase {
             );
 
             FormattedPrompt<List<ChatMessage>> formatted = templatePrompt
-                    .bind(variables)
+                    .bind(new TemplatePrompt.BindRequest(variables))
                     .format("openai_chat");
 
             List<Map<String, Object>> expectedToolSchema = List.of(Map.of(
@@ -1071,7 +1076,7 @@ public class ThinClientTest extends HttpClientTestBase {
             );
 
             FormattedPrompt<List<ChatMessage>> formatted = templatePrompt
-                    .bind(variables)
+                    .bind(new TemplatePrompt.BindRequest(variables))
                     .format("anthropic_chat");
 
             List<Map<String, Object>> expectedToolSchema = List.of(Map.of(
@@ -1101,7 +1106,7 @@ public class ThinClientTest extends HttpClientTestBase {
             );
 
             FormattedPrompt<List<ChatMessage>> formatted = templatePrompt
-                    .bind(variables)
+                    .bind(new TemplatePrompt.BindRequest(variables))
                     .format("openai_chat");
 
             // Tool schema should be null when not provided
@@ -1121,7 +1126,7 @@ public class ThinClientTest extends HttpClientTestBase {
             );
 
             FormattedPrompt<List<ChatMessage>> formattedEmpty = templatePromptEmpty
-                    .bind(variables)
+                    .bind(new TemplatePrompt.BindRequest(variables))
                     .format("openai_chat");
 
             // Tool schema should be empty list when empty list provided
@@ -1206,7 +1211,7 @@ public class ThinClientTest extends HttpClientTestBase {
                             new ChatMessage("system", "You are a support agent."),
                             new ChatMessage("assistant", "How may I help you?"),
                             new ChatMessage("user", "{{question}}")
-                    )).bind(variables);
+                    )).bind(new TemplatePrompt.BindRequest(variables));
             toolSchema = List.of(
                     Map.of(
                             "name", "get_weather",

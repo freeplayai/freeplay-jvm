@@ -3,6 +3,7 @@ package ai.freeplay.example.kotlin
 import ai.freeplay.client.thin.FilesystemTemplateResolver
 import ai.freeplay.client.thin.Freeplay
 import ai.freeplay.client.thin.resources.prompts.ChatMessage
+import ai.freeplay.client.thin.resources.prompts.TemplatePrompt
 import ai.freeplay.client.thin.resources.recordings.CallInfo
 import ai.freeplay.client.thin.resources.recordings.RecordInfo
 import ai.freeplay.client.thin.resources.recordings.ResponseInfo
@@ -41,7 +42,7 @@ fun main(): Unit = runBlocking {
             "my-anthropic-history-prompt",
             "latest"
         ).await()
-    val formatted = template.bind(variables, history).format<List<ChatMessage>>()
+    val formatted = template.bind(TemplatePrompt.BindRequest(variables).history(history)).format<List<ChatMessage>>()
 
     println("Calling Anthropic...")
     val startTime = System.currentTimeMillis()

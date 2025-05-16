@@ -6,6 +6,7 @@ import ai.freeplay.client.thin.internal.v2dto.TemplateDTO;
 import ai.freeplay.client.thin.internal.v2dto.TemplateDTO.ToolSchema;
 import ai.freeplay.client.thin.internal.v2dto.TemplatesDTO;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 
 import java.io.File;
 import java.io.IOException;
@@ -196,10 +197,24 @@ public class FilesystemTemplateResolver implements TemplateResolver {
         List<TemplateDTO.Message> messages = new ArrayList<>(content.size());
         content.forEach(messageNode -> {
             if (messageNode.path("kind").isMissingNode()) {
+                JsonNode mediaNode = messageNode.get("media_slots");
+
+                List<TemplateDTO.MediaSlot> mediaSlots = new ArrayList<>();
+                if (mediaNode != null && mediaNode.isArray()) {
+                    ArrayNode arrayNode = (ArrayNode) mediaNode;
+                    for (JsonNode item : arrayNode) {
+                        mediaSlots.add(new TemplateDTO.MediaSlot(
+                                item.path("type").textValue(),
+                                item.get("placeholder_name").textValue()
+                        ));
+                    }
+                }
+
                 messages.add(
                         new TemplateDTO.Message(
                                 translateRole(messageNode.get("role").textValue()),
-                                messageNode.get("content").textValue()
+                                messageNode.get("content").textValue(),
+                                mediaSlots
                         )
                 );
             } else {
@@ -207,7 +222,8 @@ public class FilesystemTemplateResolver implements TemplateResolver {
                         new TemplateDTO.Message(
                                 null,
                                 null,
-                                messageNode.path("kind").textValue()
+                                messageNode.path("kind").textValue(),
+                                List.of()
                         )
                 );
             }

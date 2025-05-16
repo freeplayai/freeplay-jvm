@@ -33,7 +33,7 @@ public class FilesystemTemplateResolverTest extends HttpClientTestBase {
 
         PromptTemplate expected = new PromptTemplate(
                 "test-prompt-with-params",
-                "[{\"role\":\"system\",\"content\":\"You are a support agent\",\"kind\":null},{\"role\":\"assistant\",\"content\":\"How can I help you?\",\"kind\":null},{\"role\":\"user\",\"content\":\"{{question}}\",\"kind\":null}]",
+                "[{\"role\":\"system\",\"content\":\"You are a support agent\",\"kind\":null,\"media_slots\":[]},{\"role\":\"assistant\",\"content\":\"How can I help you?\",\"kind\":null,\"media_slots\":[]},{\"role\":\"user\",\"content\":\"{{question}}\",\"kind\":null,\"media_slots\":[]}]",
                 "openai_chat",
                 "6fe8af2e-defe-41b8-bdf2-7b2ec23592f5",
                 "a8b91d92-e063-4c3e-bb44-0d570793856b",

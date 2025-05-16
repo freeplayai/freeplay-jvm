@@ -52,7 +52,7 @@ public class OpenAIChatCompletion {
         );
 
         ChatCompletionResponse chatResponse = session.getChatCompletion(
-                "my-chat-start",
+                "media",
                 Map.of("question", "why else isn't my sink working?"),
                 llmParameters
         );

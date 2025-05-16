@@ -4,6 +4,7 @@ import ai.freeplay.client.HttpConfig;
 import ai.freeplay.client.exceptions.FreeplayClientException;
 import ai.freeplay.client.internal.AsyncHttp;
 import ai.freeplay.client.internal.JSONUtil;
+import ai.freeplay.client.media.MediaInput;
 import ai.freeplay.client.thin.TemplateResolver;
 import ai.freeplay.client.thin.internal.dto.*;
 import ai.freeplay.client.thin.internal.v2dto.TemplateDTO;
@@ -20,6 +21,7 @@ import ai.freeplay.client.thin.resources.testruns.TestRun;
 import ai.freeplay.client.thin.resources.testruns.TestRunResults;
 import com.fasterxml.jackson.databind.JsonNode;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -95,6 +97,13 @@ public class ThinCallSupport {
                 recordPayload.getResponseInfo().getResponseTokens()
         );
 
+        Map<String, RecordDTO.MediaInputDTO> mediaInputs = new HashMap<>();
+        if (recordPayload.getMediaInputCollection() != null) {
+            for (Map.Entry<String, MediaInput> entry : recordPayload.getMediaInputCollection().entries()) {
+                mediaInputs.put(entry.getKey(), RecordDTO.MediaInputDTO.fromMediaInput(entry.getValue()));
+            }
+        }
+
         RecordDTO payload = new RecordDTO(
                 recordPayload.getAllMessages(),
                 recordPayload.getInputs(),
@@ -120,7 +129,8 @@ public class ThinCallSupport {
                 recordPayload.getEvalResults(),
                 recordPayload.getTraceInfo() != null ? new RecordDTO.TraceInfoDTO(recordPayload.getTraceInfo().traceId) : null,
                 recordPayload.getToolSchema(),
-                recordPayload.getCompletionId()
+                recordPayload.getCompletionId(),
+                mediaInputs
         );
 
         return AsyncHttp.postJson(

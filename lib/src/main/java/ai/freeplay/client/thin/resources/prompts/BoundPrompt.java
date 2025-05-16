@@ -1,6 +1,5 @@
 package ai.freeplay.client.thin.resources.prompts;
 
-import ai.freeplay.client.exceptions.FreeplayClientException;
 import ai.freeplay.client.thin.LLMAdapters;
 import ai.freeplay.client.thin.internal.ThinCallSupport;
 import ai.freeplay.client.thin.internal.v2dto.TemplateDTO.ToolSchema;

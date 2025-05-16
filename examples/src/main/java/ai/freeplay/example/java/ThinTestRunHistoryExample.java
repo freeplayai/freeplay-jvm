@@ -81,7 +81,7 @@ public class ThinTestRunHistoryExample {
         System.out.println("Test Case History");
         System.out.println(testCase.getHistory());
         FormattedPrompt<List<ChatMessage>> formattedPrompt =
-                templatePrompt.bind(testCase.getVariables(), testCase.getHistory()).format();
+                templatePrompt.bind(new TemplatePrompt.BindRequest(testCase.getVariables()).history(testCase.getHistory())).format();
 
         long startTime = System.currentTimeMillis();
         return callAnthropic(

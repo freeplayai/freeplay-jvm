@@ -192,10 +192,53 @@ public class TemplateDTO {
     }
 
     @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
+    public static class MediaSlot {
+        String type;
+        String placeholderName;
+
+        public MediaSlot() {
+        }
+
+        public MediaSlot(String type, String placeholderName) {
+            this.type = type;
+            this.placeholderName = placeholderName;
+        }
+
+        public String getType() {
+            return type;
+        }
+
+        public String getPlaceholderName() {
+            return placeholderName;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (o == null || getClass() != o.getClass()) return false;
+            MediaSlot mediaSlot = (MediaSlot) o;
+            return Objects.equals(type, mediaSlot.type) && Objects.equals(placeholderName, mediaSlot.placeholderName);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(type, placeholderName);
+        }
+
+        @Override
+        public String toString() {
+            return "MediaSlot{" +
+                    "type='" + type + '\'' +
+                    ", placeholderName='" + placeholderName + '\'' +
+                    '}';
+        }
+    }
+
+    @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
     public static class Message {
         private String role;
         private String content;
         private String kind;
+        private List<MediaSlot> mediaSlots;
 
         public Message() {
         }
@@ -209,7 +252,19 @@ public class TemplateDTO {
         public Message(String role, String content) {
             this.role = role;
             this.content = content;
-            this.kind = null;
+        }
+
+        public Message(String role, String content, String kind, List<MediaSlot> mediaSlots) {
+            this.role = role;
+            this.content = content;
+            this.kind = kind;
+            this.mediaSlots = mediaSlots;
+        }
+
+        public Message(String role, String content, List<MediaSlot> mediaSlots) {
+            this.role = role;
+            this.content = content;
+            this.mediaSlots = mediaSlots;
         }
 
         public String getRole() {
@@ -228,17 +283,20 @@ public class TemplateDTO {
             return kind;
         }
 
+        public List<MediaSlot> getMediaSlots() {
+            return mediaSlots;
+        }
+
         @Override
         public boolean equals(Object o) {
-            if (this == o) return true;
-            if (!(o instanceof Message)) return false;
+            if (o == null || getClass() != o.getClass()) return false;
             Message message = (Message) o;
-            return Objects.equals(role, message.role) && Objects.equals(content, message.content) && Objects.equals(kind, message.kind);
+            return Objects.equals(role, message.role) && Objects.equals(content, message.content) && Objects.equals(kind, message.kind) && Objects.equals(mediaSlots, message.mediaSlots);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(role, content, kind);
+            return Objects.hash(role, content, kind, mediaSlots);
         }
 
         @Override
@@ -247,6 +305,7 @@ public class TemplateDTO {
                     "role='" + role + '\'' +
                     ", content='" + content + '\'' +
                     ", kind='" + kind + '\'' +
+                    ", mediaSlots=" + mediaSlots +
                     '}';
         }
     }
