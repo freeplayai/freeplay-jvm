@@ -61,19 +61,22 @@ fun main(): Unit = runBlocking {
         endTime
     )
     val responseInfo = ResponseInfo("stop_sequence" == bodyNode.path("stop_reason").asText())
-    val sessionInfo = fpClient.sessions().create()
+    val session = fpClient.sessions().create()
         .customMetadata(mapOf("custom_field" to "custom_value"))
-        .sessionInfo
+
+    val trace = session.createTrace("input str", "agent name", null)
 
     val recordResponse = fpClient.recordings().create(
         RecordInfo(
             allMessages,
             variables,
-            sessionInfo,
+            session.sessionInfo,
             prompt.getPromptInfo(),
             callInfo,
             responseInfo
-        )
+        ).traceInfo(trace)
     ).await()
+
+    trace.recordOutput(projectId, "output str").await()
     println("Recorded with completionId ${recordResponse.completionId}")
 }

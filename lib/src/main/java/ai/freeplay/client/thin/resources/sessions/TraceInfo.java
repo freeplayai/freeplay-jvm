@@ -5,6 +5,7 @@ import ai.freeplay.client.thin.internal.ThinCallSupport;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 public class TraceInfo {
     public UUID sessionId;
@@ -77,15 +78,15 @@ public class TraceInfo {
     }
 
     @SuppressWarnings("unused")
-    public void recordOutput(String projectId, String output) {
+    public CompletableFuture<TraceRecordResponse> recordOutput(String projectId, String output) {
         this.output = output;
-        callSupport.recordTrace(projectId, this);
+        return callSupport.recordTrace(projectId, this);
     }
 
-    public void recordOutput(String projectId, String output, Map<String, Object> evalResults) {
+    public CompletableFuture<TraceRecordResponse> recordOutput(String projectId, String output, Map<String, Object> evalResults) {
         this.output = output;
         this.evalResults = evalResults;
-        callSupport.recordTrace(projectId, this);
+        return callSupport.recordTrace(projectId, this);
     }
 
     @Override

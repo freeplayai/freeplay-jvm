@@ -4,7 +4,7 @@ plugins {
     signing
 }
 
-version = "0.2.61"
+version = "0.2.62"
 group = "ai.freeplay"
 
 repositories {
@@ -43,8 +43,8 @@ tasks.jar {
     // Set the manifest attributes
     manifest {
         attributes(
-            "Implementation-Title" to project.name,
-            "Implementation-Version" to project.version
+                "Implementation-Title" to project.name,
+                "Implementation-Version" to project.version
         )
     }
 }

@@ -613,7 +613,7 @@ public class ThinClientTest extends HttpClientTestBase {
             RecordDTO apiPayload = JSONUtil.parse(requestBody, RecordDTO.class);
             assertEquals(expectedPayload, apiPayload);
 
-            traceInfo.recordOutput(projectId, completion, traceEvalResults);
+            traceInfo.recordOutput(projectId, completion, traceEvalResults).get();
 
             String traceRequestBody = getCapturedAsyncBody(mockedClient, 3, 2);
             TraceInfoDTO expectedTracePayload = new TraceInfoDTO(
