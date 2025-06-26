@@ -41,6 +41,7 @@ public class OpenAIStreamCompletion {
             System.out.printf("Message [%s]: %s%n", chunk.getRole(), chunk.getContent());
             if (chunk.isLast()) {
                 fpClient.recordCompletionFeedback(
+                        projectId,
                         chunk.getCompletionId(),
                         Map.of("feedback", POSITIVE_FEEDBACK)
                 );

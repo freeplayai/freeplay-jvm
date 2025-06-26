@@ -47,6 +47,7 @@ public class OpenAIChatCompletion {
         System.out.printf("Completion text: %s%n", response.getContent());
 
         fpClient.recordCompletionFeedback(
+                projectId,
                 response.getCompletionId(),
                 Map.of("feedback", "freeplay-positive-feedback")
         );

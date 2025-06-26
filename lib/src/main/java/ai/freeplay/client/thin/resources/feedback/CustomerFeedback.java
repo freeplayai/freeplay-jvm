@@ -13,8 +13,8 @@ public class CustomerFeedback {
         this.callSupport = callSupport;
     }
 
-    public CompletableFuture<CustomerFeedbackResponse> update(String completionId, Map<String, Object> feedback) {
-        return callSupport.updateCustomerFeedback(completionId, feedback);
+    public CompletableFuture<CustomerFeedbackResponse> update(String projectId, String completionId, Map<String, Object> feedback) {
+        return callSupport.updateCustomerFeedback(projectId, completionId, feedback);
     }
 
     public CompletableFuture<TraceFeedbackResponse> updateTrace(String projectId, String traceId, Map<String, Object> feedback) {

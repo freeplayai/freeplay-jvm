@@ -842,7 +842,7 @@ public class ThinClientTest extends HttpClientTestBase {
 
             Freeplay fpClient = new Freeplay(Config().freeplayAPIKey(freeplayApiKey).baseUrl(baseUrl));
 
-            CustomerFeedbackResponse response = fpClient.customerFeedback().update(completionId, feedback).get();
+            CustomerFeedbackResponse response = fpClient.customerFeedback().update(projectId, completionId, feedback).get();
 
             assertNotNull(response);
 
@@ -892,7 +892,7 @@ public class ThinClientTest extends HttpClientTestBase {
 
             ExecutionException exception = assertThrows(
                     ExecutionException.class,
-                    () -> fpClient.customerFeedback().update(completionId, feedback).get()
+                    () -> fpClient.customerFeedback().update(projectId, completionId, feedback).get()
             );
             assertEquals("Error making call [401]", exception.getCause().getMessage());
         });
@@ -911,7 +911,7 @@ public class ThinClientTest extends HttpClientTestBase {
 
             FreeplayClientException exception = assertThrows(
                     FreeplayClientException.class,
-                    () -> fpClient.customerFeedback().update(completionId, feedback).get()
+                    () -> fpClient.customerFeedback().update(projectId, completionId, feedback).get()
             );
             assertEquals(
                     "Invalid value for key 'not_allowed': Value must be a string, number, or boolean.",

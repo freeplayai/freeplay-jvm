@@ -217,12 +217,13 @@ public class ThinCallSupport {
     }
 
     public CompletableFuture<CustomerFeedbackResponse> updateCustomerFeedback(
+            String projectId,
             String completionId,
             Map<String, Object> feedback
     ) {
         validateBasicMap(feedback);
-        String url = String.format("%s/v1/completion_feedback/%s", baseUrl, completionId);
-        return AsyncHttp.putJson(
+        String url = String.format("%s/v2/projects/%s/completion-feedback/id/%s", baseUrl, projectId, completionId);
+        return AsyncHttp.postJson(
                 url,
                 freeplayApiKey,
                 httpConfig,

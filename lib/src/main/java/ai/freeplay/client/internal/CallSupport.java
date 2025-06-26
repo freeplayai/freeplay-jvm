@@ -429,17 +429,17 @@ public class CallSupport {
         }
     }
 
-    public void recordCompletionFeedback(String completionId, Map<String, Object> feedback) throws FreeplayException {
+    public void recordCompletionFeedback(String projectId, String completionId, Map<String, Object> feedback) throws FreeplayException {
         ParameterUtils.validateBasicMap(feedback);
 
-        String url = getUrl("v1/completion_feedback/%s", completionId);
+        String url = getUrl("v2/projects/%s/completion-feedback/id/%s", projectId, completionId);
         try {
             Http.jsonRequest(
                     url,
                     JSONUtil.asString(feedback),
                     HttpResponse.BodyHandlers.ofString(),
                     httpConfig,
-                    "PUT",
+                    "POST",
                     authHeaders(freeplayApiKey));
         } catch (FreeplayException e) {
             throw new FreeplayServerException("Error creating session.", e);

@@ -409,7 +409,7 @@ public class OpenAICompletionTest extends HttpClientTestBase {
             );
 
             String completionId = completionResponse.getCompletionId();
-            fpClient.recordCompletionFeedback(completionId, Map.of("feedback", NEGATIVE_FEEDBACK));
+            fpClient.recordCompletionFeedback(projectId, completionId, Map.of("feedback", NEGATIVE_FEEDBACK));
 
             // Make sure we record feedback
             Map<String, Object> feedbackMap = getCapturedBodyAsMap(mockedClient, 4, 3);

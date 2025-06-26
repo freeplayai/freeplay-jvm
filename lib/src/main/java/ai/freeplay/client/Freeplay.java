@@ -379,8 +379,8 @@ public class Freeplay {
         return callSupport.createTestRun(projectId, environment, testListName);
     }
 
-    public void recordCompletionFeedback(String completionId, Map<String, Object> feedback) {
-        callSupport.recordCompletionFeedback(completionId, feedback);
+    public void recordCompletionFeedback(String projectId, String completionId, Map<String, Object> feedback) {
+        callSupport.recordCompletionFeedback(projectId, completionId, feedback);
     }
 
     public static FreeplayConfig Config() {

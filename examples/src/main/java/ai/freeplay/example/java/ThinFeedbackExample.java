@@ -98,6 +98,7 @@ public class ThinFeedbackExample {
                                             ))
                                     .thenCompose(recordResponse ->
                                             fpClient.customerFeedback().update(
+                                                            projectId,
                                                             recordResponse.getCompletionId(),
                                                             Map.of("helpful", "thumbsup")
                                                     )

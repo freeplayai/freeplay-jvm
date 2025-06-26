@@ -200,7 +200,7 @@ public class MockFixtures {
 
     public static void mockUpdateCustomerFeedbackAsync(HttpClient mockedClient) throws RuntimeException {
         try {
-            when(requestAsync(mockedClient, "PUT", "v1/completion_feedback/[^/]*"))
+            when(requestAsync(mockedClient, "POST", "v2/projects/[^/]*/completion-feedback/id/[^/]*"))
                     .thenReturn(asyncResponse(201, ""));
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -247,7 +247,7 @@ public class MockFixtures {
 
     public static void mockUnauthorizedUpdateCustomerFeedbackAsync(HttpClient mockedClient) throws RuntimeException {
         try {
-            when(requestAsync(mockedClient, "PUT", "v1/completion_feedback/[^/]*"))
+            when(requestAsync(mockedClient, "POST", "v2/projects/[^/]*/completion-feedback/id/[^/]*"))
                     .thenReturn(asyncResponse(401, ""));
         } catch (Exception e) {
             throw new RuntimeException(e);
