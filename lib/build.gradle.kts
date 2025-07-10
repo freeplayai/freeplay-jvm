@@ -1,3 +1,7 @@
+import java.net.HttpURLConnection
+import java.net.URL
+import java.util.*
+
 plugins {
     `java-library`
     `maven-publish`
@@ -112,8 +116,8 @@ publishing {
 
     repositories {
         maven {
-            name = "OSSRH"
-            url = uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/")
+            name = "ossrh-staging-api"
+            url = uri("https://ossrh-staging-api.central.sonatype.com/service/local/staging/deploy/maven2/")
             credentials {
                 username = (project.properties["ossrhUsername"] ?: "").toString()
                 password = (project.properties["ossrhPassword"] ?: "").toString()
@@ -128,11 +132,54 @@ signing {
     sign(publishing.publications["mavenJava"])
 }
 
+
+
+tasks.register("uploadToPortal") {
+    group = "publishing"
+    description = "Upload deployment to Central Publisher Portal"
+
+    doLast {
+        val username = (project.properties["ossrhUsername"] ?: "").toString()
+        val password = (project.properties["ossrhPassword"] ?: "").toString()
+        val namespace = "ai.freeplay" // Your namespace
+
+        if (username.isNotEmpty() && password.isNotEmpty()) {
+            val credentials = Base64.getEncoder().encodeToString("$username:$password".toByteArray())
+
+            val url = URL("https://ossrh-staging-api.central.sonatype.com/manual/upload/defaultRepository/$namespace")
+            val connection = url.openConnection() as HttpURLConnection
+
+            connection.requestMethod = "POST"
+            connection.setRequestProperty("Authorization", "Bearer $credentials")
+            connection.setRequestProperty("Content-Type", "application/json")
+            connection.doOutput = true
+
+            // Optional: specify publishing type (user_managed, automatic, or portal_api)
+            val requestBody = """{"publishing_type": "user_managed"}"""
+            connection.outputStream.use { it.write(requestBody.toByteArray()) }
+
+            val responseCode = connection.responseCode
+            if (responseCode == 200 || responseCode == 201) {
+                println("Successfully uploaded to Portal")
+            } else {
+                val errorResponse = connection.errorStream?.bufferedReader()?.readText() ?: "Unknown error"
+                throw GradleException("Failed to upload to Portal: $responseCode - $errorResponse")
+            }
+        } else {
+            throw GradleException("Missing Portal credentials")
+        }
+    }
+}
+
 tasks.register("publishAll") {
     dependsOn("clean")
     dependsOn("test")
     dependsOn("jar")
     dependsOn("javadocJar")
     dependsOn("sourcesJar")
-    dependsOn("publishMavenJavaPublicationToOSSRHRepository")
+    dependsOn("publishMavenJavaPublicationToOssrh-staging-apiRepository")
+    dependsOn("uploadToPortal")
+
+    // Ensure upload happens after publish
+    tasks.findByName("uploadToPortal")?.mustRunAfter("publishMavenJavaPublicationToOssrh-staging-apiRepository")
 }
