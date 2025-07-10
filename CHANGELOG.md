@@ -2,6 +2,13 @@
 
 Notable additions, fixes, or breaking changes to the Freeplay SDK.
 
+## [0.3.1] - 2025-07-10
+
+### Fixed
+
+- Fixed a precision issue in CallInfo that caused leading "0"s in the millisecond position to be dropped from startTime
+  and endTime, resulting in incorrectly calculated latencies.
+
 ## [0.3.0] - 2025-06-26
 
 ### Breaking changes
