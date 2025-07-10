@@ -899,6 +899,49 @@ public class ThinClientTest extends HttpClientTestBase {
     }
 
     @Test
+    public void testCallInfoPrecisionWithLeadingZeros() {
+        long startTime = 1749762235009L; // 009 milliseconds
+        long endTime = 1749762235339L;   // 339 milliseconds
+
+        Map<String, Object> modelParams = Map.of("model", "test-model");
+
+        CallInfo callInfo = new CallInfo(
+                "test-provider",
+                "test-model",
+                startTime,
+                endTime,
+                modelParams
+        );
+
+        // What the values should be (in seconds with proper decimal places)
+        double expectedStartTime = startTime / 1000.0; // 1749762235.009
+        double expectedEndTime = endTime / 1000.0;     // 1749762235.339
+
+        assertEquals("Start time should preserve leading zero milliseconds (1749762235.009)",
+                expectedStartTime, callInfo.getStartTime(), 0.0001);
+        assertEquals("End time should be correct (1749762235.339)",
+                expectedEndTime, callInfo.getEndTime(), 0.0001);
+
+        // The critical bug: start time appears AFTER end time due to precision loss
+        assertTrue("Start time should be before end time",
+                callInfo.getStartTime() < callInfo.getEndTime());
+
+        // Test more edge cases with leading zeros
+        testLeadingZeroCase(1000000001L); // 001 milliseconds
+        testLeadingZeroCase(1000000010L); // 010 milliseconds
+        testLeadingZeroCase(1000000100L); // 100 milliseconds (should work)
+    }
+
+    private void testLeadingZeroCase(long millisTimestamp) {
+        CallInfo callInfo = new CallInfo("provider", "model", millisTimestamp, millisTimestamp + 100, Map.of());
+        double expected = millisTimestamp / 1000.0;
+        double actual = callInfo.getStartTime();
+
+        assertEquals("Timestamp " + millisTimestamp + " should preserve precision",
+                expected, actual, 0.0001);
+    }
+
+    @Test
     public void testInvalidCustomerFeedback() {
         withMockedClient((HttpClient mockedClient) -> {
             String completionId = UUID.randomUUID().toString();

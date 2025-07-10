@@ -4,7 +4,6 @@ import ai.freeplay.client.thin.resources.prompts.PromptInfo;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 
-import java.time.Instant;
 import java.util.Map;
 
 @SuppressWarnings("FieldCanBeLocal")
@@ -18,11 +17,6 @@ public class CallInfo {
     private Map<String, Object> providerInfo;
     private UsageTokens usage;
     private ApiStyle apiStyle;
-
-
-    public static double instantToDouble(Instant instant) {
-        return Double.parseDouble(instant.getEpochSecond() + "." + instant.getNano());
-    }
 
     public static CallInfo from(PromptInfo promptInfo, long startTime, long endTime) {
         return new CallInfo(
@@ -43,8 +37,8 @@ public class CallInfo {
     ) {
         this.provider = provider;
         this.model = model;
-        this.startTime = instantToDouble(Instant.ofEpochMilli(startTime));
-        this.endTime = instantToDouble(Instant.ofEpochMilli(endTime));
+        this.startTime = startTime / 1000.0;
+        this.endTime = endTime / 1000.0;
         this.modelParameters = modelParameters;
     }
 
