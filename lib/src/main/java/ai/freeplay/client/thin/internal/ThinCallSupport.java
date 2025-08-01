@@ -87,15 +87,18 @@ public class ThinCallSupport {
                         ? null
                         : recordPayload.getTestRunInfo().getTestCaseId();
 
-        RecordDTO.ResponseInfoDTO responseInfo = new RecordDTO.ResponseInfoDTO(
-                recordPayload.getResponseInfo().isComplete(),
-                recordPayload.getResponseInfo().getFunctionCall() != null ? new RecordDTO.OpenAIFunctionCallDTO(
-                        recordPayload.getResponseInfo().getFunctionCall().getName(),
-                        recordPayload.getResponseInfo().getFunctionCall().getArguments()
-                ) : null,
-                recordPayload.getResponseInfo().getPromptTokens(),
-                recordPayload.getResponseInfo().getResponseTokens()
-        );
+        RecordDTO.ResponseInfoDTO responseInfo = null;
+        if (recordPayload.getResponseInfo() != null) {
+            responseInfo = new RecordDTO.ResponseInfoDTO(
+                    recordPayload.getResponseInfo().isComplete(),
+                    recordPayload.getResponseInfo().getFunctionCall() != null ? new RecordDTO.OpenAIFunctionCallDTO(
+                            recordPayload.getResponseInfo().getFunctionCall().getName(),
+                            recordPayload.getResponseInfo().getFunctionCall().getArguments()
+                    ) : null,
+                    recordPayload.getResponseInfo().getPromptTokens(),
+                    recordPayload.getResponseInfo().getResponseTokens()
+            );
+        }
 
         Map<String, RecordDTO.MediaInputDTO> mediaInputs = new HashMap<>();
         if (recordPayload.getMediaInputCollection() != null) {
@@ -104,26 +107,49 @@ public class ThinCallSupport {
             }
         }
 
+        // Handle optional PromptInfo
+        RecordDTO.PromptInfoDTO promptInfoDTO = null;
+        if (recordPayload.getPromptInfo() != null) {
+            promptInfoDTO = new RecordDTO.PromptInfoDTO(
+                    recordPayload.getPromptInfo().getPromptTemplateId(),
+                    recordPayload.getPromptInfo().getPromptTemplateVersionId(),
+                    recordPayload.getPromptInfo().getTemplateName(),
+                    recordPayload.getPromptInfo().getEnvironment(),
+                    recordPayload.getPromptInfo().getModelParameters(),
+                    recordPayload.getPromptInfo().getProviderInfo(),
+                    recordPayload.getPromptInfo().getProvider(),
+                    recordPayload.getPromptInfo().getModel(),
+                    recordPayload.getPromptInfo().getFlavorName(),
+                    recordPayload.getProjectId()
+            );
+        }
+
+        // Handle optional CallInfo
+        RecordDTO.CallInfoDTO callInfoDTO = null;
+        if (recordPayload.getCallInfo() != null) {
+            callInfoDTO = new RecordDTO.CallInfoDTO(
+                    recordPayload.getCallInfo().getProvider(),
+                    recordPayload.getCallInfo().getModel(),
+                    recordPayload.getCallInfo().getStartTime(),
+                    recordPayload.getCallInfo().getEndTime(),
+                    recordPayload.getCallInfo().getModelParameters()
+            ).providerInfo(
+                    recordPayload.getCallInfo().getProviderInfo()
+            ).usage(
+                    recordPayload.getCallInfo().getUsage() != null ?
+                            new RecordDTO.CallInfoDTO.UsageTokensDTO(
+                                    recordPayload.getCallInfo().getUsage().getPromptTokens(),
+                                    recordPayload.getCallInfo().getUsage().getCompletionTokens()
+                            ) : null
+            ).apiStyle(recordPayload.getCallInfo().getApiStyle());
+        }
+
         RecordDTO payload = new RecordDTO(
                 recordPayload.getAllMessages(),
                 recordPayload.getInputs(),
                 new RecordDTO.SessionInfoDTO(recordPayload.getSessionInfo().getSessionId(), recordPayload.getSessionInfo().getCustomMetadata()),
-                new RecordDTO.PromptInfoDTO(recordPayload.getPromptInfo().getPromptTemplateId(), recordPayload.getPromptInfo().getPromptTemplateVersionId(),
-                        recordPayload.getPromptInfo().getTemplateName(), recordPayload.getPromptInfo().getEnvironment(),
-                        recordPayload.getPromptInfo().getModelParameters(), recordPayload.getPromptInfo().getProviderInfo(),
-                        recordPayload.getPromptInfo().getProvider(), recordPayload.getPromptInfo().getModel(),
-                        recordPayload.getPromptInfo().getFlavorName(), recordPayload.getPromptInfo().getProjectId()),
-                new RecordDTO.CallInfoDTO(recordPayload.getCallInfo().getProvider(), recordPayload.getCallInfo().getModel(),
-                        recordPayload.getCallInfo().getStartTime(), recordPayload.getCallInfo().getEndTime(), recordPayload.getCallInfo().getModelParameters()
-                ).providerInfo(
-                        recordPayload.getCallInfo().getProviderInfo()
-                ).usage(
-                        recordPayload.getCallInfo().getUsage() != null ?
-                                new RecordDTO.CallInfoDTO.UsageTokensDTO(
-                                        recordPayload.getCallInfo().getUsage().getPromptTokens(),
-                                        recordPayload.getCallInfo().getUsage().getCompletionTokens()
-                                ) : null
-                ).apiStyle(recordPayload.getCallInfo().getApiStyle()),
+                promptInfoDTO,
+                callInfoDTO,
                 responseInfo,
                 testRunId != null ? new RecordDTO.TestRunInfoDTO(testRunId, testCaseId) : null,
                 recordPayload.getEvalResults(),
@@ -134,7 +160,7 @@ public class ThinCallSupport {
         );
 
         return AsyncHttp.postJson(
-                format("%s/v2/projects/%s/sessions/%s/completions", baseUrl, recordPayload.getPromptInfo().getProjectId(), recordPayload.getSessionInfo().getSessionId()),
+                format("%s/v2/projects/%s/sessions/%s/completions", baseUrl, recordPayload.getProjectId(), recordPayload.getSessionInfo().getSessionId()),
                 freeplayApiKey,
                 httpConfig,
                 payload

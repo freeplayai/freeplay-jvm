@@ -53,6 +53,7 @@ public class ThinTestRunHistoryExample {
                                                     .map(testCase ->
                                                             handleTestCase(
                                                                     fpClient,
+                                                                    projectId,
                                                                     anthropicApiKey,
                                                                     templatePrompt,
                                                                     testRun,
@@ -73,6 +74,7 @@ public class ThinTestRunHistoryExample {
 
     private static CompletableFuture<RecordResponse> handleTestCase(
             Freeplay fpClient,
+            String projectId,
             String anthropicApiKey,
             TemplatePrompt templatePrompt,
             TestRun testRun,
@@ -92,12 +94,13 @@ public class ThinTestRunHistoryExample {
                 formattedPrompt.getFormattedPrompt(),
                 formattedPrompt.getSystemContent().orElse(null)
         ).thenCompose((HttpResponse<String> response) ->
-                recordAnthropic(fpClient, testRun, testCase, formattedPrompt, startTime, response)
+                recordAnthropic(fpClient, projectId, testRun, testCase, formattedPrompt, startTime, response)
         );
     }
 
     private static CompletableFuture<RecordResponse> recordAnthropic(
             Freeplay fpClient,
+            String projectId,
             TestRun testRun,
             TestCase testCase,
             FormattedPrompt<List<ChatMessage>> formattedPrompt,
@@ -124,18 +127,17 @@ public class ThinTestRunHistoryExample {
         ResponseInfo responseInfo = new ResponseInfo(
                 "stop_sequence".equals(bodyNode.path("stop_reason").asText())
         );
-        SessionInfo sessionInfo = fpClient.sessions().create().getSessionInfo();
 
         System.out.println("Completion: " + bodyNode.path("content").get(0).path("text").asText());
 
         return fpClient.recordings().create(
                 new RecordInfo(
-                        allMessages,
-                        testCase.getVariables(),
-                        sessionInfo,
-                        formattedPrompt.getPromptInfo(),
-                        callInfo,
-                        responseInfo
-                ).testRunInfo(testRun.getTestRunInfo(testCase.getTestCaseId())));
+                        projectId,
+                        allMessages
+                ).inputs(testCase.getVariables())
+                        .promptInfo(formattedPrompt.getPromptInfo())
+                        .callInfo(callInfo)
+                        .responseInfo(responseInfo)
+                        .testRunInfo(testRun.getTestRunInfo(testCase.getTestCaseId())));
     }
 }

@@ -92,13 +92,12 @@ public class ThinDeleteSession {
 
                             CompletableFuture<RecordResponse> recordResponse = fpClient.recordings().create(
                                         new RecordInfo(
-                                                allMessages,
-                                                variables,
-                                                sessionInfo,
-                                                formattedPrompt.getPromptInfo(),
-                                                callInfo,
-                                                responseInfo
-                                        ));
+                                                projectId,
+                                                allMessages
+                                        ).inputs(variables)
+                                                .promptInfo(formattedPrompt.getPromptInfo())
+                                                .callInfo(callInfo)
+                                                .responseInfo(responseInfo));
                             System.out.println("Recorded call succeeded with completionId: " + recordResponse.join().getCompletionId());
                             return fpClient.sessions().delete(projectId, sessionInfo.getSessionId());
                         }

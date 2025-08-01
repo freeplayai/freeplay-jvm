@@ -14,13 +14,14 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 public class RecordInfo {
+    private final String projectId;
     private final List<ChatMessage> allMessages;
-    private final Map<String, Object> inputs;
-    private final SessionInfo sessionInfo;
+    private Map<String, Object> inputs;
+    private SessionInfo sessionInfo;
 
-    private final PromptInfo promptInfo;
-    private final CallInfo callInfo;
-    private final ResponseInfo responseInfo;
+    private PromptInfo promptInfo;
+    private CallInfo callInfo;
+    private ResponseInfo responseInfo;
     private TestRunInfo testRunInfo;
     private Map<String, Object> evalResults;
 
@@ -31,6 +32,21 @@ public class RecordInfo {
     private MediaInputCollection mediaInputCollection;
 
     public RecordInfo(
+            String projectId,
+            List<ChatMessage> allMessages
+    ) {
+        this.projectId = projectId;
+        this.allMessages = allMessages;
+        this.sessionInfo = new SessionInfo(UUID.randomUUID().toString(), null); 
+        this.inputs = null;
+        this.promptInfo = null;
+        this.callInfo = null;
+        this.responseInfo = null;
+    }
+
+    // Builder-style constructor for optional fields
+    private RecordInfo(
+            String projectId,
             List<ChatMessage> allMessages,
             Map<String, Object> inputs,
             SessionInfo sessionInfo,
@@ -38,6 +54,7 @@ public class RecordInfo {
             CallInfo callInfo,
             ResponseInfo responseInfo
     ) {
+        this.projectId = projectId;
         this.allMessages = allMessages;
         this.inputs = inputs;
         this.sessionInfo = sessionInfo;
@@ -47,6 +64,7 @@ public class RecordInfo {
     }
 
     public static RecordInfo fromGeminiContent(
+            String projectId,
             List<Content> contents,
             Map<String, Object> inputs,
             SessionInfo sessionInfo,
@@ -58,7 +76,32 @@ public class RecordInfo {
                 .map(GeminiLLMAdapter::chatMessageFromContent)
                 .collect(Collectors.toList());
 
-        return new RecordInfo(messages, inputs, sessionInfo, promptInfo, callInfo, responseInfo);
+        return new RecordInfo(projectId, messages, inputs, sessionInfo, promptInfo, callInfo, responseInfo);
+    }
+
+    public RecordInfo sessionInfo(SessionInfo sessionInfo) {
+        this.sessionInfo = sessionInfo;
+        return this;
+    }
+
+    public RecordInfo inputs(Map<String, Object> inputs) {
+        this.inputs = inputs;
+        return this;
+    }
+
+    public RecordInfo promptInfo(PromptInfo promptInfo) {
+        this.promptInfo = promptInfo;
+        return this;
+    }
+
+    public RecordInfo callInfo(CallInfo callInfo) {
+        this.callInfo = callInfo;
+        return this;
+    }
+
+    public RecordInfo responseInfo(ResponseInfo responseInfo) {
+        this.responseInfo = responseInfo;
+        return this;
     }
 
     public RecordInfo testRunInfo(TestRunInfo testRunInfo) {
@@ -93,6 +136,10 @@ public class RecordInfo {
 
     public List<ChatMessage> getAllMessages() {
         return allMessages;
+    }
+
+    public String getProjectId() {
+        return projectId;
     }
 
     public Map<String, Object> getInputs() {
@@ -142,7 +189,8 @@ public class RecordInfo {
     @Override
     public String toString() {
         return "RecordInfo{" +
-                "allMessages=" + allMessages +
+                "projectId='" + projectId + '\'' +
+                ", allMessages=" + allMessages +
                 ", completionId=" + completionId +
                 ", inputs=" + inputs +
                 ", sessionInfo=" + sessionInfo +

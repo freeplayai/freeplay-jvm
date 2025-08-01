@@ -89,13 +89,13 @@ public class ThinFeedbackExample {
 
                             return fpClient.recordings().create(
                                             new RecordInfo(
-                                                    allMessages,
-                                                    variables,
-                                                    sessionInfo,
-                                                    formattedPrompt.getPromptInfo(),
-                                                    callInfo,
-                                                    responseInfo
-                                            ))
+                                                    projectId,
+                                                    allMessages
+                                            ).inputs(variables)
+                                                    .sessionInfo(sessionInfo)
+                                                    .promptInfo(formattedPrompt.getPromptInfo())
+                                                    .callInfo(callInfo)
+                                                    .responseInfo(responseInfo))
                                     .thenCompose(recordResponse ->
                                             fpClient.customerFeedback().update(
                                                             projectId,

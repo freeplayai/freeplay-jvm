@@ -79,16 +79,14 @@ public class ThinOpenAIWithImageExample {
         CallInfo callInfo = CallInfo.from(prompt.getPromptInfo(), startTime, endTime);
         ResponseInfo responseInfo = new ResponseInfo(true);
 
-        SessionInfo sessionInfo = fpClient.sessions().create().getSessionInfo();
         fpClient.recordings().create(
                 new RecordInfo(
-                        messages,
-                        variables,
-                        sessionInfo,
-                        prompt.getPromptInfo(),
-                        callInfo,
-                        responseInfo
-                )
+                        projectId,
+                        messages
+                ).inputs(variables)
+                        .promptInfo(prompt.getPromptInfo())
+                        .callInfo(callInfo)
+                        .responseInfo(responseInfo)
         ).get();
     }
 }

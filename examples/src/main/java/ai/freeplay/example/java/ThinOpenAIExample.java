@@ -95,13 +95,14 @@ public class ThinOpenAIExample {
 
                             return fpClient.recordings().create(
                                     new RecordInfo(
-                                            allMessages,
-                                            variables,
-                                            sessionInfo,
-                                            formattedPrompt.getPromptInfo(),
-                                            callInfo,
-                                            responseInfo
-                                    ).toolSchema(formattedPrompt.getToolSchema()));
+                                            projectId,
+                                            allMessages
+                                    ).inputs(variables)
+                                            .sessionInfo(sessionInfo)
+                                            .promptInfo(formattedPrompt.getPromptInfo())
+                                            .callInfo(callInfo)
+                                            .responseInfo(responseInfo)
+                                            .toolSchema(formattedPrompt.getToolSchema()));
                         }
                 )
                 .exceptionally(exception -> {

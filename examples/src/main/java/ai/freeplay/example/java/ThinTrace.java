@@ -91,14 +91,13 @@ public class ThinTrace {
                             System.out.println("Completion: " + output);
 
                             RecordInfo recordInfo = new RecordInfo(
-                                    allMessages,
-                                    variables,
-                                    session.getSessionInfo(),
-                                    formattedPrompt.getPromptInfo(),
-                                    callInfo,
-                                    responseInfo
-                            );
-                            recordInfo.traceInfo(traceInfo);
+                                    projectId,
+                                    allMessages
+                            ).inputs(variables)
+                                    .promptInfo(formattedPrompt.getPromptInfo())
+                                    .callInfo(callInfo)
+                                    .responseInfo(responseInfo)
+                                    .traceInfo(traceInfo);
 
                             fpClient.recordings().create(recordInfo);
 

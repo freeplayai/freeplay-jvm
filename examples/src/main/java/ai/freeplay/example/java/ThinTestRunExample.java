@@ -61,6 +61,7 @@ public class ThinTestRunExample {
                                                     .map(testCase ->
                                                             handleTestCase(
                                                                     fpClient,
+                                                                    projectId,
                                                                     anthropicApiKey,
                                                                     templatePrompt,
                                                                     testRun,
@@ -81,6 +82,7 @@ public class ThinTestRunExample {
 
     private static CompletableFuture<RecordResponse> handleTestCase(
             Freeplay fpClient,
+            String projectId,
             String anthropicApiKey,
             TemplatePrompt templatePrompt,
             TestRun testRun,
@@ -100,7 +102,7 @@ public class ThinTestRunExample {
                 formattedPrompt.getSystemContent().orElse(null),
                 formattedPrompt.getToolSchema()
         ).thenCompose((HttpResponse<String> response) ->
-                recordAnthropic(fpClient, testRun, session, testCase, formattedPrompt, startTime, response)
+                recordAnthropic(fpClient, projectId, testRun, session, testCase, formattedPrompt, startTime, response)
                 .thenCompose(recordResponse -> {
                     JsonNode firstBodyNode;
                     try {
@@ -144,7 +146,7 @@ public class ThinTestRunExample {
                             new ChatMessage("assistant", secondBodyNode.path("completion").asText())
                         );
 
-                        return recordAnthropic(fpClient, testRun, session, testCase, formattedPrompt, startTime, secondResponse);
+                        return recordAnthropic(fpClient, projectId, testRun, session, testCase, formattedPrompt, startTime, secondResponse);
                     });
                 })
         );
@@ -152,6 +154,7 @@ public class ThinTestRunExample {
 
     private static CompletableFuture<RecordResponse> recordAnthropic(
             Freeplay fpClient,
+            String projectId,
             TestRun testRun,
             Session session,
             TestCase testCase,
@@ -179,19 +182,18 @@ public class ThinTestRunExample {
         ResponseInfo responseInfo = new ResponseInfo(
                 "stop_sequence".equals(bodyNode.path("stop_reason").asText())
         );
-        SessionInfo sessionInfo = session.getSessionInfo();
 
         System.out.println("Completion: " + bodyNode.path("completion").asText());
 
         return fpClient.recordings().create(
                 new RecordInfo(
-                        allMessages,
-                        testCase.getVariables(),
-                        sessionInfo,
-                        formattedPrompt.getPromptInfo(),
-                        callInfo,
-                        responseInfo
-                ).toolSchema(formattedPrompt.getToolSchema())
+                        projectId,
+                        allMessages
+                ).inputs(testCase.getVariables())
+                        .promptInfo(formattedPrompt.getPromptInfo())
+                        .callInfo(callInfo)
+                        .responseInfo(responseInfo)
+                        .toolSchema(formattedPrompt.getToolSchema())
                         .testRunInfo(testRun.getTestRunInfo(testCase.getTestCaseId())));
     }
 }

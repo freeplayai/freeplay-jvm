@@ -68,13 +68,14 @@ fun main(): Unit = runBlocking {
 
     val recordResponse = fpClient.recordings().create(
         RecordInfo(
-            allMessages,
-            variables,
-            session.sessionInfo,
-            prompt.getPromptInfo(),
-            callInfo,
-            responseInfo
-        ).traceInfo(trace)
+            projectId,
+            allMessages
+        ).inputs(variables)
+            .sessionInfo(session.sessionInfo)
+            .promptInfo(prompt.getPromptInfo())
+            .callInfo(callInfo)
+            .responseInfo(responseInfo)
+            .traceInfo(trace)
     ).await()
 
     trace.recordOutput(projectId, "output str").await()

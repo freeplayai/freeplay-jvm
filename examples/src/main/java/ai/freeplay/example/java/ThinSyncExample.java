@@ -57,6 +57,7 @@ public class ThinSyncExample {
 
         RecordResponse recordResponse = recordResult(
                 fpClient,
+                projectId,
                 prompt,
                 variables,
                 startTime,
@@ -67,6 +68,7 @@ public class ThinSyncExample {
 
     public static CompletableFuture<RecordResponse> recordResult(
             Freeplay fpClient,
+            String projectId,
             FormattedPrompt<List<ChatMessage>> formattedPrompt, Map<String, Object> variables, long startTime, HttpResponse<String> response
     ) {
         JsonNode bodyNode;
@@ -96,12 +98,12 @@ public class ThinSyncExample {
 
         return fpClient.recordings().create(
                 new RecordInfo(
-                        allMessages,
-                        variables,
-                        sessionInfo,
-                        formattedPrompt.getPromptInfo(),
-                        callInfo,
-                        responseInfo
-                ));
+                        projectId,
+                        allMessages
+                ).inputs(variables)
+                        .sessionInfo(sessionInfo)
+                        .promptInfo(formattedPrompt.getPromptInfo())
+                        .callInfo(callInfo)
+                        .responseInfo(responseInfo));
     }
 }

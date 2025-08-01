@@ -133,14 +133,13 @@ public class OpenAIWithMediaTest {
         List<ChatMessage> sentMessages = new ArrayList<>(formattedPrompt.getFormattedPrompt());
         sentMessages.add(new ChatMessage("assistant", responseContent));
 
-        Session session = freeplay.sessions().create();
         return freeplay.recordings().create(new RecordInfo(
-                sentMessages,
-                variables,
-                session.getSessionInfo(),
-                formattedPrompt.getPromptInfo(),
-                CallInfo.from(formattedPrompt.getPromptInfo(), System.currentTimeMillis() - 1_000, System.currentTimeMillis()),
-                new ResponseInfo(true))
+                projectId,
+                sentMessages)
+                .inputs(variables)
+                .promptInfo(formattedPrompt.getPromptInfo())
+                .callInfo(CallInfo.from(formattedPrompt.getPromptInfo(), System.currentTimeMillis() - 1_000, System.currentTimeMillis()))
+                .responseInfo(new ResponseInfo(true))
                 .mediaInputCollection(media)
         ).get();
     }

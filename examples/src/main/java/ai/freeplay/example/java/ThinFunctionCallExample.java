@@ -98,19 +98,17 @@ public class ThinFunctionCallExample {
                             ResponseInfo responseInfo = new ResponseInfo(
                                     "stop".equals(bodyNode.path("finish_reason").asText())
                             ).functionCall(new OpenAIFunctionCall(functionName, functionArgs));
-                            SessionInfo sessionInfo = fpClient.sessions().create().getSessionInfo();
 
                             System.out.printf("Function call: %s(%s)%n", functionName, functionArgs);
 
                             return fpClient.recordings().create(
                                     new RecordInfo(
-                                            formattedPrompt.getBoundMessages(),
-                                            variables,
-                                            sessionInfo,
-                                            formattedPrompt.getPromptInfo(),
-                                            callInfo,
-                                            responseInfo
-                                    ));
+                                            projectId,
+                                            formattedPrompt.getBoundMessages()
+                                    ).inputs(variables)
+                                            .promptInfo(formattedPrompt.getPromptInfo())
+                                            .callInfo(callInfo)
+                                            .responseInfo(responseInfo));
                         }
                 )
                 .exceptionally(exception -> {

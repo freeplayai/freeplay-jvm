@@ -64,6 +64,7 @@ public class ThinExtractedExample {
                 llmFuture.thenCompose((Tuple2<FormattedPrompt<List<ChatMessage>>, HttpResponse<String>> promptAndResponse) ->
                         recordResult(
                                 fpClient,
+                                projectId,
                                 promptAndResponse.first, variables, startTime, promptAndResponse.second
                         )
                 );
@@ -81,6 +82,7 @@ public class ThinExtractedExample {
 
     public static CompletableFuture<RecordResponse> recordResult(
             Freeplay fpClient,
+            String projectId,
             FormattedPrompt<List<ChatMessage>> formattedPrompt,
             Map<String, Object> variables,
             long startTime,
@@ -113,12 +115,12 @@ public class ThinExtractedExample {
 
         return fpClient.recordings().create(
                 new RecordInfo(
-                        allMessages,
-                        variables,
-                        sessionInfo,
-                        formattedPrompt.getPromptInfo(),
-                        callInfo,
-                        responseInfo
-                ));
+                        projectId,
+                        allMessages
+                ).inputs(variables)
+                        .sessionInfo(sessionInfo)
+                        .promptInfo(formattedPrompt.getPromptInfo())
+                        .callInfo(callInfo)
+                        .responseInfo(responseInfo));
     }
 }

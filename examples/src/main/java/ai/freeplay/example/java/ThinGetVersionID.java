@@ -90,13 +90,13 @@ public class ThinGetVersionID {
 
                             return fpClient.recordings().create(
                                     new RecordInfo(
-                                            allMessages,
-                                            variables,
-                                            copySessionInfo,
-                                            formattedPrompt.getPromptInfo(),
-                                            callInfo,
-                                            responseInfo
-                                    ));
+                                            projectId,
+                                            allMessages
+                                    ).inputs(variables)
+                                            .sessionInfo(sessionInfo)
+                                            .promptInfo(formattedPrompt.getPromptInfo())
+                                            .callInfo(callInfo)
+                                            .responseInfo(responseInfo));
                         }
                 )
                 .exceptionally(exception -> {

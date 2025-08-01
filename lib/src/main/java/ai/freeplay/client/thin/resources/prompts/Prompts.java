@@ -220,8 +220,7 @@ public class Prompts {
                 params,
                 llmAdapter.getProvider(),
                 model,
-                template.getMetadata().getFlavor(),
-                projectId
+                template.getMetadata().getFlavor()
         ).providerInfo(template.getMetadata().getProviderInfo());
 
         return new TemplatePrompt(

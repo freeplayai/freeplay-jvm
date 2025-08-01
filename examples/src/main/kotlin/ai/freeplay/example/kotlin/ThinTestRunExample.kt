@@ -59,13 +59,14 @@ fun main(): Unit = runBlocking {
 
         val recordResponse = fpClient.recordings().create(
             RecordInfo(
-                allMessages,
-                testCase.variables,
-                sessionInfo,
-                formattedPrompt.getPromptInfo(),
-                callInfo,
-                responseInfo
-            ).testRunInfo(testRun.getTestRunInfo(testCase.testCaseId))
+                projectId,
+                allMessages
+            ).inputs(testCase.variables)
+                .sessionInfo(sessionInfo)
+                .promptInfo(formattedPrompt.getPromptInfo())
+                .callInfo(callInfo)
+                .responseInfo(responseInfo)
+                .testRunInfo(testRun.getTestRunInfo(testCase.testCaseId))
         ).await()
         println("Recorded with completionId ${recordResponse.completionId}")
     }

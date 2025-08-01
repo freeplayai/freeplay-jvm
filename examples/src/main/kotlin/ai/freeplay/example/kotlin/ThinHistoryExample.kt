@@ -92,13 +92,13 @@ fun main(): Unit = runBlocking {
 
         val recordResponse = fpClient.recordings().create(
                 RecordInfo(
-                        allMessages,
-                        variables,
-                        sessionInfo,
-                        formatted.getPromptInfo(),
-                        callInfo,
-                        responseInfo
-                )
+                        projectId,
+                        allMessages
+                ).inputs(variables)
+                        .sessionInfo(sessionInfo)
+                        .promptInfo(formatted.getPromptInfo())
+                        .callInfo(callInfo)
+                        .responseInfo(responseInfo)
         ).await()
 
     }

@@ -72,8 +72,7 @@ public class ThinClientTest extends HttpClientTestBase {
                     Map.of(),
                     "openai",
                     MODEL_GPT_35_TURBO,
-                    "openai_chat",
-                    projectId
+                    "openai_chat"
             ).providerInfo(Map.of("provider", "info"));
             assertEquals(expectedInfo, templatePrompt.getPromptInfo());
 
@@ -310,14 +309,15 @@ public class ThinClientTest extends HttpClientTestBase {
             Session session = fpClient.sessions().create()
                     .customMetadata(customMetadata);
 
-            RecordInfo recordInfo = new RecordInfo(
-                    allMessages,
-                    variables,
-                    session.getSessionInfo(),
-                    prompt.getPromptInfo(),
-                    callInfo,
-                    responseInfo
-            ).evalResults(evalResults);
+                        RecordInfo recordInfo = new RecordInfo(
+                    projectId,
+                    allMessages
+            ).sessionInfo(session.getSessionInfo())
+                    .inputs(variables)
+                    .promptInfo(prompt.getPromptInfo())
+                    .callInfo(callInfo)
+                    .responseInfo(responseInfo)
+                    .evalResults(evalResults);
             CompletableFuture<RecordResponse> recordFuture = fpClient.recordings().create(recordInfo);
 
             // Assertions
@@ -332,7 +332,7 @@ public class ThinClientTest extends HttpClientTestBase {
                             prompt.getPromptInfo().getTemplateName(), prompt.getPromptInfo().getEnvironment(),
                             prompt.getPromptInfo().getModelParameters(), prompt.getPromptInfo().getProviderInfo(),
                             prompt.getPromptInfo().getProvider(), prompt.getPromptInfo().getModel(),
-                            prompt.getPromptInfo().getFlavorName(), prompt.getPromptInfo().getProjectId()),
+                            prompt.getPromptInfo().getFlavorName(), projectId),
                     new RecordDTO.CallInfoDTO(
                             callInfo.getProvider(),
                             callInfo.getModel(),
@@ -388,13 +388,13 @@ public class ThinClientTest extends HttpClientTestBase {
             Session session = fpClient.sessions().create();
             CompletableFuture<RecordResponse> recordFuture = fpClient.recordings().create(
                     new RecordInfo(
-                            fixtures.getAllMessages(),
-                            variables,
-                            session.getSessionInfo(),
-                            fixtures.getPromptInfo(),
-                            fixtures.getCallInfo(),
-                            fixtures.getResponseInfo()
-                    ));
+                            projectId,
+                            fixtures.getAllMessages()
+                    ).sessionInfo(session.getSessionInfo())
+                    .inputs(variables)
+                    .promptInfo(fixtures.getPromptInfo())
+                    .callInfo(fixtures.getCallInfo())
+                    .responseInfo(fixtures.getResponseInfo()));
 
             // Assertions
             assertNotNull(recordFuture.get().getCompletionId());
@@ -407,7 +407,7 @@ public class ThinClientTest extends HttpClientTestBase {
                             fixtures.getPromptInfo().getTemplateName(), fixtures.getPromptInfo().getEnvironment(),
                             fixtures.getPromptInfo().getModelParameters(), fixtures.getPromptInfo().getProviderInfo(),
                             fixtures.getPromptInfo().getProvider(), fixtures.getPromptInfo().getModel(),
-                            fixtures.getPromptInfo().getFlavorName(), fixtures.getPromptInfo().getProjectId()),
+                            fixtures.getPromptInfo().getFlavorName(), projectId),
                     new RecordDTO.CallInfoDTO(fixtures.getCallInfo().getProvider(), fixtures.getCallInfo().getModel(),
                             fixtures.getCallInfo().getStartTime(), fixtures.getCallInfo().getEndTime(), fixtures.getCallInfo().getModelParameters()).providerInfo(fixtures.getCallInfo().getProviderInfo()),
                     new RecordDTO.ResponseInfoDTO(fixtures.getResponseInfo().isComplete(), null,
@@ -446,13 +446,13 @@ public class ThinClientTest extends HttpClientTestBase {
             Session session = fpClient.sessions().create();
             CompletableFuture<RecordResponse> recordFuture = fpClient.recordings().create(
                     new RecordInfo(
-                            fixtures.getAllMessages(),
-                            variables,
-                            session.getSessionInfo(),
-                            fixtures.getPromptInfo(),
-                            fixtures.getCallInfo(),
-                            fixtures.getResponseInfo()
-                    ).testRunInfo(new TestRunInfo(testRunId, testCaseId)));
+                            projectId,
+                            fixtures.getAllMessages()
+                    ).sessionInfo(session.getSessionInfo())
+                    .inputs(variables)
+                    .promptInfo(fixtures.getPromptInfo())
+                    .callInfo(fixtures.getCallInfo())
+                    .responseInfo(fixtures.getResponseInfo()).testRunInfo(new TestRunInfo(testRunId, testCaseId)));
 
             // Assertions
             assertNotNull(recordFuture.get().getCompletionId());
@@ -465,7 +465,7 @@ public class ThinClientTest extends HttpClientTestBase {
                             fixtures.getPromptInfo().getTemplateName(), fixtures.getPromptInfo().getEnvironment(),
                             fixtures.getPromptInfo().getModelParameters(), fixtures.getPromptInfo().getProviderInfo(),
                             fixtures.getPromptInfo().getProvider(), fixtures.getPromptInfo().getModel(),
-                            fixtures.getPromptInfo().getFlavorName(), fixtures.getPromptInfo().getProjectId()),
+                            fixtures.getPromptInfo().getFlavorName(), projectId),
                     new RecordDTO.CallInfoDTO(fixtures.getCallInfo().getProvider(), fixtures.getCallInfo().getModel(),
                             fixtures.getCallInfo().getStartTime(), fixtures.getCallInfo().getEndTime(), fixtures.getCallInfo().getModelParameters()).providerInfo(fixtures
                             .getCallInfo().getProviderInfo()),
@@ -505,13 +505,13 @@ public class ThinClientTest extends HttpClientTestBase {
             Session session = fpClient.sessions().create();
             CompletableFuture<RecordResponse> recordFuture = fpClient.recordings().create(
                     new RecordInfo(
-                            fixtures.getAllMessages(),
-                            variables,
-                            session.getSessionInfo(),
-                            fixtures.getPromptInfo(),
-                            fixtures.getCallInfo(),
-                            fixtures.getResponseInfo()
-                    ));
+                            projectId,
+                            fixtures.getAllMessages()
+                    ).sessionInfo(session.getSessionInfo())
+                    .inputs(variables)
+                    .promptInfo(fixtures.getPromptInfo())
+                    .callInfo(fixtures.getCallInfo())
+                    .responseInfo(fixtures.getResponseInfo()));
 
             // Assertions
             assertNull(recordFuture.get().getCompletionId());
@@ -575,13 +575,13 @@ public class ThinClientTest extends HttpClientTestBase {
                     .customMetadata(customMetadata);
             TraceInfo traceInfo = session.createTrace(input, "agent_name", traceCustomMetadata);
             RecordInfo recordInfo = new RecordInfo(
-                    allMessages,
-                    variables,
-                    session.getSessionInfo(),
-                    prompt.getPromptInfo(),
-                    callInfo,
-                    responseInfo
-            )
+                    projectId,
+                    allMessages
+            ).sessionInfo(session.getSessionInfo())
+                    .inputs(variables)
+                    .promptInfo(prompt.getPromptInfo())
+                    .callInfo(callInfo)
+                    .responseInfo(responseInfo)
                     .evalResults(evalResults)
                     .traceInfo(traceInfo);
             CompletableFuture<RecordResponse> recordFuture = fpClient.recordings().create(recordInfo);
@@ -598,7 +598,7 @@ public class ThinClientTest extends HttpClientTestBase {
                             prompt.getPromptInfo().getTemplateName(), prompt.getPromptInfo().getEnvironment(),
                             prompt.getPromptInfo().getModelParameters(), prompt.getPromptInfo().getProviderInfo(),
                             prompt.getPromptInfo().getProvider(), prompt.getPromptInfo().getModel(),
-                            prompt.getPromptInfo().getFlavorName(), prompt.getPromptInfo().getProjectId()),
+                            prompt.getPromptInfo().getFlavorName(), projectId),
                     new RecordDTO.CallInfoDTO(callInfo.getProvider(), callInfo.getModel(),
                             callInfo.getStartTime(), callInfo.getEndTime(), callInfo.getModelParameters()).providerInfo(callInfo
                             .getProviderInfo()),
@@ -647,13 +647,13 @@ public class ThinClientTest extends HttpClientTestBase {
                     .functionCall(new OpenAIFunctionCall(functionName, arguments));
             CompletableFuture<RecordResponse> recordFuture = fpClient.recordings().create(
                     new RecordInfo(
-                            fixtures.getAllMessages(),
-                            variables,
-                            session.getSessionInfo(),
-                            fixtures.getPromptInfo(),
-                            fixtures.getCallInfo(),
-                            responseInfo
-                    ));
+                            projectId,
+                            fixtures.getAllMessages()
+                    ).sessionInfo(session.getSessionInfo())
+                            .inputs(variables)
+                            .promptInfo(fixtures.getPromptInfo())
+                            .callInfo(fixtures.getCallInfo())
+                            .responseInfo(responseInfo));
 
             // Assertions
             assertNotNull(recordFuture.get().getCompletionId());
@@ -666,7 +666,7 @@ public class ThinClientTest extends HttpClientTestBase {
                             fixtures.getPromptInfo().getTemplateName(), fixtures.getPromptInfo().getEnvironment(),
                             fixtures.getPromptInfo().getModelParameters(), fixtures.getPromptInfo().getProviderInfo(),
                             fixtures.getPromptInfo().getProvider(), fixtures.getPromptInfo().getModel(),
-                            fixtures.getPromptInfo().getFlavorName(), fixtures.getPromptInfo().getProjectId()),
+                            fixtures.getPromptInfo().getFlavorName(), projectId),
                     new RecordDTO.CallInfoDTO(fixtures.getCallInfo().getProvider(), fixtures.getCallInfo().getModel(),
                             fixtures.getCallInfo().getStartTime(), fixtures.getCallInfo().getEndTime(), fixtures.getCallInfo().getModelParameters()).providerInfo(fixtures
                             .getCallInfo().getProviderInfo()),
@@ -707,20 +707,19 @@ public class ThinClientTest extends HttpClientTestBase {
                     "openai", MODEL_GPT_35_TURBO, "openai_chat", null
             );
 
-            Session session = fpClient.sessions().create();
             List<ChatMessage> messages = fixtures.getBoundPrompt()
                     .format(fixtures.getPromptInfo().getFlavorName())
                     .allMessages(toolCallMessage);
 
             CompletableFuture<RecordResponse> recordFuture = fpClient.recordings().create(
                     new RecordInfo(
-                            messages,
-                            variables,
-                            session.getSessionInfo(),
-                            fixtures.getPromptInfo(),
-                            fixtures.getCallInfo(),
-                            fixtures.getResponseInfo()
-                    ).toolSchema(fixtures.getToolSchema()));
+                            projectId,
+                            messages
+                    ).inputs(variables)
+                            .promptInfo(fixtures.getPromptInfo())
+                            .callInfo(fixtures.getCallInfo())
+                            .responseInfo(fixtures.getResponseInfo())
+                            .toolSchema(fixtures.getToolSchema()));
 
             // Assertions
             assertNotNull(recordFuture.get().getCompletionId());
@@ -761,20 +760,19 @@ public class ThinClientTest extends HttpClientTestBase {
                     "openai", MODEL_GPT_35_TURBO, "openai_chat", null
             );
 
-            Session session = fpClient.sessions().create();
             List<ChatMessage> messages = fixtures.getBoundPrompt()
                     .format(fixtures.getPromptInfo().getFlavorName())
                     .allMessages(toolCallMessage);
 
             CompletableFuture<RecordResponse> recordFuture = fpClient.recordings().create(
                     new RecordInfo(
-                            messages,
-                            variables,
-                            session.getSessionInfo(),
-                            fixtures.getPromptInfo(),
-                            fixtures.getCallInfo(),
-                            fixtures.getResponseInfo()
-                    ).toolSchema(fixtures.getToolSchema()));
+                            projectId,
+                            messages
+                    ).inputs(variables)
+                            .promptInfo(fixtures.getPromptInfo())
+                            .callInfo(fixtures.getCallInfo())
+                            .responseInfo(fixtures.getResponseInfo())
+                            .toolSchema(fixtures.getToolSchema()));
 
             assertNotNull(recordFuture.get().getCompletionId());
             Map<String, Object> request = JSONUtil.parseMap(getCapturedAsyncBody(mockedClient, 1, 0));
@@ -1037,18 +1035,16 @@ public class ThinClientTest extends HttpClientTestBase {
             Freeplay fpClient = new Freeplay(Config().freeplayAPIKey(freeplayApiKey).baseUrl(baseUrl));
             StubbedRecordFixtures fixtures = new StubbedRecordFixtures("anthropic", MODEL_CLAUDE_2, "anthropic_chat", "Some completion");
 
-            Session session = fpClient.sessions().create();
             ExecutionException exception = assertThrows(
                     ExecutionException.class,
                     () -> fpClient.recordings().create(
                             new RecordInfo(
-                                    fixtures.getAllMessages(),
-                                    variables,
-                                    session.getSessionInfo(),
-                                    fixtures.getPromptInfo(),
-                                    fixtures.getCallInfo(),
-                                    fixtures.getResponseInfo()
-                            )).get());
+                                    projectId,
+                                    fixtures.getAllMessages()
+                            ).inputs(variables)
+                                    .promptInfo(fixtures.getPromptInfo())
+                                    .callInfo(fixtures.getCallInfo())
+                                    .responseInfo(fixtures.getResponseInfo())).get());
             assertEquals("Error making call [401]", exception.getCause().getMessage());
         });
     }
@@ -1069,7 +1065,7 @@ public class ThinClientTest extends HttpClientTestBase {
 
             TemplatePrompt templatePrompt = new TemplatePrompt(
                     new PromptInfo(promptTemplateId, promptTemplateVersionId, templateName, "prod",
-                            openAILLMParameters, "openai", MODEL_GPT_35_TURBO, "openai_chat", projectId),
+                            openAILLMParameters, "openai", MODEL_GPT_35_TURBO, "openai_chat"),
                     getChatPromptContentObjects().stream()
                             .map(obj -> new ChatMessage(
                                     (String) ((Map<?, ?>) obj).get("role"),
@@ -1108,7 +1104,7 @@ public class ThinClientTest extends HttpClientTestBase {
 
             TemplatePrompt templatePrompt = new TemplatePrompt(
                     new PromptInfo(promptTemplateId, promptTemplateVersionId, templateName, "prod",
-                            anthropicLLMParameters, "anthropic", MODEL_CLAUDE_2, "anthropic_chat", projectId),
+                            anthropicLLMParameters, "anthropic", MODEL_CLAUDE_2, "anthropic_chat"),
                     getChatPromptContentObjects().stream()
                             .map(obj -> new ChatMessage(
                                     (String) ((Map<?, ?>) obj).get("role"),
@@ -1138,7 +1134,7 @@ public class ThinClientTest extends HttpClientTestBase {
             // Create template prompt with null tool schema
             TemplatePrompt templatePrompt = new TemplatePrompt(
                     new PromptInfo(promptTemplateId, promptTemplateVersionId, templateName, "prod",
-                            openAILLMParameters, "openai", MODEL_GPT_35_TURBO, "openai_chat", projectId),
+                            openAILLMParameters, "openai", MODEL_GPT_35_TURBO, "openai_chat"),
                     getChatPromptContentObjects().stream()
                             .map(obj -> new ChatMessage(
                                     (String) ((Map<?, ?>) obj).get("role"),
@@ -1158,7 +1154,7 @@ public class ThinClientTest extends HttpClientTestBase {
             // Create template prompt with empty tool schema list
             TemplatePrompt templatePromptEmpty = new TemplatePrompt(
                     new PromptInfo(promptTemplateId, promptTemplateVersionId, templateName, "prod",
-                            openAILLMParameters, "openai", MODEL_GPT_35_TURBO, "openai_chat", projectId),
+                            openAILLMParameters, "openai", MODEL_GPT_35_TURBO, "openai_chat"),
                     getChatPromptContentObjects().stream()
                             .map(obj -> new ChatMessage(
                                     (String) ((Map<?, ?>) obj).get("role"),
@@ -1235,8 +1231,7 @@ public class ThinClientTest extends HttpClientTestBase {
                     modelParameters,
                     provider,
                     model,
-                    flavorName,
-                    projectId
+                    flavorName
             ).providerInfo(providerInfo);
             this.completion = completion;
 

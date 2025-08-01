@@ -123,6 +123,7 @@ public class GeminiWithMediaTest {
 
         Session session = freeplay.sessions().create();
         return freeplay.recordings().create(RecordInfo.fromGeminiContent(
+                projectId,
                 sentMessages,
                 variables,
                 session.getSessionInfo(),
