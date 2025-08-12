@@ -20,6 +20,7 @@ Notable additions, fixes, or breaking changes to the Freeplay SDK.
   - `responseInfo` (Optional) - use `.withResponseInfo(ResponseInfo)` to set
 - `SessionInfo` now has a default value and will be automatically generated if not provided using `RecordInfo.create(projectId, messages)`.
 - New builder-style methods added to `RecordInfo` for setting optional fields.
+- Add new optional field `targetEvaluationIds` to `TestRun` creation to control which evaluations run as part of a test.
 
 ## [0.3.1] - 2025-07-10
 

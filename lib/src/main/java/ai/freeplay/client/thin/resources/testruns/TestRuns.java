@@ -55,7 +55,8 @@ public class TestRuns {
             request.includeOutputs(),
             request.getName(),
             request.getDescription(),
-            request.getFlavorName()
+            request.getFlavorName(),
+            request.getTargetEvaluationIds()
         );
     }
 

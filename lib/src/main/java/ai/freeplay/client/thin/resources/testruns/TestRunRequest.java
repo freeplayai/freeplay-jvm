@@ -1,5 +1,8 @@
 package ai.freeplay.client.thin.resources.testruns;
 
+import java.util.List;
+import java.util.UUID;
+
 public class TestRunRequest {
     private final String projectId;
     private final String testList;
@@ -7,6 +10,7 @@ public class TestRunRequest {
     private final String name;
     private final String description;
     private final String flavorName;
+    private final List<UUID> targetEvaluationIds;
 
     private TestRunRequest(Builder builder) {
         this.projectId = builder.projectId;
@@ -15,6 +19,7 @@ public class TestRunRequest {
         this.name = builder.name;
         this.description = builder.description;
         this.flavorName = builder.flavorName;
+        this.targetEvaluationIds = builder.targetEvaluationIds;
     }
 
     public String getProjectId() {
@@ -41,6 +46,8 @@ public class TestRunRequest {
         return flavorName;
     }
 
+    public List<UUID> getTargetEvaluationIds() { return targetEvaluationIds; }
+
     public static class Builder {
         private final String projectId;
         private final String testList;
@@ -48,6 +55,7 @@ public class TestRunRequest {
         private String name = null;
         private String description = null;
         private String flavorName = null;
+        private List<UUID> targetEvaluationIds = null;
 
         public Builder(String projectId, String testList) {
             this.projectId = projectId;
@@ -71,6 +79,11 @@ public class TestRunRequest {
 
         public Builder flavorName(String flavorName) {
             this.flavorName = flavorName;
+            return this;
+        }
+
+        public Builder targetEvaluationIds(List<UUID> targetEvaluationIds) {
+            this.targetEvaluationIds = targetEvaluationIds;
             return this;
         }
 

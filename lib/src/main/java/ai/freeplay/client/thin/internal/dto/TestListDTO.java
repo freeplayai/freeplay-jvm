@@ -3,7 +3,9 @@ package ai.freeplay.client.thin.internal.dto;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 
+import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public class TestListDTO {
@@ -16,16 +18,19 @@ public class TestListDTO {
 
     private String flavorName;
 
+    private List<UUID> targetEvaluationIds;
+
     @SuppressWarnings("unused")
     public TestListDTO() {
     }
 
-    public TestListDTO(String datasetName, boolean includeOutputs, String testRunName, String testRunDescription, String flavorName) {
+    public TestListDTO(String datasetName, boolean includeOutputs, String testRunName, String testRunDescription, String flavorName, List<UUID> targetEvaluationIds) {
         this.datasetName = datasetName;
         this.includeOutputs = includeOutputs;
         this.testRunName = testRunName;
         this.testRunDescription = testRunDescription;
         this.flavorName = flavorName;
+        this.targetEvaluationIds = targetEvaluationIds;
     }
 
     @SuppressWarnings("unused")
@@ -51,6 +56,9 @@ public class TestListDTO {
     public String getFlavorName() {
         return flavorName;
     }
+
+    @SuppressWarnings("unused")
+    public List<UUID> targetEvaluationIds() { return targetEvaluationIds; }
 
 
     @Override

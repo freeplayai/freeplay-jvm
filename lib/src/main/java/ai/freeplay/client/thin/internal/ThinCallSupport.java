@@ -24,6 +24,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 import static ai.freeplay.client.internal.Http.throwFreeplayIfError;
@@ -194,13 +195,13 @@ public class ThinCallSupport {
         });
     }
 
-    public CompletableFuture<TestRun> createTestRun(String projectId, String testList, boolean includeOutputs, String name, String description, String flavorName) {
+    public CompletableFuture<TestRun> createTestRun(String projectId, String testList, boolean includeOutputs, String name, String description, String flavorName, List<UUID> targetEvaluationIds) {
         String url = String.format("%s/v2/projects/%s/test-runs", baseUrl, projectId);
         return AsyncHttp.postJson(
                 url,
                 freeplayApiKey,
                 httpConfig,
-                new TestListDTO(testList, includeOutputs, name, description, flavorName)
+                new TestListDTO(testList, includeOutputs, name, description, flavorName, targetEvaluationIds)
         ).thenApply(httpResponse -> {
             throwFreeplayIfError(httpResponse, 201);
 
