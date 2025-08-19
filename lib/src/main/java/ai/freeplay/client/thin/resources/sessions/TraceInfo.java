@@ -1,6 +1,7 @@
 package ai.freeplay.client.thin.resources.sessions;
 
 import ai.freeplay.client.thin.internal.ThinCallSupport;
+import ai.freeplay.client.thin.resources.recordings.TestRunInfo;
 
 import java.util.Map;
 import java.util.Objects;
@@ -87,6 +88,12 @@ public class TraceInfo {
         this.output = output;
         this.evalResults = evalResults;
         return callSupport.recordTrace(projectId, this);
+    }
+
+    public CompletableFuture<TraceRecordResponse> recordOutput(String projectId, String output, Map<String, Object> evalResults, TestRunInfo testRunInfo) {
+        this.output = output;
+        this.evalResults = evalResults;
+        return callSupport.recordTrace(projectId, this, testRunInfo);
     }
 
     @Override

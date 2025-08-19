@@ -8,8 +8,7 @@ import ai.freeplay.client.thin.resources.recordings.CallInfo;
 import ai.freeplay.client.thin.resources.recordings.RecordInfo;
 import ai.freeplay.client.thin.resources.recordings.RecordResponse;
 import ai.freeplay.client.thin.resources.recordings.ResponseInfo;
-import ai.freeplay.client.thin.resources.sessions.SessionInfo;
-import ai.freeplay.client.thin.resources.testruns.TestCase;
+import ai.freeplay.client.thin.resources.testruns.CompletionTestCase;
 import ai.freeplay.client.thin.resources.testruns.TestRun;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -78,7 +77,7 @@ public class ThinTestRunHistoryExample {
             String anthropicApiKey,
             TemplatePrompt templatePrompt,
             TestRun testRun,
-            TestCase testCase
+            CompletionTestCase testCase
     ) {
         System.out.println("Test Case History");
         System.out.println(testCase.getHistory());
@@ -102,7 +101,7 @@ public class ThinTestRunHistoryExample {
             Freeplay fpClient,
             String projectId,
             TestRun testRun,
-            TestCase testCase,
+            CompletionTestCase testCase,
             FormattedPrompt<List<ChatMessage>> formattedPrompt,
             long startTime,
             HttpResponse<String> response

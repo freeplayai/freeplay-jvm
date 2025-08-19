@@ -12,6 +12,7 @@ import java.util.Map;
 public class TestRunDTO {
     private String testRunId;
     private List<TestCase> testCases;
+    private List<TraceTestCaseDTO> traceTestCases;
     private String testRunDescription;
     private String testRunName;
 
@@ -22,6 +23,11 @@ public class TestRunDTO {
     public List<TestCase> getTestCases() {
         return testCases;
     }
+
+    public List<TraceTestCaseDTO> getTraceTestCases() {
+        return traceTestCases;
+    }
+
     public String getTestRunDescription() {
         return testRunDescription;
     }
@@ -36,6 +42,7 @@ public class TestRunDTO {
         private Map<String, Object> variables;
         private String output;
         private List<ChatMessage> history;
+        private Map<String, String> customMetadata;
 
         public String getTestCaseId() {
             return testCaseId;
@@ -51,6 +58,35 @@ public class TestRunDTO {
 
         public List<ChatMessage> getHistory() {
             return history;
+        }
+
+        public Map<String, String> getCustomMetadata() {
+            return customMetadata;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
+    public static class TraceTestCaseDTO {
+        private String testCaseId;
+        private String input;
+        private String output;
+        private Map<String, String> customMetadata;
+
+        public String getTestCaseId() {
+            return testCaseId;
+        }
+
+        public String getInput() {
+            return input;
+        }
+
+        public String getOutput() {
+            return output;
+        }
+
+        public Map<String, String> getCustomMetadata() {
+            return customMetadata;
         }
     }
 }

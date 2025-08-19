@@ -1,5 +1,6 @@
 package ai.freeplay.client.thin.internal.dto;
 
+import ai.freeplay.client.thin.resources.recordings.TestRunInfo;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 
@@ -13,6 +14,7 @@ public class TraceInfoDTO {
     private String agentName;
     private Map<String, Object> customMetadata;
     private Map<String, Object> evalResults;
+    private RecordDTO.TestRunInfoDTO testRunInfo;
 
     @SuppressWarnings("unused")
     public TraceInfoDTO() {
@@ -24,7 +26,8 @@ public class TraceInfoDTO {
             String output,
             String agentName,
             Map<String, Object> customMetadata,
-            Map<String, Object> evalResults
+            Map<String, Object> evalResults,
+            TestRunInfo testRunInfo
 
     ) {
         this.input = input;
@@ -32,6 +35,7 @@ public class TraceInfoDTO {
         this.agentName = agentName;
         this.customMetadata = customMetadata;
         this.evalResults = evalResults;
+        this.testRunInfo = testRunInfo != null ? new RecordDTO.TestRunInfoDTO(testRunInfo.getTestRunId(), testRunInfo.getTestCaseId()) : null;
     }
 
     @SuppressWarnings("unused")
@@ -57,6 +61,11 @@ public class TraceInfoDTO {
     @SuppressWarnings("unused")
     public Map<String, Object> getEvalResults() {
         return evalResults;
+    }
+
+    @SuppressWarnings("unused")
+    public RecordDTO.TestRunInfoDTO getTestRunInfo() {
+        return testRunInfo;
     }
 
     @Override

@@ -1,6 +1,5 @@
 package ai.freeplay.example.java;
 
-import ai.freeplay.client.internal.JSONUtil;
 import ai.freeplay.client.thin.Freeplay;
 import ai.freeplay.client.thin.resources.prompts.ChatMessage;
 import ai.freeplay.client.thin.resources.prompts.FormattedPrompt;
@@ -10,11 +9,9 @@ import ai.freeplay.client.thin.resources.recordings.RecordInfo;
 import ai.freeplay.client.thin.resources.recordings.RecordResponse;
 import ai.freeplay.client.thin.resources.recordings.ResponseInfo;
 import ai.freeplay.client.thin.resources.sessions.Session;
-import ai.freeplay.client.thin.resources.sessions.SessionInfo;
-import ai.freeplay.client.thin.resources.testruns.TestCase;
+import ai.freeplay.client.thin.resources.testruns.CompletionTestCase;
 import ai.freeplay.client.thin.resources.testruns.TestRun;
 import ai.freeplay.client.thin.resources.testruns.TestRunRequest;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -28,8 +25,8 @@ import java.util.concurrent.ExecutionException;
 
 import static ai.freeplay.client.thin.Freeplay.Config;
 import static ai.freeplay.example.java.ThinExampleUtils.callAnthropic;
-import static java.util.stream.Collectors.toList;
 import static java.lang.String.format;
+import static java.util.stream.Collectors.toList;
 
 public class ThinTestRunExample {
     private static final ObjectMapper objectMapper = new ObjectMapper();
@@ -86,7 +83,7 @@ public class ThinTestRunExample {
             String anthropicApiKey,
             TemplatePrompt templatePrompt,
             TestRun testRun,
-            TestCase testCase
+            CompletionTestCase testCase
     ) {
         FormattedPrompt<List<ChatMessage>> formattedPrompt =
                 templatePrompt.bind(new TemplatePrompt.BindRequest(testCase.getVariables()).history(testCase.getHistory())).format();
@@ -157,7 +154,7 @@ public class ThinTestRunExample {
             String projectId,
             TestRun testRun,
             Session session,
-            TestCase testCase,
+            CompletionTestCase testCase,
             FormattedPrompt<List<ChatMessage>> formattedPrompt,
             long startTime,
             HttpResponse<String> response

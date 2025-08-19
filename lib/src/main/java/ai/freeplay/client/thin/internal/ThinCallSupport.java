@@ -13,12 +13,14 @@ import ai.freeplay.client.thin.resources.feedback.TraceFeedbackResponse;
 import ai.freeplay.client.thin.resources.prompts.ChatMessage;
 import ai.freeplay.client.thin.resources.recordings.RecordInfo;
 import ai.freeplay.client.thin.resources.recordings.RecordResponse;
+import ai.freeplay.client.thin.resources.recordings.TestRunInfo;
 import ai.freeplay.client.thin.resources.sessions.SessionDeleteResponse;
 import ai.freeplay.client.thin.resources.sessions.TraceInfo;
 import ai.freeplay.client.thin.resources.sessions.TraceRecordResponse;
-import ai.freeplay.client.thin.resources.testruns.TestCase;
+import ai.freeplay.client.thin.resources.testruns.CompletionTestCase;
 import ai.freeplay.client.thin.resources.testruns.TestRun;
 import ai.freeplay.client.thin.resources.testruns.TestRunResults;
+import ai.freeplay.client.thin.resources.testruns.TraceTestCase;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import java.util.HashMap;
@@ -174,6 +176,10 @@ public class ThinCallSupport {
 
     @SuppressWarnings("unused")
     public CompletableFuture<TraceRecordResponse> recordTrace(String projectId, TraceInfo traceInfo) {
+        return recordTrace(projectId, traceInfo, null);
+    }
+
+    public CompletableFuture<TraceRecordResponse> recordTrace(String projectId, TraceInfo traceInfo, TestRunInfo testRunInfo) {
         if (traceInfo.input.isEmpty()) {
             throw new FreeplayClientException("Input needed to record a trace");
         }
@@ -182,7 +188,8 @@ public class ThinCallSupport {
                 traceInfo.getOutput(),
                 traceInfo.getAgentName(),
                 traceInfo.getCustomMetadata(),
-                traceInfo.getEvalResults()
+                traceInfo.getEvalResults(),
+                testRunInfo
         );
         return AsyncHttp.postJson(
                 format("%s/v2/projects/%s/sessions/%s/traces/id/%s", baseUrl, projectId, traceInfo.sessionId, traceInfo.traceId),
@@ -210,17 +217,38 @@ public class ThinCallSupport {
                             httpResponse.body(),
                             TestRunDTO.class);
 
-            return new TestRun(
-                    testRun.getTestRunId(),
-                    testRun.getTestCases().stream()
-                            .map(testCase -> new TestCase(
-                                    testCase.getTestCaseId(),
-                                    testCase.getVariables(),
-                                    testCase.getOutput(),
-                                    testCase.getHistory()
-                            ))
-                            .collect(toList())
-            );
+            List<CompletionTestCase> completionTestCases = null;
+            List<TraceTestCase> traceTestCases = null;
+
+            if (testRun.getTestCases() != null && !testRun.getTestCases().isEmpty()) {
+                completionTestCases = testRun.getTestCases().stream()
+                        .map(testCase -> new CompletionTestCase(
+                                testCase.getTestCaseId(),
+                                testCase.getVariables(),
+                                testCase.getOutput(),
+                                testCase.getHistory(),
+                                testCase.getCustomMetadata()
+                        ))
+                        .collect(toList());
+            }
+
+            if (testRun.getTraceTestCases() != null && !testRun.getTraceTestCases().isEmpty()) {
+                traceTestCases = testRun.getTraceTestCases().stream()
+                        .map(testCase -> new TraceTestCase(
+                                testCase.getTestCaseId(),
+                                testCase.getInput(),
+                                testCase.getOutput(),
+                                testCase.getCustomMetadata()
+                        ))
+                        .collect(toList());
+            }
+
+            if (completionTestCases != null && !completionTestCases.isEmpty() &&
+                    traceTestCases != null && !traceTestCases.isEmpty()) {
+                throw new FreeplayClientException("Test cases and trace test cases cannot both be present.");
+            }
+
+            return new TestRun(testRun.getTestRunId(), completionTestCases, traceTestCases);
         });
     }
 

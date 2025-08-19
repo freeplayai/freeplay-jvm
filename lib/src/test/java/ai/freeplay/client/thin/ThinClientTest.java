@@ -621,7 +621,8 @@ public class ThinClientTest extends HttpClientTestBase {
                     traceInfo.getOutput(),
                     traceInfo.getAgentName(),
                     traceInfo.getCustomMetadata(),
-                    traceEvalResults
+                    traceEvalResults,
+                    null
             );
             TraceInfoDTO actualTracePayload = JSONUtil.parse(traceRequestBody, TraceInfoDTO.class);
             assertEquals(expectedTracePayload, actualTracePayload);
