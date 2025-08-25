@@ -128,7 +128,7 @@ public class AnthropicWithMediaTest {
                 projectId,
                 sentMessages)
                 .inputs(variables)
-                .promptInfo(formattedPrompt.getPromptInfo())
+                .promptVersionInfo(formattedPrompt.getPromptInfo())
                 .callInfo(CallInfo.from(formattedPrompt.getPromptInfo(), System.currentTimeMillis() - 1_000, System.currentTimeMillis()))
                 .responseInfo(new ResponseInfo(true))
                 .mediaInputCollection(media)

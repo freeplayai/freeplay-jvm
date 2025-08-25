@@ -3,11 +3,9 @@ package ai.freeplay.client.thin.resources.prompts;
 import java.util.Map;
 import java.util.Objects;
 
-public class PromptInfo {
+public class PromptInfo extends PromptVersionInfo {
     private final String promptTemplateId;
-    private final String promptTemplateVersionId;
     private final String templateName;
-    private final String environment;
     private final Map<String, Object> modelParameters;
     private Map<String, Object> providerInfo;
     private final String provider;
@@ -25,10 +23,9 @@ public class PromptInfo {
             String model,
             String flavorName
     ) {
+        super(promptTemplateVersionId, environment);
         this.promptTemplateId = promptTemplateId;
-        this.promptTemplateVersionId = promptTemplateVersionId;
         this.templateName = templateName;
-        this.environment = environment;
         this.modelParameters = modelParameters;
         this.provider = provider;
         this.model = model;
@@ -44,16 +41,8 @@ public class PromptInfo {
         return promptTemplateId;
     }
 
-    public String getPromptTemplateVersionId() {
-        return promptTemplateVersionId;
-    }
-
     public String getTemplateName() {
         return templateName;
-    }
-
-    public String getEnvironment() {
-        return environment;
     }
 
     public Map<String, Object> getModelParameters() {
@@ -81,22 +70,23 @@ public class PromptInfo {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
         PromptInfo that = (PromptInfo) o;
-        return Objects.equals(promptTemplateId, that.promptTemplateId) && Objects.equals(promptTemplateVersionId, that.promptTemplateVersionId) && Objects.equals(templateName, that.templateName) && Objects.equals(environment, that.environment) && Objects.equals(modelParameters, that.modelParameters)  && Objects.equals(providerInfo, that.providerInfo) && Objects.equals(provider, that.provider) && Objects.equals(model, that.model) && Objects.equals(flavorName, that.flavorName);
+        return Objects.equals(promptTemplateId, that.promptTemplateId) && Objects.equals(templateName, that.templateName) && Objects.equals(modelParameters, that.modelParameters) && Objects.equals(providerInfo, that.providerInfo) && Objects.equals(provider, that.provider) && Objects.equals(model, that.model) && Objects.equals(flavorName, that.flavorName);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(promptTemplateId, promptTemplateVersionId, templateName, environment, modelParameters, providerInfo, provider, model, flavorName);
+        return Objects.hash(super.hashCode(), promptTemplateId, templateName, modelParameters, providerInfo, provider, model, flavorName);
     }
 
     @Override
     public String toString() {
         return "PromptInfo{" +
                 "promptTemplateId='" + promptTemplateId + '\'' +
-                ", promptTemplateVersionId='" + promptTemplateVersionId + '\'' +
+                ", promptTemplateVersionId='" + getPromptTemplateVersionId() + '\'' +
                 ", templateName='" + templateName + '\'' +
-                ", environment='" + environment + '\'' +
+                ", environment='" + getEnvironment() + '\'' +
                 ", modelParameters=" + modelParameters +
                 ", providerInfo=" + providerInfo +
                 ", provider='" + provider + '\'' +

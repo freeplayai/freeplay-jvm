@@ -22,7 +22,7 @@ public class RecordDTO {
     private List<ChatMessage> messages;
     private Map<String, Object> inputs;
     private SessionInfoDTO sessionInfo;
-    private PromptInfoDTO promptInfo;
+    private PromptVersionInfoDTO promptVersionInfo;
     private CallInfoDTO callInfo;
     private ResponseInfoDTO responseInfo;
     private TestRunInfoDTO testRunInfo;
@@ -39,7 +39,7 @@ public class RecordDTO {
             List<ChatMessage> messages,
             Map<String, Object> inputs,
             SessionInfoDTO sessionInfo,
-            PromptInfoDTO promptInfo,
+            PromptVersionInfoDTO promptVersionInfo,
             CallInfoDTO callInfo,
             ResponseInfoDTO responseInfo,
             TestRunInfoDTO testRunInfo,
@@ -52,7 +52,7 @@ public class RecordDTO {
         this.messages = messages;
         this.inputs = inputs;
         this.sessionInfo = sessionInfo;
-        this.promptInfo = promptInfo;
+        this.promptVersionInfo = promptVersionInfo;
         this.callInfo = callInfo;
         this.responseInfo = responseInfo;
         this.testRunInfo = testRunInfo;
@@ -75,8 +75,8 @@ public class RecordDTO {
         return sessionInfo;
     }
 
-    public PromptInfoDTO getPromptInfo() {
-        return promptInfo;
+    public PromptVersionInfoDTO getPromptVersionInfo() {
+        return promptVersionInfo;
     }
 
     public CallInfoDTO getCallInfo() {
@@ -109,7 +109,7 @@ public class RecordDTO {
                 "messages=" + messages +
                 ", inputs=" + inputs +
                 ", sessionInfo=" + sessionInfo +
-                ", promptInfo=" + promptInfo +
+                ", promptVersionInfo=" + promptVersionInfo +
                 ", callInfo=" + callInfo +
                 ", responseInfo=" + responseInfo +
                 ", testRunInfo=" + testRunInfo +
@@ -125,12 +125,12 @@ public class RecordDTO {
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
         RecordDTO recordDTO = (RecordDTO) o;
-        return Objects.equals(messages, recordDTO.messages) && Objects.equals(inputs, recordDTO.inputs) && Objects.equals(sessionInfo, recordDTO.sessionInfo) && Objects.equals(promptInfo, recordDTO.promptInfo) && Objects.equals(callInfo, recordDTO.callInfo) && Objects.equals(responseInfo, recordDTO.responseInfo) && Objects.equals(testRunInfo, recordDTO.testRunInfo) && Objects.equals(evalResults, recordDTO.evalResults) && Objects.equals(traceInfo, recordDTO.traceInfo) && Objects.equals(toolSchema, recordDTO.toolSchema) && Objects.equals(completionId, recordDTO.completionId) && Objects.equals(mediaInputs, recordDTO.mediaInputs);
+        return Objects.equals(messages, recordDTO.messages) && Objects.equals(inputs, recordDTO.inputs) && Objects.equals(sessionInfo, recordDTO.sessionInfo) && Objects.equals(promptVersionInfo, recordDTO.promptVersionInfo) && Objects.equals(callInfo, recordDTO.callInfo) && Objects.equals(responseInfo, recordDTO.responseInfo) && Objects.equals(testRunInfo, recordDTO.testRunInfo) && Objects.equals(evalResults, recordDTO.evalResults) && Objects.equals(traceInfo, recordDTO.traceInfo) && Objects.equals(toolSchema, recordDTO.toolSchema) && Objects.equals(completionId, recordDTO.completionId) && Objects.equals(mediaInputs, recordDTO.mediaInputs);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(messages, inputs, sessionInfo, promptInfo, callInfo, responseInfo, testRunInfo, evalResults, traceInfo, toolSchema, completionId, mediaInputs);
+        return Objects.hash(messages, inputs, sessionInfo, promptVersionInfo, callInfo, responseInfo, testRunInfo, evalResults, traceInfo, toolSchema, completionId, mediaInputs);
     }
 
     public Map<String, Object> getEvalResults() {
@@ -181,79 +181,30 @@ public class RecordDTO {
     }
 
     @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
-    public static class PromptInfoDTO {
-        private String promptTemplateId;
+    public static class PromptVersionInfoDTO {
         private String promptTemplateVersionId;
-        private String templateName;
         private String environment;
-        private Map<String, Object> modelParameters;
-        private Map<String, Object> providerInfo;
-        private String provider;
-        private String model;
-        private String flavorName;
         private String projectId;
 
-        public PromptInfoDTO() {
+        public PromptVersionInfoDTO() {
         }
 
-        public PromptInfoDTO(
-                String promptTemplateId,
+        public PromptVersionInfoDTO(
                 String promptTemplateVersionId,
-                String templateName,
                 String environment,
-                Map<String, Object> modelParameters,
-                Map<String, Object> providerInfo,
-                String provider,
-                String model,
-                String flavorName,
                 String projectId
         ) {
-            this.promptTemplateId = promptTemplateId;
             this.promptTemplateVersionId = promptTemplateVersionId;
-            this.templateName = templateName;
             this.environment = environment;
-            this.modelParameters = modelParameters;
-            this.providerInfo = providerInfo;
-            this.provider = provider;
-            this.model = model;
-            this.flavorName = flavorName;
             this.projectId = projectId;
-        }
-
-        public String getPromptTemplateId() {
-            return promptTemplateId;
         }
 
         public String getPromptTemplateVersionId() {
             return promptTemplateVersionId;
         }
 
-        public String getTemplateName() {
-            return templateName;
-        }
-
         public String getEnvironment() {
             return environment;
-        }
-
-        public Map<String, Object> getModelParameters() {
-            return modelParameters;
-        }
-
-        public Map<String, Object> getProviderInfo() {
-            return providerInfo;
-        }
-
-        public String getProvider() {
-            return provider;
-        }
-
-        public String getModel() {
-            return model;
-        }
-
-        public String getFlavorName() {
-            return flavorName;
         }
 
         public String getProjectId() {
@@ -265,27 +216,21 @@ public class RecordDTO {
         public boolean equals(Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
-            PromptInfoDTO that = (PromptInfoDTO) o;
-            return Objects.equals(promptTemplateId, that.promptTemplateId) && Objects.equals(promptTemplateVersionId, that.promptTemplateVersionId) && Objects.equals(templateName, that.templateName) && Objects.equals(environment, that.environment) && Objects.equals(modelParameters, that.modelParameters) && Objects.equals(providerInfo, that.providerInfo) && Objects.equals(provider, that.provider) && Objects.equals(model, that.model) && Objects.equals(flavorName, that.flavorName);
+            PromptVersionInfoDTO that = (PromptVersionInfoDTO) o;
+            return Objects.equals(promptTemplateVersionId, that.promptTemplateVersionId) && Objects.equals(environment, that.environment) && Objects.equals(projectId, that.projectId);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(promptTemplateId, promptTemplateVersionId, templateName, environment, modelParameters, providerInfo, provider, model, flavorName);
+            return Objects.hash(promptTemplateVersionId, environment, projectId);
         }
 
         @Override
         public String toString() {
-            return "PromptInfo{" +
-                    "promptTemplateId='" + promptTemplateId + '\'' +
-                    ", promptTemplateVersionId='" + promptTemplateVersionId + '\'' +
-                    ", templateName='" + templateName + '\'' +
+            return "PromptVersionInfoDTO{" +
+                    "promptTemplateVersionId='" + promptTemplateVersionId + '\'' +
                     ", environment='" + environment + '\'' +
-                    ", modelParameters=" + modelParameters +
-                    ", providerInfo=" + providerInfo +
-                    ", provider='" + provider + '\'' +
-                    ", model='" + model + '\'' +
-                    ", flavorName='" + flavorName + '\'' +
+                    ", projectId='" + projectId + '\'' +
                     '}';
         }
     }

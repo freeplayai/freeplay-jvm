@@ -102,7 +102,7 @@ public class ThinSyncExample {
                         allMessages
                 ).inputs(variables)
                         .sessionInfo(sessionInfo)
-                        .promptInfo(formattedPrompt.getPromptInfo())
+                        .promptVersionInfo(formattedPrompt.getPromptInfo())
                         .callInfo(callInfo)
                         .responseInfo(responseInfo));
     }

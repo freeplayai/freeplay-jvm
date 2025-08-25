@@ -94,7 +94,7 @@ public class ThinTrace {
                                     projectId,
                                     allMessages
                             ).inputs(variables)
-                                    .promptInfo(formattedPrompt.getPromptInfo())
+                                    .promptVersionInfo(formattedPrompt.getPromptInfo())
                                     .callInfo(callInfo)
                                     .responseInfo(responseInfo)
                                     .traceInfo(traceInfo);

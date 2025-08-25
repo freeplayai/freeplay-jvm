@@ -84,7 +84,7 @@ public class ThinOpenAIWithImageExample {
                         projectId,
                         messages
                 ).inputs(variables)
-                        .promptInfo(prompt.getPromptInfo())
+                        .promptVersionInfo(prompt.getPromptInfo())
                         .callInfo(callInfo)
                         .responseInfo(responseInfo)
         ).get();

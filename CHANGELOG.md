@@ -12,10 +12,23 @@ Notable additions, fixes, or breaking changes to the Freeplay SDK.
 - `PromptInfo` no longer contains a `projectId` field. The project ID must now be accessed from the project context
   instead.
 - The original `RecordInfo` constructor is removed. Use the new constructor with projectId or the factory methods.
+- `RecordInfo.promptInfo()` method has been renamed to `RecordInfo.promptVersionInfo()` and now accepts `PromptVersionInfo` objects. Existing `PromptInfo` objects can still be passed, but the method name must be updated:
+  ```java
+  // Before:
+  new RecordInfo(projectId, allMessages)
+      .inputs(variables)
+      .promptInfo(formattedPrompt.getPromptInfo())
+      .callInfo(callInfo)
+  
+  // After:
+  new RecordInfo(projectId, allMessages)
+      .inputs(variables)
+      .promptVersionInfo(formattedPrompt.getPromptInfo())
+      .callInfo(callInfo)
+  ```
 
 ### Added
 
-- Support for trace test cases in test runs through new `TraceTestCase` class for agent datasets.
   Use `TestRun.getTraceTestCases()` to retrieve test cases for agent targeting datasets.
 - `TraceInfo.recordOutput()` accepts `TestRunInfo` for trace test cases to attach a trace to a test run.
 - Support for custom metadata in test cases through `customMetadata` field.
@@ -23,10 +36,10 @@ Notable additions, fixes, or breaking changes to the Freeplay SDK.
 ### Changed
 
 - In `RecordInfo`, the following fields are now optional:
-    - `inputs` (Optional) - use `.withInputs(Map<String, Object>)` to set
-    - `promptInfo` (Optional) - use `.withPromptInfo(PromptInfo)` to set
-    - `callInfo` (Optional) - use `.withCallInfo(CallInfo)` to set
-    - `responseInfo` (Optional) - use `.withResponseInfo(ResponseInfo)` to set
+    - `inputs` (Optional) - use `.inputs(Map<String, Object>)` to set
+    - `promptVersionInfo` (Optional, renamed from `promptInfo`) - use `.promptVersionInfo(PromptVersionInfo)` to set
+    - `callInfo` (Optional) - use `.callInfo(CallInfo)` to set
+    - `responseInfo` (Optional) - use `.responseInfo(ResponseInfo)` to set
 - `SessionInfo` now has a default value and will be automatically generated if not provided
   using `RecordInfo.create(projectId, messages)`.
 - New builder-style methods added to `RecordInfo` for setting optional fields.

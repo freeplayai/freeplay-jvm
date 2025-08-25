@@ -63,7 +63,7 @@ fun main(): Unit = runBlocking {
                 allMessages
             ).inputs(testCase.variables)
                 .sessionInfo(sessionInfo)
-                .promptInfo(formattedPrompt.getPromptInfo())
+                .promptVersionInfo(formattedPrompt.getPromptInfo())
                 .callInfo(callInfo)
                 .responseInfo(responseInfo)
                 .testRunInfo(testRun.getTestRunInfo(testCase.testCaseId))

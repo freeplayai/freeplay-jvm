@@ -3,7 +3,7 @@ package ai.freeplay.client.thin.resources.recordings;
 import ai.freeplay.client.media.MediaInputCollection;
 import ai.freeplay.client.thin.GeminiLLMAdapter;
 import ai.freeplay.client.thin.resources.prompts.ChatMessage;
-import ai.freeplay.client.thin.resources.prompts.PromptInfo;
+import ai.freeplay.client.thin.resources.prompts.PromptVersionInfo;
 import ai.freeplay.client.thin.resources.sessions.SessionInfo;
 import ai.freeplay.client.thin.resources.sessions.TraceInfo;
 import com.google.cloud.vertexai.api.Content;
@@ -19,7 +19,7 @@ public class RecordInfo {
     private Map<String, Object> inputs;
     private SessionInfo sessionInfo;
 
-    private PromptInfo promptInfo;
+    private PromptVersionInfo promptVersionInfo;
     private CallInfo callInfo;
     private ResponseInfo responseInfo;
     private TestRunInfo testRunInfo;
@@ -39,7 +39,7 @@ public class RecordInfo {
         this.allMessages = allMessages;
         this.sessionInfo = new SessionInfo(UUID.randomUUID().toString(), null); 
         this.inputs = null;
-        this.promptInfo = null;
+        this.promptVersionInfo = null;
         this.callInfo = null;
         this.responseInfo = null;
     }
@@ -50,7 +50,7 @@ public class RecordInfo {
             List<ChatMessage> allMessages,
             Map<String, Object> inputs,
             SessionInfo sessionInfo,
-            PromptInfo promptInfo,
+            PromptVersionInfo promptVersionInfo,
             CallInfo callInfo,
             ResponseInfo responseInfo
     ) {
@@ -58,7 +58,7 @@ public class RecordInfo {
         this.allMessages = allMessages;
         this.inputs = inputs;
         this.sessionInfo = sessionInfo;
-        this.promptInfo = promptInfo;
+        this.promptVersionInfo = promptVersionInfo;
         this.callInfo = callInfo;
         this.responseInfo = responseInfo;
     }
@@ -68,7 +68,7 @@ public class RecordInfo {
             List<Content> contents,
             Map<String, Object> inputs,
             SessionInfo sessionInfo,
-            PromptInfo promptInfo,
+            PromptVersionInfo promptVersionInfo,
             CallInfo callInfo,
             ResponseInfo responseInfo
     ) {
@@ -76,7 +76,7 @@ public class RecordInfo {
                 .map(GeminiLLMAdapter::chatMessageFromContent)
                 .collect(Collectors.toList());
 
-        return new RecordInfo(projectId, messages, inputs, sessionInfo, promptInfo, callInfo, responseInfo);
+        return new RecordInfo(projectId, messages, inputs, sessionInfo, promptVersionInfo, callInfo, responseInfo);
     }
 
     public RecordInfo sessionInfo(SessionInfo sessionInfo) {
@@ -89,8 +89,8 @@ public class RecordInfo {
         return this;
     }
 
-    public RecordInfo promptInfo(PromptInfo promptInfo) {
-        this.promptInfo = promptInfo;
+    public RecordInfo promptVersionInfo(PromptVersionInfo promptVersionInfo) {
+        this.promptVersionInfo = promptVersionInfo;
         return this;
     }
 
@@ -150,8 +150,8 @@ public class RecordInfo {
         return sessionInfo;
     }
 
-    public PromptInfo getPromptInfo() {
-        return promptInfo;
+    public PromptVersionInfo getPromptVersionInfo() {
+        return promptVersionInfo;
     }
 
     public CallInfo getCallInfo() {
@@ -194,7 +194,7 @@ public class RecordInfo {
                 ", completionId=" + completionId +
                 ", inputs=" + inputs +
                 ", sessionInfo=" + sessionInfo +
-                ", promptInfo=" + promptInfo +
+                ", promptVersionInfo=" + promptVersionInfo +
                 ", callInfo=" + callInfo +
                 ", responseInfo=" + responseInfo +
                 ", testRunInfo=" + testRunInfo +

@@ -314,7 +314,7 @@ public class ThinClientTest extends HttpClientTestBase {
                     allMessages
             ).sessionInfo(session.getSessionInfo())
                     .inputs(variables)
-                    .promptInfo(prompt.getPromptInfo())
+                    .promptVersionInfo(prompt.getPromptInfo())
                     .callInfo(callInfo)
                     .responseInfo(responseInfo)
                     .evalResults(evalResults);
@@ -328,11 +328,10 @@ public class ThinClientTest extends HttpClientTestBase {
                     allMessages,
                     variables,
                     new RecordDTO.SessionInfoDTO(session.getSessionInfo().getSessionId(), session.getSessionInfo().getCustomMetadata()),
-                    new RecordDTO.PromptInfoDTO(prompt.getPromptInfo().getPromptTemplateId(), prompt.getPromptInfo().getPromptTemplateVersionId(),
-                            prompt.getPromptInfo().getTemplateName(), prompt.getPromptInfo().getEnvironment(),
-                            prompt.getPromptInfo().getModelParameters(), prompt.getPromptInfo().getProviderInfo(),
-                            prompt.getPromptInfo().getProvider(), prompt.getPromptInfo().getModel(),
-                            prompt.getPromptInfo().getFlavorName(), projectId),
+                    new RecordDTO.PromptVersionInfoDTO(
+                            prompt.getPromptInfo().getPromptTemplateVersionId(),
+                            prompt.getPromptInfo().getEnvironment(),
+                            projectId),
                     new RecordDTO.CallInfoDTO(
                             callInfo.getProvider(),
                             callInfo.getModel(),
@@ -392,7 +391,7 @@ public class ThinClientTest extends HttpClientTestBase {
                             fixtures.getAllMessages()
                     ).sessionInfo(session.getSessionInfo())
                     .inputs(variables)
-                    .promptInfo(fixtures.getPromptInfo())
+                    .promptVersionInfo(fixtures.getPromptInfo())
                     .callInfo(fixtures.getCallInfo())
                     .responseInfo(fixtures.getResponseInfo()));
 
@@ -403,11 +402,10 @@ public class ThinClientTest extends HttpClientTestBase {
                     fixtures.getAllMessages(),
                     variables,
                     new RecordDTO.SessionInfoDTO(session.getSessionId(), session.getCustomMetadata()),
-                    new RecordDTO.PromptInfoDTO(fixtures.getPromptInfo().getPromptTemplateId(), fixtures.getPromptInfo().getPromptTemplateVersionId(),
-                            fixtures.getPromptInfo().getTemplateName(), fixtures.getPromptInfo().getEnvironment(),
-                            fixtures.getPromptInfo().getModelParameters(), fixtures.getPromptInfo().getProviderInfo(),
-                            fixtures.getPromptInfo().getProvider(), fixtures.getPromptInfo().getModel(),
-                            fixtures.getPromptInfo().getFlavorName(), projectId),
+                    new RecordDTO.PromptVersionInfoDTO(
+                            fixtures.getPromptInfo().getPromptTemplateVersionId(),
+                            fixtures.getPromptInfo().getEnvironment(),
+                            projectId),
                     new RecordDTO.CallInfoDTO(fixtures.getCallInfo().getProvider(), fixtures.getCallInfo().getModel(),
                             fixtures.getCallInfo().getStartTime(), fixtures.getCallInfo().getEndTime(), fixtures.getCallInfo().getModelParameters()).providerInfo(fixtures.getCallInfo().getProviderInfo()),
                     new RecordDTO.ResponseInfoDTO(fixtures.getResponseInfo().isComplete(), null,
@@ -450,7 +448,7 @@ public class ThinClientTest extends HttpClientTestBase {
                             fixtures.getAllMessages()
                     ).sessionInfo(session.getSessionInfo())
                     .inputs(variables)
-                    .promptInfo(fixtures.getPromptInfo())
+                    .promptVersionInfo(fixtures.getPromptInfo())
                     .callInfo(fixtures.getCallInfo())
                     .responseInfo(fixtures.getResponseInfo()).testRunInfo(new TestRunInfo(testRunId, testCaseId)));
 
@@ -461,11 +459,10 @@ public class ThinClientTest extends HttpClientTestBase {
                     fixtures.getAllMessages(),
                     variables,
                     new RecordDTO.SessionInfoDTO(session.getSessionInfo().getSessionId(), session.getSessionInfo().getCustomMetadata()),
-                    new RecordDTO.PromptInfoDTO(fixtures.getPromptInfo().getPromptTemplateId(), fixtures.getPromptInfo().getPromptTemplateVersionId(),
-                            fixtures.getPromptInfo().getTemplateName(), fixtures.getPromptInfo().getEnvironment(),
-                            fixtures.getPromptInfo().getModelParameters(), fixtures.getPromptInfo().getProviderInfo(),
-                            fixtures.getPromptInfo().getProvider(), fixtures.getPromptInfo().getModel(),
-                            fixtures.getPromptInfo().getFlavorName(), projectId),
+                    new RecordDTO.PromptVersionInfoDTO(
+                            fixtures.getPromptInfo().getPromptTemplateVersionId(),
+                            fixtures.getPromptInfo().getEnvironment(),
+                            projectId),
                     new RecordDTO.CallInfoDTO(fixtures.getCallInfo().getProvider(), fixtures.getCallInfo().getModel(),
                             fixtures.getCallInfo().getStartTime(), fixtures.getCallInfo().getEndTime(), fixtures.getCallInfo().getModelParameters()).providerInfo(fixtures
                             .getCallInfo().getProviderInfo()),
@@ -509,7 +506,7 @@ public class ThinClientTest extends HttpClientTestBase {
                             fixtures.getAllMessages()
                     ).sessionInfo(session.getSessionInfo())
                     .inputs(variables)
-                    .promptInfo(fixtures.getPromptInfo())
+                    .promptVersionInfo(fixtures.getPromptInfo())
                     .callInfo(fixtures.getCallInfo())
                     .responseInfo(fixtures.getResponseInfo()));
 
@@ -579,7 +576,7 @@ public class ThinClientTest extends HttpClientTestBase {
                     allMessages
             ).sessionInfo(session.getSessionInfo())
                     .inputs(variables)
-                    .promptInfo(prompt.getPromptInfo())
+                    .promptVersionInfo(prompt.getPromptInfo())
                     .callInfo(callInfo)
                     .responseInfo(responseInfo)
                     .evalResults(evalResults)
@@ -594,11 +591,10 @@ public class ThinClientTest extends HttpClientTestBase {
                     allMessages,
                     variables,
                     new RecordDTO.SessionInfoDTO(session.getSessionInfo().getSessionId(), session.getSessionInfo().getCustomMetadata()),
-                    new RecordDTO.PromptInfoDTO(prompt.getPromptInfo().getPromptTemplateId(), prompt.getPromptInfo().getPromptTemplateVersionId(),
-                            prompt.getPromptInfo().getTemplateName(), prompt.getPromptInfo().getEnvironment(),
-                            prompt.getPromptInfo().getModelParameters(), prompt.getPromptInfo().getProviderInfo(),
-                            prompt.getPromptInfo().getProvider(), prompt.getPromptInfo().getModel(),
-                            prompt.getPromptInfo().getFlavorName(), projectId),
+                    new RecordDTO.PromptVersionInfoDTO(
+                            prompt.getPromptInfo().getPromptTemplateVersionId(),
+                            prompt.getPromptInfo().getEnvironment(),
+                            projectId),
                     new RecordDTO.CallInfoDTO(callInfo.getProvider(), callInfo.getModel(),
                             callInfo.getStartTime(), callInfo.getEndTime(), callInfo.getModelParameters()).providerInfo(callInfo
                             .getProviderInfo()),
@@ -652,7 +648,7 @@ public class ThinClientTest extends HttpClientTestBase {
                             fixtures.getAllMessages()
                     ).sessionInfo(session.getSessionInfo())
                             .inputs(variables)
-                            .promptInfo(fixtures.getPromptInfo())
+                            .promptVersionInfo(fixtures.getPromptInfo())
                             .callInfo(fixtures.getCallInfo())
                             .responseInfo(responseInfo));
 
@@ -663,11 +659,10 @@ public class ThinClientTest extends HttpClientTestBase {
                     fixtures.getAllMessages(),
                     variables,
                     new RecordDTO.SessionInfoDTO(session.getSessionId(), session.getCustomMetadata()),
-                    new RecordDTO.PromptInfoDTO(fixtures.getPromptInfo().getPromptTemplateId(), fixtures.getPromptInfo().getPromptTemplateVersionId(),
-                            fixtures.getPromptInfo().getTemplateName(), fixtures.getPromptInfo().getEnvironment(),
-                            fixtures.getPromptInfo().getModelParameters(), fixtures.getPromptInfo().getProviderInfo(),
-                            fixtures.getPromptInfo().getProvider(), fixtures.getPromptInfo().getModel(),
-                            fixtures.getPromptInfo().getFlavorName(), projectId),
+                    new RecordDTO.PromptVersionInfoDTO(
+                            fixtures.getPromptInfo().getPromptTemplateVersionId(),
+                            fixtures.getPromptInfo().getEnvironment(),
+                            projectId),
                     new RecordDTO.CallInfoDTO(fixtures.getCallInfo().getProvider(), fixtures.getCallInfo().getModel(),
                             fixtures.getCallInfo().getStartTime(), fixtures.getCallInfo().getEndTime(), fixtures.getCallInfo().getModelParameters()).providerInfo(fixtures
                             .getCallInfo().getProviderInfo()),
@@ -717,7 +712,7 @@ public class ThinClientTest extends HttpClientTestBase {
                             projectId,
                             messages
                     ).inputs(variables)
-                            .promptInfo(fixtures.getPromptInfo())
+                            .promptVersionInfo(fixtures.getPromptInfo())
                             .callInfo(fixtures.getCallInfo())
                             .responseInfo(fixtures.getResponseInfo())
                             .toolSchema(fixtures.getToolSchema()));
@@ -770,7 +765,7 @@ public class ThinClientTest extends HttpClientTestBase {
                             projectId,
                             messages
                     ).inputs(variables)
-                            .promptInfo(fixtures.getPromptInfo())
+                            .promptVersionInfo(fixtures.getPromptInfo())
                             .callInfo(fixtures.getCallInfo())
                             .responseInfo(fixtures.getResponseInfo())
                             .toolSchema(fixtures.getToolSchema()));
@@ -1043,7 +1038,7 @@ public class ThinClientTest extends HttpClientTestBase {
                                     projectId,
                                     fixtures.getAllMessages()
                             ).inputs(variables)
-                                    .promptInfo(fixtures.getPromptInfo())
+                                    .promptVersionInfo(fixtures.getPromptInfo())
                                     .callInfo(fixtures.getCallInfo())
                                     .responseInfo(fixtures.getResponseInfo())).get());
             assertEquals("Error making call [401]", exception.getCause().getMessage());

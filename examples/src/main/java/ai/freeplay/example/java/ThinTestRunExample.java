@@ -187,7 +187,7 @@ public class ThinTestRunExample {
                         projectId,
                         allMessages
                 ).inputs(testCase.getVariables())
-                        .promptInfo(formattedPrompt.getPromptInfo())
+                        .promptVersionInfo(formattedPrompt.getPromptInfo())
                         .callInfo(callInfo)
                         .responseInfo(responseInfo)
                         .toolSchema(formattedPrompt.getToolSchema())

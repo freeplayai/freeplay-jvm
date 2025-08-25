@@ -124,7 +124,7 @@ public class ThinTestRunWithAgentDatasetExample {
                             projectId,
                             allMessages
                     ).inputs(Map.of("question", completion))
-                            .promptInfo(formattedPrompt.getPromptInfo())
+                            .promptVersionInfo(formattedPrompt.getPromptInfo())
                             .callInfo(callInfo)
                             .toolSchema(formattedPrompt.getToolSchema())
                             .testRunInfo(testRun.getTestRunInfo(testCase.getTestCaseId()))

@@ -110,19 +110,12 @@ public class ThinCallSupport {
             }
         }
 
-        // Handle optional PromptInfo
-        RecordDTO.PromptInfoDTO promptInfoDTO = null;
-        if (recordPayload.getPromptInfo() != null) {
-            promptInfoDTO = new RecordDTO.PromptInfoDTO(
-                    recordPayload.getPromptInfo().getPromptTemplateId(),
-                    recordPayload.getPromptInfo().getPromptTemplateVersionId(),
-                    recordPayload.getPromptInfo().getTemplateName(),
-                    recordPayload.getPromptInfo().getEnvironment(),
-                    recordPayload.getPromptInfo().getModelParameters(),
-                    recordPayload.getPromptInfo().getProviderInfo(),
-                    recordPayload.getPromptInfo().getProvider(),
-                    recordPayload.getPromptInfo().getModel(),
-                    recordPayload.getPromptInfo().getFlavorName(),
+        // Handle optional PromptVersionInfo
+        RecordDTO.PromptVersionInfoDTO promptVersionInfoDTO = null;
+        if (recordPayload.getPromptVersionInfo() != null) {
+            promptVersionInfoDTO = new RecordDTO.PromptVersionInfoDTO(
+                    recordPayload.getPromptVersionInfo().getPromptTemplateVersionId(),
+                    recordPayload.getPromptVersionInfo().getEnvironment(),
                     recordPayload.getProjectId()
             );
         }
@@ -151,7 +144,7 @@ public class ThinCallSupport {
                 recordPayload.getAllMessages(),
                 recordPayload.getInputs(),
                 new RecordDTO.SessionInfoDTO(recordPayload.getSessionInfo().getSessionId(), recordPayload.getSessionInfo().getCustomMetadata()),
-                promptInfoDTO,
+                promptVersionInfoDTO,
                 callInfoDTO,
                 responseInfo,
                 testRunId != null ? new RecordDTO.TestRunInfoDTO(testRunId, testCaseId) : null,

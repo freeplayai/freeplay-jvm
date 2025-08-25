@@ -94,7 +94,7 @@ public class ThinGetVersionID {
                                             allMessages
                                     ).inputs(variables)
                                             .sessionInfo(sessionInfo)
-                                            .promptInfo(formattedPrompt.getPromptInfo())
+                                            .promptVersionInfo(formattedPrompt.getPromptInfo())
                                             .callInfo(callInfo)
                                             .responseInfo(responseInfo));
                         }

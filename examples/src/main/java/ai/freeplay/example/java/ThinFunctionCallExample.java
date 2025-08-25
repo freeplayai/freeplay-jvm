@@ -106,7 +106,7 @@ public class ThinFunctionCallExample {
                                             projectId,
                                             formattedPrompt.getBoundMessages()
                                     ).inputs(variables)
-                                            .promptInfo(formattedPrompt.getPromptInfo())
+                                            .promptVersionInfo(formattedPrompt.getPromptInfo())
                                             .callInfo(callInfo)
                                             .responseInfo(responseInfo));
                         }

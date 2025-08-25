@@ -134,7 +134,7 @@ public class ThinTestRunHistoryExample {
                         projectId,
                         allMessages
                 ).inputs(testCase.getVariables())
-                        .promptInfo(formattedPrompt.getPromptInfo())
+                        .promptVersionInfo(formattedPrompt.getPromptInfo())
                         .callInfo(callInfo)
                         .responseInfo(responseInfo)
                         .testRunInfo(testRun.getTestRunInfo(testCase.getTestCaseId())));

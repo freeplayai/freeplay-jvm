@@ -95,7 +95,7 @@ public class ThinDeleteSession {
                                                 projectId,
                                                 allMessages
                                         ).inputs(variables)
-                                                .promptInfo(formattedPrompt.getPromptInfo())
+                                                .promptVersionInfo(formattedPrompt.getPromptInfo())
                                                 .callInfo(callInfo)
                                                 .responseInfo(responseInfo));
                             System.out.println("Recorded call succeeded with completionId: " + recordResponse.join().getCompletionId());
