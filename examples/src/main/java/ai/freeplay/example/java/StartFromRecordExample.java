@@ -17,7 +17,7 @@ import java.util.Map;
 
 import static ai.freeplay.client.thin.Freeplay.Config;
 
-public class MinimalExample {
+public class StartFromRecordExample {
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     public static void main(String[] args) throws Exception {

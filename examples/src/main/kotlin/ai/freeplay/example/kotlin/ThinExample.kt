@@ -2,6 +2,7 @@ package ai.freeplay.example.kotlin
 
 import ai.freeplay.client.thin.Freeplay
 import ai.freeplay.client.thin.resources.prompts.ChatMessage
+import ai.freeplay.client.thin.resources.prompts.Prompts
 import ai.freeplay.client.thin.resources.recordings.CallInfo
 import ai.freeplay.client.thin.resources.recordings.RecordInfo
 import ai.freeplay.client.thin.resources.recordings.ResponseInfo
@@ -27,13 +28,17 @@ fun main(): Unit = runBlocking {
     val variables = mapOf("question" to "Why isn't my window working?")
 
     println("Getting the prompt...")
-    val prompt = fpClient.prompts()
+    val prompt = fpClient
+        .prompts()
         .getFormatted<List<ChatMessage>>(
-            projectId,
-            "my-prompt-anthropic",
-            "latest",
-            variables
-        ).await()
+            Prompts.GetFormattedRequest(
+                projectId,
+                "my-anthropic-prompt",
+                "latest",
+                variables
+            )
+        )
+        .await()
 
     println("Calling Anthropic...")
     val startTime = System.currentTimeMillis()
@@ -72,7 +77,7 @@ fun main(): Unit = runBlocking {
             allMessages
         ).inputs(variables)
             .sessionInfo(session.sessionInfo)
-            .promptVersionInfo(prompt.getPromptInfo())
+            .promptVersionInfo(prompt.promptInfo)
             .callInfo(callInfo)
             .responseInfo(responseInfo)
             .traceInfo(trace)
