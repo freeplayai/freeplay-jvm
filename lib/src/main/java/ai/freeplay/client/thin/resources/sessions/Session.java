@@ -54,6 +54,17 @@ public class Session {
         );
     }
 
+    /**
+     * @deprecated use {@link #createTrace(String)} instead and use the builder pattern to set fields on TraceInfo.
+     * For example:
+     * ```java
+     * TraceInfo traceInfo = session.createTrace("input")
+     *     .agentName("agentName")
+     *     .parentId(parentId)
+     *     .customMetadata(customMetadata);
+     * ```
+     */
+    @Deprecated
     public TraceInfo createTrace(String input, String agentName, Map<String, Object> customMetadata) {
         return new TraceInfo(
                 this.sessionId,
