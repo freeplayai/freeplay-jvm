@@ -6,6 +6,7 @@ import ai.freeplay.client.media.MediaInputUrl;
 import ai.freeplay.client.thin.resources.prompts.ChatMessage;
 import ai.freeplay.client.thin.resources.recordings.CallInfo;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
@@ -22,6 +23,7 @@ public class RecordDTO {
     private List<ChatMessage> messages;
     private Map<String, Object> inputs;
     private SessionInfoDTO sessionInfo;
+    @JsonProperty("prompt_info")
     private PromptVersionInfoDTO promptVersionInfo;
     private CallInfoDTO callInfo;
     private ResponseInfoDTO responseInfo;

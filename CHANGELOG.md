@@ -2,6 +2,12 @@
 
 Notable additions, fixes, or breaking changes to the Freeplay SDK.
 
+## [0.4.1] - 2025-09-10
+
+### Fixed
+
+- Fixed a bug where the `prompt_info` field was not being set correctly in the request body.
+
 ## [0.4.1] - 2025-08-28
 
 ### Breaking changes
