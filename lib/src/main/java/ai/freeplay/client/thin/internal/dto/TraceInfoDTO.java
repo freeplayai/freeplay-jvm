@@ -6,7 +6,6 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming;
 
 import java.util.Map;
 import java.util.Objects;
-import java.util.UUID;
 
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public class TraceInfoDTO {
@@ -16,7 +15,6 @@ public class TraceInfoDTO {
     private Map<String, Object> customMetadata;
     private Map<String, Object> evalResults;
     private RecordDTO.TestRunInfoDTO testRunInfo;
-    private UUID parentId;
 
     @SuppressWarnings("unused")
     public TraceInfoDTO() {
@@ -29,8 +27,8 @@ public class TraceInfoDTO {
             String agentName,
             Map<String, Object> customMetadata,
             Map<String, Object> evalResults,
-            TestRunInfo testRunInfo,
-            UUID parentId
+            TestRunInfo testRunInfo
+
     ) {
         this.input = input;
         this.output = output;
@@ -38,7 +36,6 @@ public class TraceInfoDTO {
         this.customMetadata = customMetadata;
         this.evalResults = evalResults;
         this.testRunInfo = testRunInfo != null ? new RecordDTO.TestRunInfoDTO(testRunInfo.getTestRunId(), testRunInfo.getTestCaseId()) : null;
-        this.parentId = parentId;
     }
 
     @SuppressWarnings("unused")
@@ -71,21 +68,16 @@ public class TraceInfoDTO {
         return testRunInfo;
     }
 
-    @SuppressWarnings("unused")
-    public UUID getParentId() {
-        return parentId;
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         TraceInfoDTO that = (TraceInfoDTO) o;
-        return Objects.equals(input, that.input) && Objects.equals(output, that.output) && Objects.equals(agentName, that.agentName) && Objects.equals(customMetadata, that.customMetadata) && Objects.equals(evalResults, that.evalResults) && Objects.equals(parentId, that.parentId);
+        return Objects.equals(input, that.input) && Objects.equals(output, that.output) && Objects.equals(agentName, that.agentName) && Objects.equals(customMetadata, that.customMetadata) && Objects.equals(evalResults, that.evalResults);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(input, output, agentName, customMetadata, evalResults, parentId);
+        return Objects.hash(input, output, agentName, customMetadata, evalResults);
     }
 }

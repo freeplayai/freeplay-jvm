@@ -15,7 +15,6 @@ public class TraceInfo {
     public String output;
 
     public String agentName;
-    public UUID parentId;
 
     public Map<String, Object> customMetadata;
 
@@ -50,13 +49,6 @@ public class TraceInfo {
         return this;
     }
 
-    public TraceInfo parentId(
-            UUID parentId
-    ) {
-        this.parentId = parentId;
-        return this;
-    }
-
 
     public UUID getSessionId() {
         return sessionId;
@@ -84,10 +76,6 @@ public class TraceInfo {
 
     public Map<String, Object> getEvalResults() {
         return evalResults;
-    }
-
-    public UUID getParentId() {
-        return parentId;
     }
 
     @SuppressWarnings("unused")
