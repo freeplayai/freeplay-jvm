@@ -150,6 +150,7 @@ public class ThinCallSupport {
                 testRunId != null ? new RecordDTO.TestRunInfoDTO(testRunId, testCaseId) : null,
                 recordPayload.getEvalResults(),
                 recordPayload.getTraceInfo() != null ? new RecordDTO.TraceInfoDTO(recordPayload.getTraceInfo().traceId) : null,
+                recordPayload.getParentId(),
                 recordPayload.getToolSchema(),
                 recordPayload.getCompletionId(),
                 mediaInputs
@@ -182,7 +183,8 @@ public class ThinCallSupport {
                 traceInfo.getAgentName(),
                 traceInfo.getCustomMetadata(),
                 traceInfo.getEvalResults(),
-                testRunInfo
+                testRunInfo,
+                traceInfo.getParentId()
         );
         return AsyncHttp.postJson(
                 format("%s/v2/projects/%s/sessions/%s/traces/id/%s", baseUrl, projectId, traceInfo.sessionId, traceInfo.traceId),

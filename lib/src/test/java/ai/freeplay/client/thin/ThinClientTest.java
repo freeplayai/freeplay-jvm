@@ -6,6 +6,7 @@ import ai.freeplay.client.exceptions.FreeplayConfigurationException;
 import ai.freeplay.client.internal.JSONUtil;
 import ai.freeplay.client.thin.internal.dto.RecordDTO;
 import ai.freeplay.client.thin.internal.dto.TraceInfoDTO;
+import ai.freeplay.client.thin.internal.ThinCallSupport;
 import ai.freeplay.client.thin.internal.v2dto.TemplateDTO.ToolSchema;
 import ai.freeplay.client.thin.resources.feedback.CustomerFeedbackResponse;
 import ai.freeplay.client.thin.resources.feedback.TraceFeedbackResponse;
@@ -20,6 +21,7 @@ import com.google.cloud.vertexai.api.Content;
 import com.google.cloud.vertexai.generativeai.ContentMaker;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
 
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -350,6 +352,7 @@ public class ThinClientTest extends HttpClientTestBase {
                     null,
                     null,
                     null,
+                    null,
                     Map.of()
             );
             RecordDTO apiPayload = JSONUtil.parse(requestBody, RecordDTO.class);
@@ -415,6 +418,7 @@ public class ThinClientTest extends HttpClientTestBase {
                     null,
                     null,
                     null,
+                    null,
                     Map.of()
             );
             RecordDTO actualPayload = JSONUtil.parse(
@@ -469,6 +473,7 @@ public class ThinClientTest extends HttpClientTestBase {
                     new RecordDTO.ResponseInfoDTO(fixtures.getResponseInfo().isComplete(), null,
                             fixtures.getResponseInfo().getPromptTokens(), fixtures.getResponseInfo().getResponseTokens()),
                     new RecordDTO.TestRunInfoDTO(testRunId, testCaseId),
+                    null,
                     null,
                     null,
                     null,
@@ -603,6 +608,7 @@ public class ThinClientTest extends HttpClientTestBase {
                     null,
                     Map.of("bool_value", true, "float_value", 0.23),
                     new RecordDTO.TraceInfoDTO(traceInfo.getTraceId()),
+                    null,
                     null, null,
                     Map.of()
             );
@@ -618,6 +624,7 @@ public class ThinClientTest extends HttpClientTestBase {
                     traceInfo.getAgentName(),
                     traceInfo.getCustomMetadata(),
                     traceEvalResults,
+                    null,
                     null
             );
             TraceInfoDTO actualTracePayload = JSONUtil.parse(traceRequestBody, TraceInfoDTO.class);
@@ -668,6 +675,7 @@ public class ThinClientTest extends HttpClientTestBase {
                             .getCallInfo().getProviderInfo()),
                     new RecordDTO.ResponseInfoDTO(responseInfo.isComplete(), new RecordDTO.OpenAIFunctionCallDTO(responseInfo.getFunctionCall().getName(), responseInfo.getFunctionCall().getArguments()),
                             responseInfo.getPromptTokens(), responseInfo.getResponseTokens()),
+                    null,
                     null,
                     null,
                     null,
@@ -1302,5 +1310,161 @@ public class ThinClientTest extends HttpClientTestBase {
                     .format(promptInfo.getFlavorName())
                     .allMessages(new ChatMessage("Assistant", completion));
         }
+    }
+
+    @Test
+    public void testRecordInfoParentId() {
+        String projectId = "test-project";
+        List<ChatMessage> allMessages = List.of(
+            new ChatMessage("user", "test message"),
+            new ChatMessage("assistant", "test response")
+        );
+        
+        UUID parentId = UUID.randomUUID();
+        
+        RecordInfo recordInfo = new RecordInfo(projectId, allMessages)
+                .parentId(parentId);
+        
+        assertEquals(parentId, recordInfo.getParentId());
+    }
+
+    @Test
+    public void testTraceInfoParentId() {
+        ThinCallSupport mockCallSupport = Mockito.mock(ThinCallSupport.class);
+        UUID sessionId = UUID.randomUUID();
+        UUID traceId = UUID.randomUUID();
+        UUID parentId = UUID.randomUUID();
+        String input = "test input";
+        
+        TraceInfo traceInfo = new TraceInfo(sessionId, traceId, input, mockCallSupport)
+                .parentId(parentId);  // Using builder pattern
+        
+        assertEquals(sessionId, traceInfo.getSessionId());
+        assertEquals(traceId, traceInfo.getTraceId());
+        assertEquals(input, traceInfo.getInput());
+        assertEquals(parentId, traceInfo.getParentId());
+    }
+
+    @Test
+    public void testTraceInfoWithoutParentId() {
+        ThinCallSupport mockCallSupport = Mockito.mock(ThinCallSupport.class);
+        UUID sessionId = UUID.randomUUID();
+        UUID traceId = UUID.randomUUID();
+        String input = "test input";
+        
+        TraceInfo traceInfo = new TraceInfo(sessionId, traceId, input, mockCallSupport);
+        
+        assertEquals(sessionId, traceInfo.getSessionId());
+        assertEquals(traceId, traceInfo.getTraceId());
+        assertEquals(input, traceInfo.getInput());
+        assertNull(traceInfo.getParentId());  // Should be null when not specified
+    }
+
+    @Test
+    public void testSessionCreateTraceWithParentId() {
+        ThinCallSupport mockCallSupport = Mockito.mock(ThinCallSupport.class);
+        Session session = new Session(mockCallSupport);
+        
+        String input = "parent question";
+        String agentName = "test_agent";
+        Map<String, Object> metadata = Map.of("level", "parent");
+        
+        TraceInfo parentTrace = session.createTrace(input).agentName(agentName).customMetadata(metadata);
+        assertNull(parentTrace.getParentId());  // Parent trace has no parent
+        
+        // Create child trace with parent ID
+        String childInput = "child question";
+        String childAgentName = "child_agent";
+        Map<String, Object> childMetadata = Map.of("level", "child");
+        UUID parentId = parentTrace.getTraceId();
+        
+        TraceInfo childTrace = session.createTrace(childInput).agentName(childAgentName).customMetadata(childMetadata).parentId(parentId);
+        
+        assertEquals(childInput, childTrace.getInput());
+        assertEquals(childAgentName, childTrace.getAgentName());
+        assertEquals(parentId, childTrace.getParentId());
+        assertEquals(childMetadata, childTrace.getCustomMetadata());
+    }
+
+    @Test
+    @SuppressWarnings("deprecation")
+    public void testDeprecatedTraceInfoMethodsStillWork() {
+        String projectId = "test-project";
+        List<ChatMessage> allMessages = List.of(
+            new ChatMessage("user", "test message"),
+            new ChatMessage("assistant", "test response")
+        );
+        
+        ThinCallSupport mockCallSupport = Mockito.mock(ThinCallSupport.class);
+        UUID sessionId = UUID.randomUUID();
+        UUID traceId = UUID.randomUUID();
+        String input = "test input";
+        
+        TraceInfo traceInfo = new TraceInfo(sessionId, traceId, input, mockCallSupport);
+        
+        RecordInfo recordInfo = new RecordInfo(projectId, allMessages)
+                .traceInfo(traceInfo);
+        
+        assertEquals(traceInfo, recordInfo.getTraceInfo());  // Using deprecated getter
+    }
+
+    @Test
+    public void testParentIdVsTraceInfoEquivalence() {
+        String projectId = "test-project";
+        List<ChatMessage> allMessages = List.of(
+            new ChatMessage("user", "test message"),
+            new ChatMessage("assistant", "test response")
+        );
+        
+        ThinCallSupport mockCallSupport = Mockito.mock(ThinCallSupport.class);
+        UUID sessionId = UUID.randomUUID();
+        UUID traceId = UUID.randomUUID();
+        String input = "test input";
+        
+        TraceInfo traceInfo = new TraceInfo(sessionId, traceId, input, mockCallSupport);
+        
+        // Create with deprecated traceInfo
+        @SuppressWarnings("deprecation")
+        RecordInfo recordWithTraceInfo = new RecordInfo(projectId, allMessages)
+                .traceInfo(traceInfo);
+        
+        // Create with new parentId approach
+        RecordInfo recordWithParentId = new RecordInfo(projectId, allMessages)
+                .parentId(traceInfo.getTraceId());
+        
+        // Both should reference the same trace ID
+        @SuppressWarnings("deprecation")
+        UUID traceInfoId = recordWithTraceInfo.getTraceInfo().getTraceId();
+        UUID parentIdValue = recordWithParentId.getParentId();
+        
+        assertEquals(traceInfoId, parentIdValue);
+    }
+
+    @Test
+    public void testMultiLevelTraceHierarchy() {
+        ThinCallSupport mockCallSupport = Mockito.mock(ThinCallSupport.class);
+        Session session = new Session(mockCallSupport);
+        
+        // Create root trace
+        TraceInfo root = session.createTrace("root question").agentName("root_agent").customMetadata(null);
+        assertNull(root.getParentId());
+        
+        // Create child trace
+        TraceInfo child = session.createTrace("child question").agentName("child_agent").customMetadata(null).parentId(root.getTraceId());
+        assertEquals(root.getTraceId(), child.getParentId());
+        
+        // Create grandchild trace
+        TraceInfo grandchild = session.createTrace("grandchild question").agentName("grandchild_agent").customMetadata(null).parentId(child.getTraceId());
+        assertEquals(child.getTraceId(), grandchild.getParentId());
+        
+        // Verify hierarchy
+        assertNull(root.getParentId());
+        assertEquals(root.getTraceId(), child.getParentId());
+        assertEquals(child.getTraceId(), grandchild.getParentId());
+        
+        // All IDs should be unique
+        assertNotEquals(root.getTraceId(), child.getTraceId());
+        assertNotEquals(child.getTraceId(), grandchild.getTraceId());
+        assertNotEquals(root.getTraceId(), grandchild.getTraceId());
     }
 }

@@ -26,6 +26,7 @@ public class RecordInfo {
     private Map<String, Object> evalResults;
 
     private TraceInfo traceInfo;
+    private UUID parentId;
     private UUID completionId;
 
     private List<Map<String, Object>> toolSchema;
@@ -114,8 +115,17 @@ public class RecordInfo {
         return this;
     }
 
+    /**
+     * @deprecated Use {@link #parentId(UUID)} instead. This method will be removed in a future version.
+     */
+    @Deprecated
     public RecordInfo traceInfo(TraceInfo traceInfo) {
         this.traceInfo = traceInfo;
+        return this;
+    }
+
+    public RecordInfo parentId(UUID parentId) {
+        this.parentId = parentId;
         return this;
     }
 
@@ -170,8 +180,16 @@ public class RecordInfo {
         return evalResults;
     }
 
+    /**
+     * @deprecated Use {@link #getParentId()} instead. This method will be removed in a future version.
+     */
+    @Deprecated
     public TraceInfo getTraceInfo() {
         return traceInfo;
+    }
+
+    public UUID getParentId() {
+        return parentId;
     }
 
     public List<Map<String, Object>> getToolSchema() {
@@ -200,6 +218,7 @@ public class RecordInfo {
                 ", testRunInfo=" + testRunInfo +
                 ", evalResults=" + evalResults +
                 ", traceInfo=" + traceInfo +
+                ", parentId=" + parentId +
                 ", toolSchema=" + toolSchema +
                 ", mediaInputCollection=" + mediaInputCollection +
                 '}';

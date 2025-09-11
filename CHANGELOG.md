@@ -2,11 +2,39 @@
 
 Notable additions, fixes, or breaking changes to the Freeplay SDK.
 
-## [0.4.1] - 2025-09-10
+## [0.4.3] - Unreleased
+
+### Added
+
+- New `parentId` parameter in `RecordInfo` to replace the deprecated `traceInfo` parameter. This UUID field enables direct parent-child trace/completions relationships:
+  ```java
+  // Before (deprecated):
+  RecordInfo recordInfo = new RecordInfo(projectId, allMessages)
+      .sessionInfo(sessionInfo)
+      .traceInfo(traceInfo);
+  
+  // After:
+  RecordInfo recordInfo = new RecordInfo(projectId, allMessages)
+      .sessionInfo(sessionInfo)
+      .parentId(parentId);  // UUID of parent trace or completion
+  ```
+- `parentId` parameter support in `Session.createTrace()` methods and `TraceInfo` builder pattern:
+  ```java
+  TraceInfo parentTrace = session.createTrace("Parent question", "parent_agent", null);  
+  TraceInfo trace = session.createTrace("Question", "agent", null)
+      .parentId(parentId);  // Chain parentId using builder pattern
+  ```
+
+### Changes
+- `RecordInfo.traceInfo()` method is deprecated and will be removed in v0.6.0. Use `parentId()` instead for trace hierarchy management.
+- `RecordInfo.getTraceInfo()` method is deprecated and will be removed in v0.6.0. Use `getParentId()` instead.
+- `Session.createTrace(String input, String agentName, Map<String, Object> customMetadata)` method is deprecated and will be removed in v0.6.0. Use `createTrace(String)` instead and use the builder pattern to set fields on TraceInfo.
+
+## [0.4.2] - 2025-09-10
 
 ### Fixed
 
-- Fixed a bug where the `prompt_info` field was not being set correctly in the request body.
+- Fixed a bug where the `promptVersionInfo` field was not being set correctly in the request body.
 
 ## [0.4.1] - 2025-08-28
 
