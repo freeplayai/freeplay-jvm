@@ -114,62 +114,119 @@ publishing {
         }
     }
 
-    repositories {
-        maven {
-            name = "ossrh-staging-api"
-            url = uri("https://ossrh-staging-api.central.sonatype.com/service/local/staging/deploy/maven2/")
-            credentials {
-                username = (project.properties["ossrhUsername"] ?: "").toString()
-                password = (project.properties["ossrhPassword"] ?: "").toString()
-            }
-        }
-    }
-
-
+    // Repository configuration is handled automatically by the nexus-publish plugin
 }
+
 
 signing {
-    sign(publishing.publications["mavenJava"])
+    // Configure signing using environment variables (for CI) or properties (for local)
+    val signingKeyId = System.getenv("SIGNING_KEY_ID") ?: project.findProperty("signing.keyId")?.toString()
+    val signingPassword = System.getenv("SIGNING_PASSWORD") ?: project.findProperty("signing.password")?.toString()  
+    val signingKeyRingFile = System.getenv("SIGNING_SECRET_KEY_RING_FILE") ?: project.findProperty("signing.secretKeyRingFile")?.toString()
+    
+    if (signingKeyId != null && signingPassword != null && signingKeyRingFile != null) {
+        project.ext["signing.keyId"] = signingKeyId
+        project.ext["signing.password"] = signingPassword
+        project.ext["signing.secretKeyRingFile"] = signingKeyRingFile
+        
+        sign(publishing.publications["mavenJava"])
+    }
 }
 
 
 
-tasks.register("uploadToPortal") {
+tasks.register("determineVersion") {
     group = "publishing"
-    description = "Upload deployment to Central Publisher Portal"
-
+    description = "Determine the next version based on release type"
+    
     doLast {
-        val username = (project.properties["ossrhUsername"] ?: "").toString()
-        val password = (project.properties["ossrhPassword"] ?: "").toString()
-        val namespace = "ai.freeplay" // Your namespace
-
-        if (username.isNotEmpty() && password.isNotEmpty()) {
-            val credentials = Base64.getEncoder().encodeToString("$username:$password".toByteArray())
-
-            val url = URL("https://ossrh-staging-api.central.sonatype.com/manual/upload/defaultRepository/$namespace")
-            val connection = url.openConnection() as HttpURLConnection
-
-            connection.requestMethod = "POST"
-            connection.setRequestProperty("Authorization", "Bearer $credentials")
-            connection.setRequestProperty("Content-Type", "application/json")
-            connection.doOutput = true
-
-            // Optional: specify publishing type (user_managed, automatic, or portal_api)
-            val requestBody = """{"publishing_type": "user_managed"}"""
-            connection.outputStream.use { it.write(requestBody.toByteArray()) }
-
-            val responseCode = connection.responseCode
-            if (responseCode == 200 || responseCode == 201) {
-                println("Successfully uploaded to Portal")
-            } else {
-                val errorResponse = connection.errorStream?.bufferedReader()?.readText() ?: "Unknown error"
-                throw GradleException("Failed to upload to Portal: $responseCode - $errorResponse")
+        val releaseType = project.properties["releaseType"]?.toString() ?: "prerelease"
+        val currentVersion = project.version.toString()
+        
+        // Parse current version (e.g., "0.4.3-alpha1" -> base: "0.4.3", suffix: "alpha1")
+        val versionRegex = """^(\d+\.\d+\.\d+)(?:-(.+))?$""".toRegex()
+        val matchResult = versionRegex.find(currentVersion)
+            ?: throw GradleException("Invalid version format: $currentVersion")
+        
+        val baseVersion = matchResult.groupValues[1]
+        
+        when (releaseType) {
+            "stable" -> {
+                // For stable releases, check if the EXACT current version already exists
+                // User must manually bump version in build.gradle.kts (e.g., 0.4.3-alpha1 -> 0.4.4)
+                if (checkVersionExistsOnSonatype(currentVersion)) {
+                    throw GradleException("Version $currentVersion already exists on Sonatype. Please manually bump the version in build.gradle.kts")
+                }
+                
+                println("RESULT_JSON:{\"current_version\":\"$currentVersion\",\"base_version\":\"$baseVersion\",\"new_version\":\"$currentVersion\",\"is_prerelease\":false}")
             }
-        } else {
-            throw GradleException("Missing Portal credentials")
+            
+            "prerelease" -> {
+                // Find the latest alpha version on Sonatype
+                val latestAlpha = findLatestAlphaVersion(baseVersion)
+                val nextAlphaNumber = if (latestAlpha != null) {
+                    val alphaRegex = """alpha(\d+)""".toRegex()
+                    val alphaMatch = alphaRegex.find(latestAlpha)
+                    if (alphaMatch != null) {
+                        alphaMatch.groupValues[1].toInt() + 1
+                    } else {
+                        1
+                    }
+                } else {
+                    1
+                }
+                
+                val newVersion = "$baseVersion-alpha$nextAlphaNumber"
+                
+                println("RESULT_JSON:{\"current_version\":\"$currentVersion\",\"base_version\":\"$baseVersion\",\"new_version\":\"$newVersion\",\"is_prerelease\":true}")
+            }
+            
+            else -> throw GradleException("Invalid release type: $releaseType. Must be 'stable' or 'prerelease'")
         }
     }
 }
+
+fun checkVersionExistsOnSonatype(version: String): Boolean {
+    return try {
+        val url = URL("https://repo1.maven.org/maven2/ai/freeplay/client/$version/")
+        val connection = url.openConnection() as HttpURLConnection
+        connection.requestMethod = "HEAD"
+        connection.responseCode == 200
+    } catch (e: Exception) {
+        false
+    }
+}
+
+fun findLatestAlphaVersion(baseVersion: String): String? {
+    return try {
+        val url = URL("https://repo1.maven.org/maven2/ai/freeplay/client/maven-metadata.xml")
+        val connection = url.openConnection() as HttpURLConnection
+        connection.requestMethod = "GET"
+        
+        if (connection.responseCode == 200) {
+            val response = connection.inputStream.bufferedReader().readText()
+            val alphaVersions = mutableListOf<String>()
+            
+            // Simple XML parsing to extract versions
+            val versionRegex = """<version>($baseVersion-alpha\d+)</version>""".toRegex()
+            versionRegex.findAll(response).forEach { match ->
+                alphaVersions.add(match.groupValues[1])
+            }
+            
+            // Sort and return the latest
+            alphaVersions.sortedWith { a, b ->
+                val aNum = """alpha(\d+)""".toRegex().find(a)?.groupValues?.get(1)?.toInt() ?: 0
+                val bNum = """alpha(\d+)""".toRegex().find(b)?.groupValues?.get(1)?.toInt() ?: 0
+                aNum.compareTo(bNum)
+            }.lastOrNull()
+        } else {
+            null
+        }
+    } catch (e: Exception) {
+        null
+    }
+}
+
 
 tasks.register("publishAll") {
     dependsOn("clean")
@@ -177,9 +234,5 @@ tasks.register("publishAll") {
     dependsOn("jar")
     dependsOn("javadocJar")
     dependsOn("sourcesJar")
-    dependsOn("publishMavenJavaPublicationToOssrh-staging-apiRepository")
-    dependsOn("uploadToPortal")
-
-    // Ensure upload happens after publish
-    tasks.findByName("uploadToPortal")?.mustRunAfter("publishMavenJavaPublicationToOssrh-staging-apiRepository")
+    dependsOn("publishMavenJavaPublicationToSonatypeRepository")
 }
