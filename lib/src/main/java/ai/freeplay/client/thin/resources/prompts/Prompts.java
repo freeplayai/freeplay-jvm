@@ -223,10 +223,12 @@ public class Prompts {
                 template.getMetadata().getFlavor()
         ).providerInfo(template.getMetadata().getProviderInfo());
 
-        return new TemplatePrompt(
-                promptInfo,
-                messages,
-                template.getToolSchema()
-        );
+        TemplatePrompt templatePrompt = new TemplatePrompt(promptInfo, messages, template.getToolSchema());
+
+        if (template.getOutputSchema() != null) {
+            templatePrompt.outputSchema(template.getOutputSchema());
+        }
+
+        return templatePrompt;
     }
 }

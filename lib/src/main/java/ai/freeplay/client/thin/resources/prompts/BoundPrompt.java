@@ -5,11 +5,13 @@ import ai.freeplay.client.thin.internal.ThinCallSupport;
 import ai.freeplay.client.thin.internal.v2dto.TemplateDTO.ToolSchema;
 
 import java.util.List;
+import java.util.Map;
 
 public class BoundPrompt {
     private final PromptInfo promptInfo;
     private final List<ChatMessage> messages;
-    private final List<ToolSchema> toolSchema;
+    private List<ToolSchema> toolSchema;
+    private Map<String, Object> outputSchema;
 
     public BoundPrompt(PromptInfo promptInfo, List<ChatMessage> messages) {
         this(promptInfo, messages, null);
@@ -19,6 +21,12 @@ public class BoundPrompt {
         this.promptInfo = promptInfo;
         this.messages = messages;
         this.toolSchema = toolSchema;
+        this.outputSchema = null;
+    }
+
+    public BoundPrompt outputSchema(Map<String, Object> outputSchema) {
+        this.outputSchema = outputSchema;
+        return this;
     }
 
     public PromptInfo getPromptInfo() {
@@ -40,10 +48,14 @@ public class BoundPrompt {
         //noinspection unchecked
         ContentFormat llmSyntax = (ContentFormat) llmAdapter.toLLMSyntax(messages);
 
-        if (toolSchema == null) {
-            return new FormattedPrompt<>(getPromptInfo(), getMessages(), llmSyntax, null);
-        }
+        List<Map<String, Object>> formattedToolSchema = toolSchema != null
+            ? llmAdapter.toToolSchemaFormat(toolSchema)
+            : null;
 
-        return new FormattedPrompt<>(getPromptInfo(), getMessages(), llmSyntax, llmAdapter.toToolSchemaFormat(toolSchema));
+        Map<String, Object> formattedOutputSchema = outputSchema != null
+            ? llmAdapter.toOutputSchemaFormat(outputSchema)
+            : null;
+
+        return new FormattedPrompt<>(getPromptInfo(), getMessages(), llmSyntax, formattedToolSchema, formattedOutputSchema);
     }
 }

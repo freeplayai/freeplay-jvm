@@ -78,6 +78,12 @@ public class OpenAILLMAdapter implements LLMAdapters.LLMAdapter<List<ChatMessage
                 .collect(toList());
     }
 
+    @Override
+    public Map<String, Object> toOutputSchemaFormat(Map<String, Object> outputSchema) {
+        // For OpenAI, the normalized format is compatible with the API format
+        return outputSchema;
+    }
+
     @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class ContentPart {

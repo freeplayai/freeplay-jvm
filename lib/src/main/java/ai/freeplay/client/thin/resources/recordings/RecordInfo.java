@@ -30,6 +30,7 @@ public class RecordInfo {
     private UUID completionId;
 
     private List<Map<String, Object>> toolSchema;
+    private Map<String, Object> outputSchema;
     private MediaInputCollection mediaInputCollection;
 
     public RecordInfo(
@@ -134,6 +135,11 @@ public class RecordInfo {
         return this;
     }
 
+    public RecordInfo outputSchema(Map<String, Object> outputSchema) {
+        this.outputSchema = outputSchema;
+        return this;
+    }
+
     public RecordInfo completionId(UUID id) {
         this.completionId = id;
         return this;
@@ -196,6 +202,10 @@ public class RecordInfo {
         return toolSchema;
     }
 
+    public Map<String, Object> getOutputSchema() {
+        return outputSchema;
+    }
+
     public UUID getCompletionId() {
         return completionId;
     }
@@ -220,6 +230,7 @@ public class RecordInfo {
                 ", traceInfo=" + traceInfo +
                 ", parentId=" + parentId +
                 ", toolSchema=" + toolSchema +
+                ", outputSchema=" + outputSchema +
                 ", mediaInputCollection=" + mediaInputCollection +
                 '}';
     }

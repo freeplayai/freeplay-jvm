@@ -14,9 +14,13 @@ public class LLMAdapters {
     public interface LLMAdapter<LLMFormat> {
         String getProvider();
         LLMFormat toLLMSyntax(List<ChatMessage> messages);
-        
+
         default List<Map<String, Object>> toToolSchemaFormat(List<ToolSchema> toolSchema) {
             throw new UnsupportedOperationException("Tool schema format not supported for this model and provider.");
+        }
+
+        default Map<String, Object> toOutputSchemaFormat(Map<String, Object> outputSchema) {
+            throw new FreeplayConfigurationException("Structured outputs are not supported for this model and provider.");
         }
     }
 

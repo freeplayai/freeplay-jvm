@@ -22,7 +22,8 @@ public class TemplatePrompt {
 
     private final PromptInfo promptInfo;
     private final List<ChatMessage> messages;
-    private final List<ToolSchema> toolSchema;
+    private List<ToolSchema> toolSchema;
+    private Map<String, Object> outputSchema;
 
     public TemplatePrompt(PromptInfo promptInfo, List<ChatMessage> messages) {
         this(promptInfo, messages, null);
@@ -32,6 +33,12 @@ public class TemplatePrompt {
         this.promptInfo = promptInfo;
         this.messages = messages;
         this.toolSchema = toolSchema;
+        this.outputSchema = null;
+    }
+
+    public TemplatePrompt outputSchema(Map<String, Object> outputSchema) {
+        this.outputSchema = outputSchema;
+        return this;
     }
 
     public PromptInfo getPromptInfo() {
@@ -44,6 +51,10 @@ public class TemplatePrompt {
 
     public List<ToolSchema> getToolSchema() {
         return toolSchema;
+    }
+
+    public Map<String, Object> getOutputSchema() {
+        return outputSchema;
     }
 
     /**
@@ -106,7 +117,12 @@ public class TemplatePrompt {
                     }
                 }
         ).collect(toList());
-        return new BoundPrompt(promptInfo, messages, toolSchema);
+
+        BoundPrompt boundPrompt = new BoundPrompt(promptInfo, messages, toolSchema);
+        if (outputSchema != null) {
+            boundPrompt.outputSchema(outputSchema);
+        }
+        return boundPrompt;
     }
 
     public static class BindRequest {

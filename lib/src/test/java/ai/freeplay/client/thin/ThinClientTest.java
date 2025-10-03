@@ -353,6 +353,7 @@ public class ThinClientTest extends HttpClientTestBase {
                     null,
                     null,
                     null,
+                    null,
                     Map.of()
             );
             RecordDTO apiPayload = JSONUtil.parse(requestBody, RecordDTO.class);
@@ -419,6 +420,7 @@ public class ThinClientTest extends HttpClientTestBase {
                     null,
                     null,
                     null,
+                    null,
                     Map.of()
             );
             RecordDTO actualPayload = JSONUtil.parse(
@@ -473,6 +475,7 @@ public class ThinClientTest extends HttpClientTestBase {
                     new RecordDTO.ResponseInfoDTO(fixtures.getResponseInfo().isComplete(), null,
                             fixtures.getResponseInfo().getPromptTokens(), fixtures.getResponseInfo().getResponseTokens()),
                     new RecordDTO.TestRunInfoDTO(testRunId, testCaseId),
+                    null,
                     null,
                     null,
                     null,
@@ -609,7 +612,9 @@ public class ThinClientTest extends HttpClientTestBase {
                     Map.of("bool_value", true, "float_value", 0.23),
                     new RecordDTO.TraceInfoDTO(traceInfo.getTraceId()),
                     null,
-                    null, null,
+                    null,
+                    null,
+                    null,
                     Map.of()
             );
             RecordDTO apiPayload = JSONUtil.parse(requestBody, RecordDTO.class);
@@ -675,6 +680,7 @@ public class ThinClientTest extends HttpClientTestBase {
                             .getCallInfo().getProviderInfo()),
                     new RecordDTO.ResponseInfoDTO(responseInfo.isComplete(), new RecordDTO.OpenAIFunctionCallDTO(responseInfo.getFunctionCall().getName(), responseInfo.getFunctionCall().getArguments()),
                             responseInfo.getPromptTokens(), responseInfo.getResponseTokens()),
+                    null,
                     null,
                     null,
                     null,

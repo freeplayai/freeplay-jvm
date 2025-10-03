@@ -20,6 +20,7 @@ public class TemplateDTO {
     private int formatVersion = -1;
     private String projectId;
     private List<ToolSchema> toolSchema;
+    private Map<String, Object> outputSchema;
 
     public TemplateDTO() {
     }
@@ -61,6 +62,7 @@ public class TemplateDTO {
         this.formatVersion = formatVersion;
         this.projectId = projectId;
         this.toolSchema = toolSchema;
+        this.outputSchema = null;
     }
 
     public String getPromptTemplateId() {
@@ -93,6 +95,10 @@ public class TemplateDTO {
 
     public List<ToolSchema> getToolSchema() {
         return toolSchema;
+    }
+
+    public Map<String, Object> getOutputSchema() {
+        return outputSchema;
     }
 
     @Override
@@ -313,7 +319,7 @@ public class TemplateDTO {
     @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
     public static class ToolSchema {
         private String description;
-        private String name; 
+        private String name;
         private Map<String, Object> parameters;
 
         public ToolSchema() {
@@ -356,7 +362,7 @@ public class TemplateDTO {
         public String toString() {
             return "ToolSchema{" +
                     "description='" + description + '\'' +
-                    ", name='" + name + '\'' + 
+                    ", name='" + name + '\'' +
                     ", parameters=" + parameters +
                     '}';
         }

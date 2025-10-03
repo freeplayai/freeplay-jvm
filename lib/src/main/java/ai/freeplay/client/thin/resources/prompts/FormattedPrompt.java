@@ -10,16 +10,22 @@ public class FormattedPrompt<LLMContentFormat> {
     private final List<ChatMessage> boundMessages;
     private final LLMContentFormat formattedPrompt;
     private final List<Map<String, Object>> toolSchema;
+    private Map<String, Object> outputSchema;
 
     public FormattedPrompt(PromptInfo promptInfo, List<ChatMessage> messages, LLMContentFormat formattedPrompt) {
-        this(promptInfo, messages, formattedPrompt, null);
+        this(promptInfo, messages, formattedPrompt, null, null);
     }
 
     public FormattedPrompt(PromptInfo promptInfo, List<ChatMessage> messages, LLMContentFormat formattedPrompt, List<Map<String, Object>> toolSchema) {
+        this(promptInfo, messages, formattedPrompt, toolSchema, null);
+    }
+
+    public FormattedPrompt(PromptInfo promptInfo, List<ChatMessage> messages, LLMContentFormat formattedPrompt, List<Map<String, Object>> toolSchema, Map<String, Object> outputSchema) {
         this.promptInfo = promptInfo;
         this.boundMessages = messages;
         this.formattedPrompt = formattedPrompt;
         this.toolSchema = toolSchema;
+        this.outputSchema = outputSchema;
     }
 
     public PromptInfo getPromptInfo() {
@@ -49,6 +55,15 @@ public class FormattedPrompt<LLMContentFormat> {
 
     public List<Map<String, Object>> getToolSchema() {
         return toolSchema;
+    }
+
+    public Map<String, Object> getOutputSchema() {
+        return outputSchema;
+    }
+
+    public FormattedPrompt<LLMContentFormat> outputSchema(Map<String, Object> outputSchema) {
+        this.outputSchema = outputSchema;
+        return this;
     }
 
     public List<ChatMessage> allMessages(ChatMessage message) {

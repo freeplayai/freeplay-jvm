@@ -152,6 +152,7 @@ public class ThinCallSupport {
                 recordPayload.getTraceInfo() != null ? new RecordDTO.TraceInfoDTO(recordPayload.getTraceInfo().traceId) : null,
                 recordPayload.getParentId(),
                 recordPayload.getToolSchema(),
+                recordPayload.getOutputSchema(),
                 recordPayload.getCompletionId(),
                 mediaInputs
         );
