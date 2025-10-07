@@ -3,10 +3,11 @@ plugins {
 }
 
 nexusPublishing {
+    packageGroup = "ai.freeplay"  // Explicitly set the package group
     repositories {
         sonatype {
-            nexusUrl.set(uri("https://oss.sonatype.org/service/local/"))
-            snapshotRepositoryUrl.set(uri("https://oss.sonatype.org/content/repositories/snapshots/"))
+            nexusUrl.set(uri("https://ossrh-staging-api.central.sonatype.com/service/local/"))
+            snapshotRepositoryUrl.set(uri("https://central.sonatype.com/repository/maven-snapshots/"))
             // Read from environment variables (CI) or project properties (local)
             username.set(System.getenv("OSSRH_USERNAME") ?: (project.properties["ossrhUsername"] ?: "").toString())
             password.set(System.getenv("OSSRH_PASSWORD") ?: (project.properties["ossrhPassword"] ?: "").toString())
