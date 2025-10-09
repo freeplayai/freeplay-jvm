@@ -8,7 +8,7 @@ plugins {
     signing
 }
 
-version = "0.4.3"
+version = "0.4.4"
 group = "ai.freeplay"
 
 repositories {
@@ -26,6 +26,7 @@ java {
 dependencies {
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.mockito:mockito-core:5.4.0")
+    testImplementation("software.amazon.awssdk:bedrockruntime:2.35.3")
 
     implementation("com.fasterxml.jackson.jr:jackson-jr-all:2.16.1")
     implementation("com.fasterxml.jackson.core:jackson-databind:2.16.1")

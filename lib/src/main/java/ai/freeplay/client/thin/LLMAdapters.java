@@ -36,6 +36,9 @@ public class LLMAdapters {
                 return new BasetenLLMAdapter();
             case "gemini_chat":
                 return new GeminiLLMAdapter();
+            case "amazon_bedrock_converse":
+            case "bedrock_converse":
+                return new BedrockConverseAdapter();
             default:
                 throw new FreeplayConfigurationException(format("Unable to create LLMAdapter for name '%s'.%n", flavor));
         }

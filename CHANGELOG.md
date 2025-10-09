@@ -2,6 +2,12 @@
 
 Notable additions, fixes, or breaking changes to the Freeplay SDK.
 
+## [0.4.4] - 2025-10-08
+
+### Added
+
+- Add bedrock converse w/ multimedia and tool call support. Add examples.
+
 ## [0.4.3] - 2025-10-06
 
 ### Added
