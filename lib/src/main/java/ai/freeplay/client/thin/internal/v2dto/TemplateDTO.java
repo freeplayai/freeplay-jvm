@@ -316,6 +316,8 @@ public class TemplateDTO {
         }
     }
 
+    // This class is actually exposed in the public API of the SDK, though DTO classes are normally
+    // considered internal. If you change this class, consider if it's a breaking change for customers.
     @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
     public static class ToolSchema {
         private String description;

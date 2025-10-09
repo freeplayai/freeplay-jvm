@@ -642,4 +642,79 @@ public class MockFixtures {
                 "completion_id", UUID.randomUUID().toString()
         ));
     }
+
+    public static void mockCreatePromptVersionAsync(
+            HttpClient mockedClient,
+            String promptTemplateName,
+            String promptTemplateId,
+            String promptTemplateVersionId
+    ) throws RuntimeException {
+        try {
+            String matchUrl = String.format("v2/projects/[^/]*/prompt-templates/name/%s/versions", promptTemplateName);
+            when(requestAsync(mockedClient, "POST", matchUrl)).thenReturn(
+                    asyncResponse(
+                            201,
+                            getCreatePromptVersionResponsePayload(
+                                    promptTemplateId,
+                                    promptTemplateVersionId,
+                                    promptTemplateName
+                            )
+                    )
+            );
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static String getCreatePromptVersionResponsePayload(
+            String promptTemplateId,
+            String promptTemplateVersionId,
+            String promptTemplateName
+    ) {
+        return JSONUtil.asString(object(
+                "prompt_template_id", promptTemplateId,
+                "prompt_template_version_id", promptTemplateVersionId,
+                "prompt_template_name", promptTemplateName,
+                "version_name", "v1.0",
+                "version_description", "Test version",
+                "metadata", object(
+                        "provider", "anthropic",
+                        "model", "claude-3-5-sonnet-20241022",
+                        "flavor", "anthropic_chat",
+                        "params", object("temperature", 0.7),
+                        "provider_info", object()
+                ),
+                "format_version", 2,
+                "project_id", projectId,
+                "content", array(
+                        object(
+                                "role", "user",
+                                "content", "Answer this question as concisely as you can: {{question}}"
+                        )
+                ),
+                "tool_schema", array()
+        ));
+    }
+
+    public static void mockUpdateVersionEnvironmentsAsync(HttpClient mockedClient) throws RuntimeException {
+        try {
+            String matchUrl = "v2/projects/[^/]*/prompt-templates/id/[^/]*/versions/[^/]*/environments";
+            when(requestAsync(mockedClient, "POST", matchUrl)).thenReturn(
+                    asyncResponse(200, "")
+            );
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static void mockUpdateVersionEnvironmentsAsyncUnauthorized(HttpClient mockedClient) throws RuntimeException {
+        try {
+            String matchUrl = "v2/projects/[^/]*/prompt-templates/id/[^/]*/versions/[^/]*/environments";
+            when(requestAsync(mockedClient, "POST", matchUrl)).thenReturn(
+                    asyncResponse(400, JSONUtil.asString(object("message", "Project not found")))
+            );
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

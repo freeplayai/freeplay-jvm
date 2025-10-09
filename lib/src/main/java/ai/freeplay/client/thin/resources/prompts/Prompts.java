@@ -188,6 +188,32 @@ public class Prompts {
         }
     }
 
+    public CompletableFuture<TemplateVersionResponse> createVersion(CreateVersionRequest request) {
+        return callSupport.createPromptVersion(
+                request.getProjectId(),
+                request.getPromptTemplateName(),
+                request.getTemplateMessages(),
+                request.getModel(),
+                request.getProvider().getName(),
+                request.getVersionName(),
+                request.getVersionDescription(),
+                request.getLlmParameters(),
+                request.getToolSchema(),
+                request.getEnvironments()
+        );
+    }
+
+    public CompletableFuture<Void> updateVersionEnvironments(
+            String projectId,
+            String promptTemplateId,
+            String prompteTemplateVersionId,
+            List<String> environments
+    ) {
+        return callSupport.updateTemplateVersionEnvironments(
+                projectId, promptTemplateId, prompteTemplateVersionId, environments
+        );
+    }
+
     private TemplatePrompt getTemplateFromDTO(String projectId, String environment, TemplateDTO template) {
         validateReturnedTemplate(template);
 

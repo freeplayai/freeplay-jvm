@@ -11,6 +11,7 @@ import ai.freeplay.client.thin.internal.v2dto.TemplateDTO;
 import ai.freeplay.client.thin.resources.feedback.CustomerFeedbackResponse;
 import ai.freeplay.client.thin.resources.feedback.TraceFeedbackResponse;
 import ai.freeplay.client.thin.resources.prompts.ChatMessage;
+import ai.freeplay.client.thin.resources.prompts.TemplateVersionResponse;
 import ai.freeplay.client.thin.resources.recordings.RecordInfo;
 import ai.freeplay.client.thin.resources.recordings.RecordResponse;
 import ai.freeplay.client.thin.resources.recordings.TestRunInfo;
@@ -314,6 +315,96 @@ public class ThinCallSupport {
         ).thenApply(httpResponse -> {
             throwFreeplayIfError(httpResponse, 201);
             return new SessionDeleteResponse();
+        });
+    }
+
+    public CompletableFuture<TemplateVersionResponse> createPromptVersion(
+            String projectId,
+            String promptTemplateName,
+            List<TemplateDTO.Message> templateMessages,
+            String model,
+            String provider,
+            String versionName,
+            String versionDescription,
+            Map<String, Object> llmParameters,
+            List<TemplateDTO.ToolSchema> toolSchema,
+            List<String> environments
+    ) {
+        String url = String.format(
+                "%s/v2/projects/%s/prompt-templates/name/%s/versions",
+                baseUrl,
+                projectId,
+                promptTemplateName
+        );
+        CreatePromptVersionDTO payload = new CreatePromptVersionDTO(
+                promptTemplateName,
+                templateMessages,
+                model,
+                provider,
+                versionName,
+                versionDescription,
+                llmParameters,
+                toolSchema,
+                environments
+        );
+
+        return AsyncHttp.postJson(
+                url,
+                freeplayApiKey,
+                httpConfig,
+                payload
+        ).thenApply(httpResponse -> {
+            throwFreeplayIfError(httpResponse, 201);
+
+            TemplateVersionResponseDTO responseDTO = JSONUtil.parse(
+                    httpResponse.body(),
+                    TemplateVersionResponseDTO.class
+            );
+
+            return new TemplateVersionResponse(
+                    responseDTO.getPromptTemplateId(),
+                    responseDTO.getPromptTemplateVersionId(),
+                    responseDTO.getPromptTemplateName(),
+                    responseDTO.getVersionName(),
+                    responseDTO.getVersionDescription(),
+                    new TemplateVersionResponse.PromptTemplateMetadata(
+                            responseDTO.getMetadata().getProvider(),
+                            responseDTO.getMetadata().getFlavor(),
+                            responseDTO.getMetadata().getModel(),
+                            responseDTO.getMetadata().getParams(),
+                            responseDTO.getMetadata().getProviderInfo()
+                    ),
+                    responseDTO.getFormatVersion(),
+                    responseDTO.getProjectId(),
+                    responseDTO.getContent(),
+                    responseDTO.getToolSchema()
+            );
+        });
+    }
+
+    public CompletableFuture<Void> updateTemplateVersionEnvironments(
+            String projectId,
+            String promptTemplateId,
+            String promptTemplateVersionId,
+            List<String> environments
+    ) {
+        String url = String.format(
+                "%s/v2/projects/%s/prompt-templates/id/%s/versions/%s/environments",
+                baseUrl,
+                projectId,
+                promptTemplateId,
+                promptTemplateVersionId
+        );
+        UpdateVersionEnvironmentsDTO payload = new UpdateVersionEnvironmentsDTO(environments);
+
+        return AsyncHttp.postJson(
+                url,
+                freeplayApiKey,
+                httpConfig,
+                payload
+        ).thenApply(httpResponse -> {
+            throwFreeplayIfError(httpResponse, 200);
+            return null;
         });
     }
 
