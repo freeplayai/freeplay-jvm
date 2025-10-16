@@ -14,6 +14,7 @@ import ai.freeplay.client.thin.resources.prompts.*;
 import ai.freeplay.client.thin.resources.recordings.*;
 import ai.freeplay.client.thin.resources.sessions.Session;
 import ai.freeplay.client.thin.resources.sessions.TraceInfo;
+import ai.freeplay.client.thin.resources.sessions.SpanKind;
 import ai.freeplay.client.thin.resources.testruns.TestRun;
 import ai.freeplay.client.thin.resources.testruns.TestRunRequest;
 import ai.freeplay.client.thin.resources.testruns.TestRunResults;
@@ -579,6 +580,7 @@ public class ThinClientTest extends HttpClientTestBase {
             Session session = fpClient.sessions().create()
                     .customMetadata(customMetadata);
             TraceInfo traceInfo = session.createTrace(input, "agent_name", traceCustomMetadata);
+            traceInfo.kind(SpanKind.TOOL).name("test_tool_span");
             RecordInfo recordInfo = new RecordInfo(
                     projectId,
                     allMessages
@@ -630,13 +632,16 @@ public class ThinClientTest extends HttpClientTestBase {
                     traceInfo.getCustomMetadata(),
                     traceEvalResults,
                     null,
-                    null
+                    null,
+                    SpanKind.TOOL,
+                    "test_tool_span",
+                    traceInfo.getStartTime(),
+                    traceInfo.getEndTime()
             );
             TraceInfoDTO actualTracePayload = JSONUtil.parse(traceRequestBody, TraceInfoDTO.class);
             assertEquals(expectedTracePayload, actualTracePayload);
         });
     }
-
 
     @Test
     public void testRecordFunctionCall() {

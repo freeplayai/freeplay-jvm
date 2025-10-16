@@ -176,7 +176,7 @@ public class ThinCallSupport {
     }
 
     public CompletableFuture<TraceRecordResponse> recordTrace(String projectId, TraceInfo traceInfo, TestRunInfo testRunInfo) {
-        if (traceInfo.input.isEmpty()) {
+        if (traceInfo.input == null) {
             throw new FreeplayClientException("Input needed to record a trace");
         }
         TraceInfoDTO payload = new TraceInfoDTO(
@@ -186,7 +186,11 @@ public class ThinCallSupport {
                 traceInfo.getCustomMetadata(),
                 traceInfo.getEvalResults(),
                 testRunInfo,
-                traceInfo.getParentId()
+                traceInfo.getParentId(),
+                traceInfo.getKind(),
+                traceInfo.getName(),
+                traceInfo.getStartTime(),
+                traceInfo.getEndTime()
         );
         return AsyncHttp.postJson(
                 format("%s/v2/projects/%s/sessions/%s/traces/id/%s", baseUrl, projectId, traceInfo.sessionId, traceInfo.traceId),

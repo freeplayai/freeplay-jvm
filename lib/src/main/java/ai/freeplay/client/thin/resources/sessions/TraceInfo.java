@@ -3,6 +3,7 @@ package ai.freeplay.client.thin.resources.sessions;
 import ai.freeplay.client.thin.internal.ThinCallSupport;
 import ai.freeplay.client.thin.resources.recordings.TestRunInfo;
 
+import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
@@ -11,29 +12,48 @@ import java.util.concurrent.CompletableFuture;
 public class TraceInfo {
     public UUID sessionId;
     public UUID traceId;
-    public String input;
-    public String output;
+    public Object input;
+    public Object output;
 
     public String agentName;
     public UUID parentId;
+    public SpanKind kind;
+    public String name;
+    public Instant startTime;
 
     public Map<String, Object> customMetadata;
 
     private Map<String, Object> evalResults;
+    private Instant endTime;
 
     private final ThinCallSupport callSupport;
 
     public TraceInfo(
             UUID sessionId,
             UUID traceId,
-            String input,
-            ThinCallSupport callSupport
+            Object input,
+            ThinCallSupport callSupport,
+            SpanKind kind,
+            String name,
+            Instant startTime
     ) {
         this.sessionId = sessionId;
         this.traceId = traceId;
         this.input = input;
         this.output = null;
         this.callSupport = callSupport;
+        this.kind = kind;
+        this.name = name;
+        this.startTime = startTime != null ? startTime : Instant.now();
+    }
+
+    public TraceInfo(
+            UUID sessionId,
+            UUID traceId,
+            Object input,
+            ThinCallSupport callSupport
+    ) {
+        this(sessionId, traceId, input, callSupport, null, null, null);
     }
 
     public TraceInfo agentName(
@@ -57,6 +77,20 @@ public class TraceInfo {
         return this;
     }
 
+    public TraceInfo kind(
+            SpanKind kind
+    ) {
+        this.kind = kind;
+        return this;
+    }
+
+    public TraceInfo name(
+            String name
+    ) {
+        this.name = name;
+        return this;
+    }
+
 
     public UUID getSessionId() {
         return sessionId;
@@ -66,11 +100,11 @@ public class TraceInfo {
         return traceId;
     }
 
-    public String getInput() {
+    public Object getInput() {
         return input;
     }
 
-    public String getOutput() {
+    public Object getOutput() {
         return output;
     }
 
@@ -90,21 +124,47 @@ public class TraceInfo {
         return parentId;
     }
 
+    public SpanKind getKind() {
+        return kind;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public Instant getStartTime() {
+        return startTime;
+    }
+
+    public Instant getEndTime() {
+        return endTime;
+    }
+
     @SuppressWarnings("unused")
-    public CompletableFuture<TraceRecordResponse> recordOutput(String projectId, String output) {
+    public CompletableFuture<TraceRecordResponse> recordOutput(String projectId, Object output) {
         this.output = output;
+        this.endTime = Instant.now();
         return callSupport.recordTrace(projectId, this);
     }
 
-    public CompletableFuture<TraceRecordResponse> recordOutput(String projectId, String output, Map<String, Object> evalResults) {
+    public CompletableFuture<TraceRecordResponse> recordOutput(String projectId, Object output, Map<String, Object> evalResults) {
         this.output = output;
         this.evalResults = evalResults;
+        this.endTime = Instant.now();
         return callSupport.recordTrace(projectId, this);
     }
 
-    public CompletableFuture<TraceRecordResponse> recordOutput(String projectId, String output, Map<String, Object> evalResults, TestRunInfo testRunInfo) {
+    public CompletableFuture<TraceRecordResponse> recordOutput(String projectId, Object output, Map<String, Object> evalResults, TestRunInfo testRunInfo) {
         this.output = output;
         this.evalResults = evalResults;
+        this.endTime = Instant.now();
+        return callSupport.recordTrace(projectId, this, testRunInfo);
+    }
+
+    public CompletableFuture<TraceRecordResponse> recordOutput(String projectId, Object output, Map<String, Object> evalResults, TestRunInfo testRunInfo, Instant endTime) {
+        this.output = output;
+        this.evalResults = evalResults;
+        this.endTime = endTime != null ? endTime : Instant.now();
         return callSupport.recordTrace(projectId, this, testRunInfo);
     }
 

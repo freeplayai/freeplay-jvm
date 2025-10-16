@@ -54,6 +54,28 @@ public class Session {
         );
     }
 
+    public TraceInfo createTrace(CreateTracePayload payload) {
+        TraceInfo trace = new TraceInfo(
+                this.sessionId,
+                UUID.randomUUID(),
+                payload.getInput(),
+                this.callSupport,
+                payload.getKind(),
+                payload.getName(),
+                null
+        );
+        if (payload.getAgentName() != null) {
+            trace.agentName(payload.getAgentName());
+        }
+        if (payload.getParentId() != null) {
+            trace.parentId(payload.getParentId());
+        }
+        if (payload.getCustomMetadata() != null) {
+            trace.customMetadata(payload.getCustomMetadata());
+        }
+        return trace;
+    }
+
     /**
      * @deprecated use {@link #createTrace(String)} instead and use the builder pattern to set fields on TraceInfo.
      * For example:
