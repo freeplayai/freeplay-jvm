@@ -10,6 +10,7 @@ import ai.freeplay.client.thin.internal.dto.*;
 import ai.freeplay.client.thin.internal.v2dto.TemplateDTO;
 import ai.freeplay.client.thin.resources.feedback.CustomerFeedbackResponse;
 import ai.freeplay.client.thin.resources.feedback.TraceFeedbackResponse;
+import ai.freeplay.client.thin.resources.metadata.MetadataUpdateResponse;
 import ai.freeplay.client.thin.resources.prompts.ChatMessage;
 import ai.freeplay.client.thin.resources.prompts.TemplateVersionResponse;
 import ai.freeplay.client.thin.resources.recordings.RecordInfo;
@@ -409,6 +410,54 @@ public class ThinCallSupport {
         ).thenApply(httpResponse -> {
             throwFreeplayIfError(httpResponse, 200);
             return null;
+        });
+    }
+
+    public CompletableFuture<MetadataUpdateResponse> updateSessionMetadata(
+            String projectId,
+            String sessionId,
+            Map<String, Object> metadata
+    ) {
+        validateBasicMap(metadata);
+        String url = String.format(
+                "%s/v2/projects/%s/sessions/id/%s/metadata",
+                baseUrl,
+                projectId,
+                sessionId
+        );
+        return AsyncHttp.patchJson(
+                url,
+                freeplayApiKey,
+                httpConfig,
+                metadata
+        ).thenApply(httpResponse -> {
+            throwFreeplayIfError(httpResponse, 200);
+            return new MetadataUpdateResponse();
+        });
+    }
+
+    public CompletableFuture<MetadataUpdateResponse> updateTraceMetadata(
+            String projectId,
+            String sessionId,
+            String traceId,
+            Map<String, Object> metadata
+    ) {
+        validateBasicMap(metadata);
+        String url = String.format(
+                "%s/v2/projects/%s/sessions/%s/traces/id/%s/metadata",
+                baseUrl,
+                projectId,
+                sessionId,
+                traceId
+        );
+        return AsyncHttp.patchJson(
+                url,
+                freeplayApiKey,
+                httpConfig,
+                metadata
+        ).thenApply(httpResponse -> {
+            throwFreeplayIfError(httpResponse, 200);
+            return new MetadataUpdateResponse();
         });
     }
 

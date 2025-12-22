@@ -2,6 +2,38 @@
 
 Notable additions, fixes, or breaking changes to the Freeplay SDK.
 
+## [Unreleased]
+
+### Added
+
+- New `Metadata` resource for updating session and trace metadata after creation:
+
+  ```java
+  // Update session metadata
+  client.metadata().updateSession(
+      projectId,
+      sessionId,
+      Map.of(
+          "customer_id", "cust_123",
+          "rating", 5,
+          "status", "resolved"
+      )
+  ).get();
+  
+  // Update trace metadata
+  client.metadata().updateTrace(
+      projectId,
+      sessionId,
+      traceId,
+      Map.of(
+          "resolved", true,
+          "resolution_time_ms", 1234
+      )
+  ).get();
+  ```
+
+  This addresses the use case where IDs or metadata are generated at the end of a conversation and need to be associated with existing sessions/traces without logging additional completions. Metadata updates use merge semantics - new keys overwrite existing keys while preserving unmentioned keys.
+
 ## [0.4.4] - 2025-10-08
 
 ### Added

@@ -216,6 +216,33 @@ public class MockFixtures {
         }
     }
 
+    public static void mockUpdateSessionMetadataAsync(HttpClient mockedClient) throws RuntimeException {
+        try {
+            when(requestAsync(mockedClient, "PATCH", "v2/projects/[^/]*/sessions/id/[^/]*/metadata"))
+                    .thenReturn(asyncResponse(200, "{\"message\": \"Metadata updated successfully\"}"));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static void mockUpdateTraceMetadataAsync(HttpClient mockedClient) throws RuntimeException {
+        try {
+            when(requestAsync(mockedClient, "PATCH", "v2/projects/[^/]*/sessions/[^/]*/traces/id/[^/]*/metadata"))
+                    .thenReturn(asyncResponse(200, "{\"message\": \"Metadata updated successfully\"}"));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static void mockUnauthorizedUpdateSessionMetadataAsync(HttpClient mockedClient) throws RuntimeException {
+        try {
+            when(requestAsync(mockedClient, "PATCH", "v2/projects/[^/]*/sessions/id/[^/]*/metadata"))
+                    .thenReturn(asyncResponse(401, ""));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public static void mockSessionDelete(HttpClient mockedClient) throws RuntimeException {
         try {
             when(requestAsync(mockedClient, "DELETE", "v2/projects/[^/]*/sessions/[^/]*"))

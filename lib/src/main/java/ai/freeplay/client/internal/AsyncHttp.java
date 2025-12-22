@@ -49,6 +49,15 @@ public class AsyncHttp {
         return sendJson(url, apiKey, httpConfig, "PUT", body);
     }
 
+    public static CompletableFuture<HttpResponse<String>> patchJson(
+            String url,
+            String apiKey,
+            HttpConfig httpConfig,
+            Object body
+    ) throws FreeplayException {
+        return sendJson(url, apiKey, httpConfig, "PATCH", body);
+    }
+
     public static CompletableFuture<HttpResponse<String>> delete(
             String url,
             String apiKey,
