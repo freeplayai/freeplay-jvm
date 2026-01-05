@@ -2,9 +2,68 @@
 
 Notable additions, fixes, or breaking changes to the Freeplay SDK.
 
-## [Unreleased]
+## [0.4.5] - 2025-12-29
 
 ### Added
+
+- Interactive REPL for development and testing:
+  - `./scripts/repl.sh` - Production mode (connects to app.freeplay.ai with SSL verification enabled)
+  - `./scripts/repl.sh --local` - Local development mode (connects to localhost:8000 with SSL verification disabled)
+  - Pre-loaded imports (Freeplay, RecordInfo, ChatMessage, etc.)
+  - Environment variables automatically loaded from `.env` file
+  - Pre-initialized variables (apiKey, baseUrl, projectId, sessionId)
+
+### Changed
+
+- **Tool Schema Handling**: The SDK no longer provides `GenaiFunction` and `GenaiTool` wrapper classes. Tool schemas should be passed directly as `Map` objects in the provider's native format (e.g., from Google Cloud Vertex AI Java SDK). This aligns with how messages are handled - users pass provider-native types directly to Freeplay.
+
+  ```java
+  // Tool schemas are now passed as raw Map objects
+  // matching the provider's format
+  List<Map<String, Object>> toolSchema = List.of(
+      Map.of(
+          "functionDeclarations", List.of(
+              Map.of(
+                  "name", "get_weather",
+                  "description", "Get the current weather for a location",
+                  "parameters", Map.of(
+                      "type", "object",
+                      "properties", Map.of(
+                          "location", Map.of("type", "string", "description", "City name")
+                      ),
+                      "required", List.of("location")
+                  )
+              )
+          )
+      )
+  );
+
+  // Use in recording
+  RecordInfo info = new RecordInfo(projectId, messages)
+      .toolSchema(toolSchema)
+      .callInfo(new CallInfo("vertex", "gemini-2.0-flash", startTime, endTime, modelParams));
+  ```
+  
+  **Notes:**
+  - Backend automatically normalizes all tool schema formats (OpenAI, Anthropic, GenAI/Vertex)
+  - No breaking changes to the API - tool schemas are still passed the same way
+  - This approach is consistent with how we handle messages from different providers
+
+### Added
+
+- Interactive REPL script (`scripts/repl.sh`) for development and testing with:
+  - Pre-loaded imports (Freeplay client, etc.)
+  - Environment variables automatically loaded from `.env` file
+  - SSL verification disabled for local development
+  - Pre-initialized variables (apiKey, baseUrl, projectId, sessionId)
+  
+  ```bash
+  ./scripts/repl.sh
+  ```
+
+- Comprehensive testing guide (`JAVA_GENAI_TESTING_GUIDE.md`) with manual test scenarios for GenAI tool schema support
+
+- Gradle task `printClasspath` for REPL classpath generation
 
 - New `Metadata` resource for updating session and trace metadata after creation:
 

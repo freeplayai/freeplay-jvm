@@ -8,7 +8,7 @@ plugins {
     signing
 }
 
-version = "0.4.4"
+version = "0.4.5"
 group = "ai.freeplay"
 
 repositories {
@@ -81,6 +81,14 @@ tasks.register("testAll") {
     group = "verification"
     description = "Runs the entire test suite."
     dependsOn("test", "slowTest")
+}
+
+tasks.register("printClasspath") {
+    group = "help"
+    description = "Prints the runtime classpath for use with jshell REPL"
+    doLast {
+        println(sourceSets["main"].runtimeClasspath.asPath)
+    }
 }
 
 publishing {
