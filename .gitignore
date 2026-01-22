@@ -1,0 +1,7 @@
+.idea
+.gradle
+nohup.out
+**/build/
+**/bin/
+.DS_Store
+.env

@@ -1,0 +1,139 @@
+name: Publish
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Perform a dry run (skip actual publishing)"
+        type: boolean
+        default: false
+      release_type:
+        description: "Type of release"
+        type: choice
+        options:
+          - prerelease
+          - stable
+        default: prerelease
+
+concurrency:
+  group: "publish-maven"
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Needed for creating releases
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 11
+        uses: actions/setup-java@v4
+        with:
+          java-version: '11'
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: false
+          cache-cleanup: on-success
+
+      - name: Setup GPG
+        run: |
+          mkdir -p $HOME/.gradle
+          # Decode base64 and remove ASCII armor to get binary format
+          echo "${{ secrets.GPG_SECRET_KEY_BASE64 }}" | base64 --decode | gpg --batch --yes --dearmor > $HOME/.gradle/secring.gpg
+          chmod 600 $HOME/.gradle/secring.gpg
+
+      - name: Determine release version
+        id: version
+        run: |
+          VERSION_OUTPUT=$(./gradlew lib:determineVersion -PreleaseType=${{ github.event.inputs.release_type }})
+          echo "$VERSION_OUTPUT"
+
+          # Extract JSON output (line starting with RESULT_JSON:)
+          VERSION_JSON=$(echo "$VERSION_OUTPUT" | grep "RESULT_JSON:" | sed 's/RESULT_JSON://')
+
+          # Parse and set outputs
+          CURRENT_VERSION=$(echo "$VERSION_JSON" | jq -r '.current_version')
+          BASE_VERSION=$(echo "$VERSION_JSON" | jq -r '.base_version') 
+          NEW_VERSION=$(echo "$VERSION_JSON" | jq -r '.new_version')
+          IS_PRERELEASE=$(echo "$VERSION_JSON" | jq -r '.is_prerelease')
+
+          echo "current_version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+          echo "base_version=$BASE_VERSION" >> $GITHUB_OUTPUT
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "is_prerelease=$IS_PRERELEASE" >> $GITHUB_OUTPUT
+
+      - name: Update build.gradle.kts version
+        if: github.event.inputs.release_type == 'prerelease'
+        run: |
+          sed -i 's/version = "[^"]*"/version = "${{ steps.version.outputs.new_version }}"/' lib/build.gradle.kts
+
+      - name: Run tests and build
+        run: ./gradlew test build --parallel --build-cache --configuration-cache
+        env:
+          FREEPLAY_API_URL: ${{ secrets.FREEPLAY_API_URL }}
+          FREEPLAY_PROJECT_ID: ${{ secrets.FREEPLAY_PROJECT_ID }}
+          EXAMPLES_PROJECT_ID: ${{ secrets.EXAMPLES_PROJECT_ID }}
+          FREEPLAY_API_KEY: ${{ secrets.FREEPLAY_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+
+      - name: Publish to Sonatype (dry run)
+        if: github.event.inputs.dry_run == 'true'
+        run: |
+          echo "🔍 DRY RUN - Testing full publish flow (simulation)"
+          echo ""
+          echo "📦 Testing local publishing..."
+          ./gradlew lib:publishToMavenLocal --info
+          echo ""
+          echo "🔄 Step 1: Testing initialize staging repository..."
+          ./gradlew initializeSonatypeStagingRepository --dry-run --info --stacktrace
+          echo ""
+          echo "🚀 Step 2: Simulating Sonatype publishing..."
+          ./gradlew publishToSonatype --dry-run --info --stacktrace
+          echo ""
+          echo "🏁 Step 3: Simulating staging repository close/release..."
+          ./gradlew closeAndReleaseSonatypeStagingRepository --dry-run --info --stacktrace
+          echo ""
+          echo "✅ Dry run completed successfully - all tasks validated!"
+        env:
+          OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+          OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
+          SIGNING_KEY_ID: ${{ secrets.SIGNING_KEY_ID }}
+          SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
+          SIGNING_SECRET_KEY_RING_FILE: /home/runner/.gradle/secring.gpg
+
+      - name: Publish to Sonatype and Auto-Release
+        if: github.event.inputs.dry_run == 'false'
+        run: |
+          echo "🚀 Publishing to Central Portal and auto-releasing..."
+          ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository --info --stacktrace
+        env:
+          OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+          OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
+          SIGNING_KEY_ID: ${{ secrets.SIGNING_KEY_ID }}
+          SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
+          SIGNING_SECRET_KEY_RING_FILE: /home/runner/.gradle/secring.gpg
+
+      - name: Create GitHub Release
+        if: github.event.inputs.dry_run == 'false'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.new_version }}
+          name: Release v${{ steps.version.outputs.new_version }}
+          draft: false
+          prerelease: ${{ github.event.inputs.release_type == 'prerelease' }}
+          body: |
+            Release v${{ steps.version.outputs.new_version }}
+
+            Published to Maven Central: https://central.sonatype.com/artifact/ai.freeplay/client/${{ steps.version.outputs.new_version }}
+          files: |
+            lib/build/libs/*
