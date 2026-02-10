@@ -2,6 +2,13 @@
 
 Notable additions, fixes, or breaking changes to the Freeplay SDK.
 
+## [0.4.6] - 2026-02-10
+
+### Added
+
+- **`gemini_api_chat` flavor**: New `GeminiApiLLMAdapter` for the Gemini API (`google-genai` SDK). Returns plain `Map` objects for both messages and tool schemas, while `gemini_chat` (`GeminiLLMAdapter`) continues to return Vertex AI protobuf `Content`/`Tool` objects.
+- **Gemini message parts passthrough**: Both `GeminiLLMAdapter` and `GeminiApiLLMAdapter` now handle `isGemini()` history messages (function calls, function responses, multi-part content) by reconstructing them in the correct format without re-wrapping.
+
 ## [0.4.5] - 2025-12-29
 
 ### Added

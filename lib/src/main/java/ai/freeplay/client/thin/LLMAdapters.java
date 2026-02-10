@@ -36,6 +36,8 @@ public class LLMAdapters {
                 return new BasetenLLMAdapter();
             case "gemini_chat":
                 return new GeminiLLMAdapter();
+            case "gemini_api_chat":
+                return new GeminiApiLLMAdapter();
             case "amazon_bedrock_converse":
             case "bedrock_converse":
                 return new BedrockConverseAdapter();
