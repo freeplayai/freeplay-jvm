@@ -152,6 +152,59 @@ public class GeminiApiLLMAdapterTest {
         assertEquals("model", result.get(0).get("role"));
     }
 
+    @Test
+    public void testToLLMSyntaxMultiTurnHistoryWithInlineData() {
+        GeminiApiLLMAdapter adapter = new GeminiApiLLMAdapter();
+
+        // Multi-turn history: user sends image, model responds, user follows up
+        GeminiLLMAdapter.InlineDataContent inlineData =
+                new GeminiLLMAdapter.InlineDataContent("image/png", "iVBORw0KGgoAAAANSUhEUg==");
+        List<Object> userImageParts = List.of(
+                new GeminiLLMAdapter.ContentPart("What's in this image?"),
+                new GeminiLLMAdapter.ContentPart(inlineData)
+        );
+        ChatMessage userImageMsg = ChatMessage.newForGemini("user", userImageParts);
+
+        List<Object> modelResponseParts = List.of(
+                new GeminiLLMAdapter.ContentPart("I see a cat in the image.")
+        );
+        ChatMessage modelMsg = ChatMessage.newForGemini("model", modelResponseParts);
+
+        // Standard follow-up message (not Gemini format)
+        ChatMessage followUp = new ChatMessage("user", "Can you describe it further?");
+
+        List<Map<String, Object>> result = adapter.toLLMSyntax(List.of(
+                userImageMsg, modelMsg, followUp
+        ));
+
+        assertEquals(3, result.size());
+
+        // First message: user with text + inlineData
+        assertEquals("user", result.get(0).get("role"));
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> firstParts = (List<Map<String, Object>>) result.get(0).get("parts");
+        assertEquals(2, firstParts.size());
+        assertEquals("What's in this image?", firstParts.get(0).get("text"));
+        @SuppressWarnings("unchecked")
+        Map<String, Object> firstInlineData = (Map<String, Object>) firstParts.get(1).get("inline_data");
+        assertEquals("image/png", firstInlineData.get("mime_type"));
+        assertEquals("iVBORw0KGgoAAAANSUhEUg==", firstInlineData.get("data"));
+
+        // Second message: model text response
+        assertEquals("model", result.get(1).get("role"));
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> secondParts = (List<Map<String, Object>>) result.get(1).get("parts");
+        assertEquals(1, secondParts.size());
+        assertEquals("I see a cat in the image.", secondParts.get(0).get("text"));
+
+        // Third message: standard content converted to Gemini format
+        assertEquals("user", result.get(2).get("role"));
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> thirdParts = (List<Map<String, Object>>) result.get(2).get("parts");
+        assertEquals(1, thirdParts.size());
+        assertEquals("Can you describe it further?", thirdParts.get(0).get("text"));
+    }
+
     // ---- Tool Schema Tests ----
 
     @Test
