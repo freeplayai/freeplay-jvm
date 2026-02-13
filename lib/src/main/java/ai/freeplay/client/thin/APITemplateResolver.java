@@ -6,7 +6,9 @@ import ai.freeplay.client.internal.JSONUtil;
 import ai.freeplay.client.thin.internal.v2dto.TemplateDTO;
 import ai.freeplay.client.thin.internal.v2dto.TemplatesDTO;
 
+import java.net.URLEncoder;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CompletableFuture;
 
 import static ai.freeplay.client.internal.Http.throwFreeplayIfError;
@@ -36,8 +38,10 @@ public class APITemplateResolver implements TemplateResolver {
 
     @Override
     public CompletableFuture<TemplateDTO> getPrompt(String projectId, String templateName, String environment) {
+        String encodedName = URLEncoder.encode(templateName, StandardCharsets.UTF_8).replace("+", "%20");
+        String encodedEnv = URLEncoder.encode(environment, StandardCharsets.UTF_8).replace("+", "%20");
         String url = format("%s/v2/projects/%s/prompt-templates/name/%s?environment=%s",
-                baseUrl, projectId, templateName, environment
+                baseUrl, projectId, encodedName, encodedEnv
         );
         return AsyncHttp
                 .get(url, freeplayApiKey, httpConfig)
