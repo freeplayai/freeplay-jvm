@@ -29,6 +29,23 @@ public class GeminiLLMAdapter implements LLMAdapters.LLMAdapter<List<Content>> {
 
     @Override
     public List<Content> toLLMSyntax(List<ChatMessage> messages) {
+        try {
+            return toLLMSyntaxInternal(messages);
+        } catch (NoClassDefFoundError e) {
+            throw new FreeplayConfigurationException(
+                    "\nThe Google Cloud Vertex AI library is required for Gemini prompts but was not found on the classpath. " +
+                            "This is an optional dependency of the Freeplay SDK. To fix this, either:\n" +
+                            "  - Gradle (feature variant): Add the 'gemini' capability to your Freeplay dependency:\n" +
+                            "      implementation(\"ai.freeplay:client\") { capabilities { requireCapability(\"ai.freeplay:client-gemini\") } }\n" +
+                            "  - Gradle (direct): Add implementation(\"com.google.cloud:google-cloud-vertexai:1.5.0\")\n" +
+                            "  - Maven: Add com.google.cloud:google-cloud-vertexai:1.5.0 to your dependencies\n" +
+                            "**Replace the version number with the correct current version for google-cloud-vertex",
+                    e
+            );
+        }
+    }
+
+    private List<Content> toLLMSyntaxInternal(List<ChatMessage> messages) {
         return messages
                 .stream()
                 .filter(message -> !message.getRole().equals("system"))
