@@ -58,6 +58,39 @@ implementation 'ai.freeplay:client:x.x.x'
 </dependency>
 ```
 
+### Gemini (Google Vertex AI) Support
+
+The Gemini adapter requires the Google Cloud Vertex AI library, which is an optional dependency not included by default. If your Freeplay prompts target Gemini, you need to add it separately.
+
+**Gradle (feature variant):**
+
+```groovy
+implementation('ai.freeplay:client:x.x.x') {
+    capabilities {
+        requireCapability('ai.freeplay:client-gemini')
+    }
+}
+```
+
+**Gradle (direct dependency):**
+
+```groovy
+implementation 'com.google.cloud:google-cloud-vertexai:1.5.0'
+```
+
+**Maven:**
+
+```xml
+<dependency>
+    <groupId>com.google.cloud</groupId>
+    <artifactId>google-cloud-vertexai</artifactId>
+    <version>1.5.0</version>
+</dependency>
+```
+*Replace the version number with the correct current version of the google-cloud-vertexai library.*
+
+All other providers (OpenAI, Anthropic, Bedrock, etc.) work out of the box with no additional dependencies.
+
 ## Quick Start
 
 ```java
