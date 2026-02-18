@@ -335,11 +335,12 @@ public class ThinCallSupport {
             List<TemplateDTO.ToolSchema> toolSchema,
             List<String> environments
     ) {
+        String encodedName = java.net.URLEncoder.encode(promptTemplateName, java.nio.charset.StandardCharsets.UTF_8).replace("+", "%20");
         String url = String.format(
                 "%s/v2/projects/%s/prompt-templates/name/%s/versions",
                 baseUrl,
                 projectId,
-                promptTemplateName
+                encodedName
         );
         CreatePromptVersionDTO payload = new CreatePromptVersionDTO(
                 promptTemplateName,

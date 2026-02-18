@@ -50,7 +50,28 @@ public class GeminiLLMAdapter implements LLMAdapters.LLMAdapter<List<Content>> {
                 .stream()
                 .filter(message -> !message.getRole().equals("system"))
                 .map(message -> {
-                            if (message.isStringMessage()) {
+                            // Already in Gemini format (e.g., history from previous turns
+                            // with function calls, function responses, or multi-part content)
+                            if (message.isGemini()) {
+                                Object[] protoParts = message.getStructuredContent().stream().map(item -> {
+                                    if (item instanceof ContentPart) {
+                                        ContentPart cp = (ContentPart) item;
+                                        if (cp.getText() != null) {
+                                            return (Object) Part.newBuilder().setText(cp.getText()).build();
+                                        }
+                                        if (cp.getInlineData() != null) {
+                                            InlineDataContent id = cp.getInlineData();
+                                            byte[] decodedBytes = Base64.getDecoder().decode(id.getData());
+                                            return (Object) Part.newBuilder().setInlineData(Blob.newBuilder()
+                                                    .setMimeType(id.getMimeType())
+                                                    .setData(ByteString.copyFrom(decodedBytes))
+                                            ).build();
+                                        }
+                                    }
+                                    return (Object) Part.newBuilder().build();
+                                }).toArray();
+                                return ContentMaker.forRole(translateRole(message.getRole())).fromMultiModalData(protoParts);
+                            } else if (message.isStringMessage()) {
                                 return ContentMaker.forRole(translateRole(message.getRole())).fromString(message.getContent());
                             } else if (message.isStructuredMessage()) {
                                 Object[] parts = message.getStructuredContent().stream().map(item -> {
