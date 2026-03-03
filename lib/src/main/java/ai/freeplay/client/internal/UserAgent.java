@@ -1,12 +1,10 @@
 package ai.freeplay.client.internal;
 
-import ai.freeplay.client.Freeplay;
-
 public class UserAgent {
 
     public static String getUserAgent() {
         String sdkName = "Freeplay";
-        Package packageInfo = Freeplay.class.getPackage();
+        Package packageInfo = UserAgent.class.getPackage();
         // Get the implementation version
         String sdkVersion = packageInfo.getImplementationVersion();
 

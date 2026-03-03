@@ -31,7 +31,7 @@ import static java.lang.String.format;
 public class ThinHistoryExample {
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
-    public static void main(String[] args) throws ExecutionException, InterruptedException {
+    public static void main(String[] args) throws Exception {
         String freeplayApiKey = System.getenv("FREEPLAY_API_KEY");
         String projectId = System.getenv("FREEPLAY_PROJECT_ID");
         String baseUrl = format("%s/api", System.getenv("FREEPLAY_API_URL"));

@@ -1,6 +1,5 @@
 package ai.freeplay.client.thin.resources.prompts;
 
-import ai.freeplay.client.Freeplay;
 import ai.freeplay.client.exceptions.FreeplayClientException;
 import ai.freeplay.client.internal.TemplateUtils;
 import ai.freeplay.client.media.MediaInputBase64;
@@ -18,7 +17,7 @@ import static java.lang.System.Logger.Level.WARNING;
 import static java.util.stream.Collectors.toList;
 
 public class TemplatePrompt {
-    public static final System.Logger LOGGER = System.getLogger(Freeplay.class.getName());
+    public static final System.Logger LOGGER = System.getLogger(TemplatePrompt.class.getName());
 
     private final PromptInfo promptInfo;
     private final List<ChatMessage> messages;
