@@ -1,15 +1,15 @@
 package ai.freeplay.example.java;
 
-import ai.freeplay.client.thin.Freeplay;
-import ai.freeplay.client.thin.resources.sessions.CreateTracePayload;
-import ai.freeplay.client.thin.resources.sessions.Session;
-import ai.freeplay.client.thin.resources.sessions.SpanKind;
-import ai.freeplay.client.thin.resources.sessions.TraceInfo;
+import ai.freeplay.client.Freeplay;
+import ai.freeplay.client.resources.sessions.CreateTracePayload;
+import ai.freeplay.client.resources.sessions.Session;
+import ai.freeplay.client.resources.sessions.SpanKind;
+import ai.freeplay.client.resources.sessions.TraceInfo;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import static ai.freeplay.client.thin.Freeplay.Config;
+import static ai.freeplay.client.Freeplay.Config;
 import static java.lang.String.format;
 
 public class ToolSpanExample {

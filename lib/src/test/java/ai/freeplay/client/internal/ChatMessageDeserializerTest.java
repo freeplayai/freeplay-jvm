@@ -6,14 +6,14 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
-import ai.freeplay.client.thin.resources.prompts.MediaSlot;
-import ai.freeplay.client.thin.resources.prompts.MediaType;
+import ai.freeplay.client.resources.prompts.MediaSlot;
+import ai.freeplay.client.resources.prompts.MediaType;
 import org.junit.Before;
 import org.junit.Test;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import ai.freeplay.client.thin.resources.prompts.ChatMessage;
+import ai.freeplay.client.resources.prompts.ChatMessage;
 
 public class ChatMessageDeserializerTest {
     

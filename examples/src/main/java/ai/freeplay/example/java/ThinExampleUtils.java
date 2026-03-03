@@ -1,6 +1,6 @@
 package ai.freeplay.example.java;
 
-import ai.freeplay.client.thin.resources.prompts.ChatMessage;
+import ai.freeplay.client.resources.prompts.ChatMessage;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;

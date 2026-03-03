@@ -1,9 +1,9 @@
 package ai.freeplay.example.java;
 
-import ai.freeplay.client.thin.FilesystemTemplateResolver;
-import ai.freeplay.client.thin.Freeplay;
-import ai.freeplay.client.thin.resources.prompts.ChatMessage;
-import ai.freeplay.client.thin.resources.prompts.FormattedPrompt;
+import ai.freeplay.client.FilesystemTemplateResolver;
+import ai.freeplay.client.Freeplay;
+import ai.freeplay.client.resources.prompts.ChatMessage;
+import ai.freeplay.client.resources.prompts.FormattedPrompt;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.net.http.HttpResponse;
@@ -12,10 +12,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
-import static ai.freeplay.client.thin.Freeplay.Config;
+import static ai.freeplay.client.Freeplay.Config;
 import static ai.freeplay.example.java.ThinExampleUtils.callAnthropic;
 import static java.lang.String.format;
-
+// TODO
 public class ThinBundleExample {
     private static final ObjectMapper objectMapper = new ObjectMapper();
 

@@ -1,7 +1,7 @@
 package ai.freeplay.example;
 
-import ai.freeplay.client.thin.Freeplay;
-import ai.freeplay.client.thin.resources.metadata.MetadataUpdateResponse;
+import ai.freeplay.client.Freeplay;
+import ai.freeplay.client.resources.metadata.MetadataUpdateResponse;
 
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;

@@ -13,7 +13,7 @@ import org.junit.Test;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import ai.freeplay.client.thin.resources.prompts.ChatMessage;
+import ai.freeplay.client.resources.prompts.ChatMessage;
 
 public class ChatMessageSerializerTest {
     

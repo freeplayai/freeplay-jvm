@@ -2,12 +2,12 @@ package ai.freeplay.example.kotlin
 
 import ai.freeplay.client.media.MediaInputBase64
 import ai.freeplay.client.media.MediaInputCollection
-import ai.freeplay.client.thin.Freeplay
-import ai.freeplay.client.thin.resources.prompts.ChatMessage
-import ai.freeplay.client.thin.resources.prompts.Prompts
-import ai.freeplay.client.thin.resources.recordings.CallInfo
-import ai.freeplay.client.thin.resources.recordings.RecordInfo
-import ai.freeplay.client.thin.resources.recordings.ResponseInfo
+import ai.freeplay.client.Freeplay
+import ai.freeplay.client.resources.prompts.ChatMessage
+import ai.freeplay.client.resources.prompts.Prompts
+import ai.freeplay.client.resources.recordings.CallInfo
+import ai.freeplay.client.resources.recordings.RecordInfo
+import ai.freeplay.client.resources.recordings.ResponseInfo
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.runBlocking
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
