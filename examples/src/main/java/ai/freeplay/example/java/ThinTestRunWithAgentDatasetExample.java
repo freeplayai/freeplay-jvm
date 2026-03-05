@@ -127,7 +127,6 @@ public class ThinTestRunWithAgentDatasetExample {
                             .promptVersionInfo(formattedPrompt.getPromptInfo())
                             .callInfo(callInfo)
                             .toolSchema(formattedPrompt.getToolSchema())
-                            .testRunInfo(testRun.getTestRunInfo(testCase.getTestCaseId()))
                             .sessionInfo(session.getSessionInfo())
                             .traceInfo(traceInfo)
             ).get();
