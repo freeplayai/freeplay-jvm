@@ -5,7 +5,7 @@ import ai.freeplay.client.resources.prompts.ChatMessage;
 import ai.freeplay.client.resources.prompts.FormattedPrompt;
 import ai.freeplay.client.resources.prompts.TemplatePrompt;
 import ai.freeplay.client.resources.recordings.CallInfo;
-import ai.freeplay.client.resources.recordings.RecordInfo;
+import ai.freeplay.client.resources.recordings.RecordPayload;
 import ai.freeplay.client.resources.sessions.Session;
 import ai.freeplay.client.resources.sessions.TraceInfo;
 import ai.freeplay.client.resources.testruns.TestRun;
@@ -120,7 +120,7 @@ public class ThinTestRunWithAgentDatasetExample {
                     System.currentTimeMillis()
             );
             fpClient.recordings().create(
-                    new RecordInfo(
+                    new RecordPayload(
                             projectId,
                             allMessages
                     ).inputs(Map.of("question", completion))

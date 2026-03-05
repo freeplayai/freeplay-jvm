@@ -7,7 +7,7 @@ import ai.freeplay.client.Freeplay;
 import ai.freeplay.client.resources.prompts.FormattedPrompt;
 import ai.freeplay.client.resources.prompts.Prompts;
 import ai.freeplay.client.resources.recordings.CallInfo;
-import ai.freeplay.client.resources.recordings.RecordInfo;
+import ai.freeplay.client.resources.recordings.RecordPayload;
 import ai.freeplay.client.resources.recordings.RecordResponse;
 import ai.freeplay.client.resources.recordings.ResponseInfo;
 import ai.freeplay.client.resources.sessions.Session;
@@ -122,7 +122,7 @@ public class GeminiWithMediaTest {
         sentMessages.add(ContentMaker.forRole("model").fromString(responseContent));
 
         Session session = freeplay.sessions().create();
-        return freeplay.recordings().create(RecordInfo.fromGeminiContent(
+        return freeplay.recordings().create(RecordPayload.fromGeminiContent(
                 projectId,
                 sentMessages,
                 variables,

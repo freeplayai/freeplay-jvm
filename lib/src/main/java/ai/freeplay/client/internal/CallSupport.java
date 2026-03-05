@@ -1,19 +1,17 @@
 package ai.freeplay.client.internal;
 
 import ai.freeplay.client.HttpConfig;
-import ai.freeplay.client.exceptions.FreeplayClientException;
-import ai.freeplay.client.internal.AsyncHttp;
-import ai.freeplay.client.internal.JSONUtil;
-import ai.freeplay.client.media.MediaInput;
 import ai.freeplay.client.TemplateResolver;
+import ai.freeplay.client.exceptions.FreeplayClientException;
 import ai.freeplay.client.internal.dto.*;
 import ai.freeplay.client.internal.v2dto.TemplateDTO;
+import ai.freeplay.client.media.MediaInput;
 import ai.freeplay.client.resources.feedback.CustomerFeedbackResponse;
 import ai.freeplay.client.resources.feedback.TraceFeedbackResponse;
 import ai.freeplay.client.resources.metadata.MetadataUpdateResponse;
 import ai.freeplay.client.resources.prompts.ChatMessage;
 import ai.freeplay.client.resources.prompts.TemplateVersionResponse;
-import ai.freeplay.client.resources.recordings.RecordInfo;
+import ai.freeplay.client.resources.recordings.RecordPayload;
 import ai.freeplay.client.resources.recordings.RecordResponse;
 import ai.freeplay.client.resources.recordings.TestRunInfo;
 import ai.freeplay.client.resources.sessions.SessionDeleteResponse;
@@ -76,7 +74,7 @@ public class CallSupport {
         return templateResolver.getPromptByVersionId(projectId, templateId, templateVersionId);
     }
 
-    public CompletableFuture<RecordResponse> record(RecordInfo recordPayload) {
+    public CompletableFuture<RecordResponse> record(RecordPayload recordPayload) {
 
         if (recordPayload.getAllMessages().isEmpty()) {
             throw new FreeplayClientException("Messages list must have at least one message. " +
@@ -210,7 +208,7 @@ public class CallSupport {
                 url,
                 freeplayApiKey,
                 httpConfig,
-                new TestListDTO(testList, includeOutputs, name, description, flavorName, targetEvaluationIds)
+                new DatasetDTO(testList, includeOutputs, name, description, flavorName, targetEvaluationIds)
         ).thenApply(httpResponse -> {
             throwFreeplayIfError(httpResponse, 201);
 

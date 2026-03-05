@@ -5,7 +5,7 @@ import ai.freeplay.client.resources.prompts.ChatMessage;
 import ai.freeplay.client.resources.prompts.FormattedPrompt;
 import ai.freeplay.client.resources.prompts.TemplatePrompt;
 import ai.freeplay.client.resources.recordings.CallInfo;
-import ai.freeplay.client.resources.recordings.RecordInfo;
+import ai.freeplay.client.resources.recordings.RecordPayload;
 import ai.freeplay.client.resources.recordings.RecordResponse;
 import ai.freeplay.client.resources.recordings.ResponseInfo;
 import ai.freeplay.client.resources.testruns.CompletionTestCase;
@@ -130,7 +130,7 @@ public class ThinTestRunHistoryExample {
         System.out.println("Completion: " + bodyNode.path("content").get(0).path("text").asText());
 
         return fpClient.recordings().create(
-                new RecordInfo(
+                new RecordPayload(
                         projectId,
                         allMessages
                 ).inputs(testCase.getVariables())

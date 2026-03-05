@@ -8,7 +8,7 @@ import java.util.Objects;
 import java.util.UUID;
 
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
-public class TestListDTO {
+public class DatasetDTO {
     private String datasetName;
     private boolean includeOutputs;
 
@@ -21,10 +21,10 @@ public class TestListDTO {
     private List<UUID> targetEvaluationIds;
 
     @SuppressWarnings("unused")
-    public TestListDTO() {
+    public DatasetDTO() {
     }
 
-    public TestListDTO(String datasetName, boolean includeOutputs, String testRunName, String testRunDescription, String flavorName, List<UUID> targetEvaluationIds) {
+    public DatasetDTO(String datasetName, boolean includeOutputs, String testRunName, String testRunDescription, String flavorName, List<UUID> targetEvaluationIds) {
         this.datasetName = datasetName;
         this.includeOutputs = includeOutputs;
         this.testRunName = testRunName;
@@ -65,7 +65,7 @@ public class TestListDTO {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        TestListDTO that = (TestListDTO) o;
+        DatasetDTO that = (DatasetDTO) o;
         return Objects.equals(datasetName, that.datasetName) && Objects.equals(includeOutputs, that.includeOutputs) && Objects.equals(testRunName, that.getTestRunName()) && Objects.equals(testRunDescription, that.testRunDescription);
     }
 
@@ -76,7 +76,7 @@ public class TestListDTO {
 
     @Override
     public String toString() {
-        return "TestListDTO{" +
+        return "DatasetDTO{" +
                 "datasetName='" + datasetName + '\'' +
                 ", includeOutputs=" + includeOutputs +
                 ", testRunName='" + testRunName + '\'' +

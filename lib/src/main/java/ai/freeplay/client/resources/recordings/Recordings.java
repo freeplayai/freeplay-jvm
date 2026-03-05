@@ -11,7 +11,7 @@ public class Recordings {
         this.callSupport = callSupport;
     }
 
-    public CompletableFuture<RecordResponse> create(RecordInfo recordPayload) {
+    public CompletableFuture<RecordResponse> create(RecordPayload recordPayload) {
         return callSupport.record(recordPayload);
     }
 }

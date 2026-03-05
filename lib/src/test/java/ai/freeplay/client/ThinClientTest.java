@@ -311,7 +311,7 @@ public class ThinClientTest extends HttpClientTestBase {
             Session session = fpClient.sessions().create()
                     .customMetadata(customMetadata);
 
-                        RecordInfo recordInfo = new RecordInfo(
+            RecordPayload recordPayload = new RecordPayload(
                     projectId,
                     allMessages
             ).sessionInfo(session.getSessionInfo())
@@ -320,7 +320,7 @@ public class ThinClientTest extends HttpClientTestBase {
                     .callInfo(callInfo)
                     .responseInfo(responseInfo)
                     .evalResults(evalResults);
-            CompletableFuture<RecordResponse> recordFuture = fpClient.recordings().create(recordInfo);
+            CompletableFuture<RecordResponse> recordFuture = fpClient.recordings().create(recordPayload);
 
             // Assertions
             assertNotNull(recordFuture.get().getCompletionId());
@@ -390,14 +390,14 @@ public class ThinClientTest extends HttpClientTestBase {
 
             Session session = fpClient.sessions().create();
             CompletableFuture<RecordResponse> recordFuture = fpClient.recordings().create(
-                    new RecordInfo(
+                    new RecordPayload(
                             projectId,
                             fixtures.getAllMessages()
                     ).sessionInfo(session.getSessionInfo())
-                    .inputs(variables)
-                    .promptVersionInfo(fixtures.getPromptInfo())
-                    .callInfo(fixtures.getCallInfo())
-                    .responseInfo(fixtures.getResponseInfo()));
+                            .inputs(variables)
+                            .promptVersionInfo(fixtures.getPromptInfo())
+                            .callInfo(fixtures.getCallInfo())
+                            .responseInfo(fixtures.getResponseInfo()));
 
             // Assertions
             assertNotNull(recordFuture.get().getCompletionId());
@@ -449,14 +449,14 @@ public class ThinClientTest extends HttpClientTestBase {
 
             Session session = fpClient.sessions().create();
             CompletableFuture<RecordResponse> recordFuture = fpClient.recordings().create(
-                    new RecordInfo(
+                    new RecordPayload(
                             projectId,
                             fixtures.getAllMessages()
                     ).sessionInfo(session.getSessionInfo())
-                    .inputs(variables)
-                    .promptVersionInfo(fixtures.getPromptInfo())
-                    .callInfo(fixtures.getCallInfo())
-                    .responseInfo(fixtures.getResponseInfo()).testRunInfo(new TestRunInfo(testRunId, testCaseId)));
+                            .inputs(variables)
+                            .promptVersionInfo(fixtures.getPromptInfo())
+                            .callInfo(fixtures.getCallInfo())
+                            .responseInfo(fixtures.getResponseInfo()).testRunInfo(new TestRunInfo(testRunId, testCaseId)));
 
             // Assertions
             assertNotNull(recordFuture.get().getCompletionId());
@@ -509,14 +509,14 @@ public class ThinClientTest extends HttpClientTestBase {
 
             Session session = fpClient.sessions().create();
             CompletableFuture<RecordResponse> recordFuture = fpClient.recordings().create(
-                    new RecordInfo(
+                    new RecordPayload(
                             projectId,
                             fixtures.getAllMessages()
                     ).sessionInfo(session.getSessionInfo())
-                    .inputs(variables)
-                    .promptVersionInfo(fixtures.getPromptInfo())
-                    .callInfo(fixtures.getCallInfo())
-                    .responseInfo(fixtures.getResponseInfo()));
+                            .inputs(variables)
+                            .promptVersionInfo(fixtures.getPromptInfo())
+                            .callInfo(fixtures.getCallInfo())
+                            .responseInfo(fixtures.getResponseInfo()));
 
             // Assertions
             assertNull(recordFuture.get().getCompletionId());
@@ -580,7 +580,7 @@ public class ThinClientTest extends HttpClientTestBase {
                     .customMetadata(customMetadata);
             TraceInfo traceInfo = session.createTrace(input, "agent_name", traceCustomMetadata);
             traceInfo.kind(SpanKind.TOOL).name("test_tool_span");
-            RecordInfo recordInfo = new RecordInfo(
+            RecordPayload recordPayload = new RecordPayload(
                     projectId,
                     allMessages
             ).sessionInfo(session.getSessionInfo())
@@ -590,7 +590,7 @@ public class ThinClientTest extends HttpClientTestBase {
                     .responseInfo(responseInfo)
                     .evalResults(evalResults)
                     .traceInfo(traceInfo);
-            CompletableFuture<RecordResponse> recordFuture = fpClient.recordings().create(recordInfo);
+            CompletableFuture<RecordResponse> recordFuture = fpClient.recordings().create(recordPayload);
 
             // Assertions
             assertNotNull(recordFuture.get().getCompletionId());
@@ -659,7 +659,7 @@ public class ThinClientTest extends HttpClientTestBase {
             ResponseInfo responseInfo = new ResponseInfo(true)
                     .functionCall(new OpenAIFunctionCall(functionName, arguments));
             CompletableFuture<RecordResponse> recordFuture = fpClient.recordings().create(
-                    new RecordInfo(
+                    new RecordPayload(
                             projectId,
                             fixtures.getAllMessages()
                     ).sessionInfo(session.getSessionInfo())
@@ -726,7 +726,7 @@ public class ThinClientTest extends HttpClientTestBase {
                     .allMessages(toolCallMessage);
 
             CompletableFuture<RecordResponse> recordFuture = fpClient.recordings().create(
-                    new RecordInfo(
+                    new RecordPayload(
                             projectId,
                             messages
                     ).inputs(variables)
@@ -779,7 +779,7 @@ public class ThinClientTest extends HttpClientTestBase {
                     .allMessages(toolCallMessage);
 
             CompletableFuture<RecordResponse> recordFuture = fpClient.recordings().create(
-                    new RecordInfo(
+                    new RecordPayload(
                             projectId,
                             messages
                     ).inputs(variables)
@@ -1052,7 +1052,7 @@ public class ThinClientTest extends HttpClientTestBase {
             ExecutionException exception = assertThrows(
                     ExecutionException.class,
                     () -> fpClient.recordings().create(
-                            new RecordInfo(
+                            new RecordPayload(
                                     projectId,
                                     fixtures.getAllMessages()
                             ).inputs(variables)
@@ -1323,19 +1323,19 @@ public class ThinClientTest extends HttpClientTestBase {
     }
 
     @Test
-    public void testRecordInfoParentId() {
+    public void testRecordPayloadParentId() {
         String projectId = "test-project";
         List<ChatMessage> allMessages = List.of(
-            new ChatMessage("user", "test message"),
-            new ChatMessage("assistant", "test response")
+                new ChatMessage("user", "test message"),
+                new ChatMessage("assistant", "test response")
         );
-        
+
         UUID parentId = UUID.randomUUID();
-        
-        RecordInfo recordInfo = new RecordInfo(projectId, allMessages)
+
+        RecordPayload recordPayload = new RecordPayload(projectId, allMessages)
                 .parentId(parentId);
-        
-        assertEquals(parentId, recordInfo.getParentId());
+
+        assertEquals(parentId, recordPayload.getParentId());
     }
 
     @Test
@@ -1345,10 +1345,10 @@ public class ThinClientTest extends HttpClientTestBase {
         UUID traceId = UUID.randomUUID();
         UUID parentId = UUID.randomUUID();
         String input = "test input";
-        
+
         TraceInfo traceInfo = new TraceInfo(sessionId, traceId, input, mockCallSupport)
                 .parentId(parentId);  // Using builder pattern
-        
+
         assertEquals(sessionId, traceInfo.getSessionId());
         assertEquals(traceId, traceInfo.getTraceId());
         assertEquals(input, traceInfo.getInput());
@@ -1361,9 +1361,9 @@ public class ThinClientTest extends HttpClientTestBase {
         UUID sessionId = UUID.randomUUID();
         UUID traceId = UUID.randomUUID();
         String input = "test input";
-        
+
         TraceInfo traceInfo = new TraceInfo(sessionId, traceId, input, mockCallSupport);
-        
+
         assertEquals(sessionId, traceInfo.getSessionId());
         assertEquals(traceId, traceInfo.getTraceId());
         assertEquals(input, traceInfo.getInput());
@@ -1374,22 +1374,22 @@ public class ThinClientTest extends HttpClientTestBase {
     public void testSessionCreateTraceWithParentId() {
         CallSupport mockCallSupport = Mockito.mock(CallSupport.class);
         Session session = new Session(mockCallSupport);
-        
+
         String input = "parent question";
         String agentName = "test_agent";
         Map<String, Object> metadata = Map.of("level", "parent");
-        
+
         TraceInfo parentTrace = session.createTrace(input).agentName(agentName).customMetadata(metadata);
         assertNull(parentTrace.getParentId());  // Parent trace has no parent
-        
+
         // Create child trace with parent ID
         String childInput = "child question";
         String childAgentName = "child_agent";
         Map<String, Object> childMetadata = Map.of("level", "child");
         UUID parentId = parentTrace.getTraceId();
-        
+
         TraceInfo childTrace = session.createTrace(childInput).agentName(childAgentName).customMetadata(childMetadata).parentId(parentId);
-        
+
         assertEquals(childInput, childTrace.getInput());
         assertEquals(childAgentName, childTrace.getAgentName());
         assertEquals(parentId, childTrace.getParentId());
@@ -1401,52 +1401,52 @@ public class ThinClientTest extends HttpClientTestBase {
     public void testDeprecatedTraceInfoMethodsStillWork() {
         String projectId = "test-project";
         List<ChatMessage> allMessages = List.of(
-            new ChatMessage("user", "test message"),
-            new ChatMessage("assistant", "test response")
+                new ChatMessage("user", "test message"),
+                new ChatMessage("assistant", "test response")
         );
-        
+
         CallSupport mockCallSupport = Mockito.mock(CallSupport.class);
         UUID sessionId = UUID.randomUUID();
         UUID traceId = UUID.randomUUID();
         String input = "test input";
-        
+
         TraceInfo traceInfo = new TraceInfo(sessionId, traceId, input, mockCallSupport);
-        
-        RecordInfo recordInfo = new RecordInfo(projectId, allMessages)
+
+        RecordPayload recordPayload = new RecordPayload(projectId, allMessages)
                 .traceInfo(traceInfo);
-        
-        assertEquals(traceInfo, recordInfo.getTraceInfo());  // Using deprecated getter
+
+        assertEquals(traceInfo, recordPayload.getTraceInfo());  // Using deprecated getter
     }
 
     @Test
     public void testParentIdVsTraceInfoEquivalence() {
         String projectId = "test-project";
         List<ChatMessage> allMessages = List.of(
-            new ChatMessage("user", "test message"),
-            new ChatMessage("assistant", "test response")
+                new ChatMessage("user", "test message"),
+                new ChatMessage("assistant", "test response")
         );
-        
+
         CallSupport mockCallSupport = Mockito.mock(CallSupport.class);
         UUID sessionId = UUID.randomUUID();
         UUID traceId = UUID.randomUUID();
         String input = "test input";
-        
+
         TraceInfo traceInfo = new TraceInfo(sessionId, traceId, input, mockCallSupport);
-        
+
         // Create with deprecated traceInfo
         @SuppressWarnings("deprecation")
-        RecordInfo recordWithTraceInfo = new RecordInfo(projectId, allMessages)
+        RecordPayload recordWithTraceInfo = new RecordPayload(projectId, allMessages)
                 .traceInfo(traceInfo);
-        
+
         // Create with new parentId approach
-        RecordInfo recordWithParentId = new RecordInfo(projectId, allMessages)
+        RecordPayload recordWithParentId = new RecordPayload(projectId, allMessages)
                 .parentId(traceInfo.getTraceId());
-        
+
         // Both should reference the same trace ID
         @SuppressWarnings("deprecation")
         UUID traceInfoId = recordWithTraceInfo.getTraceInfo().getTraceId();
         UUID parentIdValue = recordWithParentId.getParentId();
-        
+
         assertEquals(traceInfoId, parentIdValue);
     }
 
@@ -1454,24 +1454,24 @@ public class ThinClientTest extends HttpClientTestBase {
     public void testMultiLevelTraceHierarchy() {
         CallSupport mockCallSupport = Mockito.mock(CallSupport.class);
         Session session = new Session(mockCallSupport);
-        
+
         // Create root trace
         TraceInfo root = session.createTrace("root question").agentName("root_agent").customMetadata(null);
         assertNull(root.getParentId());
-        
+
         // Create child trace
         TraceInfo child = session.createTrace("child question").agentName("child_agent").customMetadata(null).parentId(root.getTraceId());
         assertEquals(root.getTraceId(), child.getParentId());
-        
+
         // Create grandchild trace
         TraceInfo grandchild = session.createTrace("grandchild question").agentName("grandchild_agent").customMetadata(null).parentId(child.getTraceId());
         assertEquals(child.getTraceId(), grandchild.getParentId());
-        
+
         // Verify hierarchy
         assertNull(root.getParentId());
         assertEquals(root.getTraceId(), child.getParentId());
         assertEquals(child.getTraceId(), grandchild.getParentId());
-        
+
         // All IDs should be unique
         assertNotEquals(root.getTraceId(), child.getTraceId());
         assertNotEquals(child.getTraceId(), grandchild.getTraceId());

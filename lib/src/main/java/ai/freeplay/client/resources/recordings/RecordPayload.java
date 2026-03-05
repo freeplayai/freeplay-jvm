@@ -13,7 +13,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-public class RecordInfo {
+public class RecordPayload {
     private final String projectId;
     private final List<ChatMessage> allMessages;
     private Map<String, Object> inputs;
@@ -33,13 +33,13 @@ public class RecordInfo {
     private Map<String, Object> outputSchema;
     private MediaInputCollection mediaInputCollection;
 
-    public RecordInfo(
+    public RecordPayload(
             String projectId,
             List<ChatMessage> allMessages
     ) {
         this.projectId = projectId;
         this.allMessages = allMessages;
-        this.sessionInfo = new SessionInfo(UUID.randomUUID().toString(), null); 
+        this.sessionInfo = new SessionInfo(UUID.randomUUID().toString(), null);
         this.inputs = null;
         this.promptVersionInfo = null;
         this.callInfo = null;
@@ -47,7 +47,7 @@ public class RecordInfo {
     }
 
     // Builder-style constructor for optional fields
-    private RecordInfo(
+    private RecordPayload(
             String projectId,
             List<ChatMessage> allMessages,
             Map<String, Object> inputs,
@@ -65,7 +65,7 @@ public class RecordInfo {
         this.responseInfo = responseInfo;
     }
 
-    public static RecordInfo fromGeminiContent(
+    public static RecordPayload fromGeminiContent(
             String projectId,
             List<Content> contents,
             Map<String, Object> inputs,
@@ -78,40 +78,40 @@ public class RecordInfo {
                 .map(GeminiLLMAdapter::chatMessageFromContent)
                 .collect(Collectors.toList());
 
-        return new RecordInfo(projectId, messages, inputs, sessionInfo, promptVersionInfo, callInfo, responseInfo);
+        return new RecordPayload(projectId, messages, inputs, sessionInfo, promptVersionInfo, callInfo, responseInfo);
     }
 
-    public RecordInfo sessionInfo(SessionInfo sessionInfo) {
+    public RecordPayload sessionInfo(SessionInfo sessionInfo) {
         this.sessionInfo = sessionInfo;
         return this;
     }
 
-    public RecordInfo inputs(Map<String, Object> inputs) {
+    public RecordPayload inputs(Map<String, Object> inputs) {
         this.inputs = inputs;
         return this;
     }
 
-    public RecordInfo promptVersionInfo(PromptVersionInfo promptVersionInfo) {
+    public RecordPayload promptVersionInfo(PromptVersionInfo promptVersionInfo) {
         this.promptVersionInfo = promptVersionInfo;
         return this;
     }
 
-    public RecordInfo callInfo(CallInfo callInfo) {
+    public RecordPayload callInfo(CallInfo callInfo) {
         this.callInfo = callInfo;
         return this;
     }
 
-    public RecordInfo responseInfo(ResponseInfo responseInfo) {
+    public RecordPayload responseInfo(ResponseInfo responseInfo) {
         this.responseInfo = responseInfo;
         return this;
     }
 
-    public RecordInfo testRunInfo(TestRunInfo testRunInfo) {
+    public RecordPayload testRunInfo(TestRunInfo testRunInfo) {
         this.testRunInfo = testRunInfo;
         return this;
     }
 
-    public RecordInfo evalResults(Map<String, Object> evalResults) {
+    public RecordPayload evalResults(Map<String, Object> evalResults) {
         this.evalResults = evalResults;
         return this;
     }
@@ -120,32 +120,32 @@ public class RecordInfo {
      * @deprecated Use {@link #parentId(UUID)} instead. This method will be removed in a future version.
      */
     @Deprecated
-    public RecordInfo traceInfo(TraceInfo traceInfo) {
+    public RecordPayload traceInfo(TraceInfo traceInfo) {
         this.traceInfo = traceInfo;
         return this;
     }
 
-    public RecordInfo parentId(UUID parentId) {
+    public RecordPayload parentId(UUID parentId) {
         this.parentId = parentId;
         return this;
     }
 
-    public RecordInfo toolSchema(List<Map<String, Object>> toolSchema) {
+    public RecordPayload toolSchema(List<Map<String, Object>> toolSchema) {
         this.toolSchema = toolSchema;
         return this;
     }
 
-    public RecordInfo outputSchema(Map<String, Object> outputSchema) {
+    public RecordPayload outputSchema(Map<String, Object> outputSchema) {
         this.outputSchema = outputSchema;
         return this;
     }
 
-    public RecordInfo completionId(UUID id) {
+    public RecordPayload completionId(UUID id) {
         this.completionId = id;
         return this;
     }
 
-    public RecordInfo mediaInputCollection(MediaInputCollection mediaInputCollection) {
+    public RecordPayload mediaInputCollection(MediaInputCollection mediaInputCollection) {
         this.mediaInputCollection = mediaInputCollection;
         return this;
     }
@@ -216,7 +216,7 @@ public class RecordInfo {
 
     @Override
     public String toString() {
-        return "RecordInfo{" +
+        return "RecordPayload{" +
                 "projectId='" + projectId + '\'' +
                 ", allMessages=" + allMessages +
                 ", completionId=" + completionId +

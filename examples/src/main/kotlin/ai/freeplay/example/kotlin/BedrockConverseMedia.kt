@@ -6,7 +6,7 @@ import ai.freeplay.client.Freeplay
 import ai.freeplay.client.resources.prompts.ChatMessage
 import ai.freeplay.client.resources.prompts.Prompts
 import ai.freeplay.client.resources.recordings.CallInfo
-import ai.freeplay.client.resources.recordings.RecordInfo
+import ai.freeplay.client.resources.recordings.RecordPayload
 import ai.freeplay.client.resources.recordings.ResponseInfo
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.runBlocking
@@ -178,7 +178,7 @@ fun main(): Unit = runBlocking {
     )
 
     freeplayClient.recordings().create(
-        RecordInfo(
+        RecordPayload(
             projectId,
             allMessages
         ).inputs(promptVars)

@@ -4,7 +4,7 @@ import ai.freeplay.client.Freeplay;
 import ai.freeplay.client.resources.prompts.ChatMessage;
 import ai.freeplay.client.resources.prompts.FormattedPrompt;
 import ai.freeplay.client.resources.recordings.CallInfo;
-import ai.freeplay.client.resources.recordings.RecordInfo;
+import ai.freeplay.client.resources.recordings.RecordPayload;
 import ai.freeplay.client.resources.recordings.ResponseInfo;
 import ai.freeplay.client.resources.sessions.Session;
 import ai.freeplay.client.resources.sessions.TraceInfo;
@@ -90,7 +90,7 @@ public class ThinTrace {
                             String output = bodyNode.path("content").get(0).path("text").asText();
                             System.out.println("Completion: " + output);
 
-                            RecordInfo recordInfo = new RecordInfo(
+                            RecordPayload recordPayload = new RecordPayload(
                                     projectId,
                                     allMessages
                             ).inputs(variables)
@@ -99,7 +99,7 @@ public class ThinTrace {
                                     .responseInfo(responseInfo)
                                     .traceInfo(traceInfo);
 
-                            fpClient.recordings().create(recordInfo);
+                            fpClient.recordings().create(recordPayload);
 
                             return CompletableFuture.completedFuture(output);
                         }

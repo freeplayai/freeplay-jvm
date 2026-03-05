@@ -4,7 +4,7 @@ import ai.freeplay.client.Freeplay
 import ai.freeplay.client.resources.prompts.ChatMessage
 import ai.freeplay.client.resources.prompts.Prompts
 import ai.freeplay.client.resources.recordings.CallInfo
-import ai.freeplay.client.resources.recordings.RecordInfo
+import ai.freeplay.client.resources.recordings.RecordPayload
 import ai.freeplay.client.resources.recordings.ResponseInfo
 import ai.freeplay.example.java.ExampleUtils.callAnthropic
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -72,7 +72,7 @@ fun main(): Unit = runBlocking {
     val trace = session.createTrace("input str", "agent name", null)
 
     val recordResponse = fpClient.recordings().create(
-        RecordInfo(
+        RecordPayload(
             projectId,
             allMessages
         ).inputs(variables)

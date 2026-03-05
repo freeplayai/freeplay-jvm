@@ -4,7 +4,7 @@ import ai.freeplay.client.Freeplay;
 import ai.freeplay.client.resources.prompts.ChatMessage;
 import ai.freeplay.client.resources.prompts.FormattedPrompt;
 import ai.freeplay.client.resources.recordings.CallInfo;
-import ai.freeplay.client.resources.recordings.RecordInfo;
+import ai.freeplay.client.resources.recordings.RecordPayload;
 import ai.freeplay.client.resources.recordings.RecordResponse;
 import ai.freeplay.client.resources.recordings.ResponseInfo;
 import ai.freeplay.client.resources.sessions.SessionInfo;
@@ -88,7 +88,7 @@ public class ThinFeedbackExample {
                             System.out.println("Completion: " + bodyNode.path("content").get(0).path("text").asText());
 
                             return fpClient.recordings().create(
-                                            new RecordInfo(
+                                            new RecordPayload(
                                                     projectId,
                                                     allMessages
                                             ).inputs(variables)
