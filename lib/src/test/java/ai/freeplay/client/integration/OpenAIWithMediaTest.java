@@ -1,17 +1,16 @@
 package ai.freeplay.client.integration;
 
+import ai.freeplay.client.Freeplay;
 import ai.freeplay.client.SlowTest;
 import ai.freeplay.client.media.MediaInputBase64;
 import ai.freeplay.client.media.MediaInputCollection;
-import ai.freeplay.client.Freeplay;
 import ai.freeplay.client.resources.prompts.ChatMessage;
 import ai.freeplay.client.resources.prompts.FormattedPrompt;
 import ai.freeplay.client.resources.prompts.Prompts;
 import ai.freeplay.client.resources.recordings.CallInfo;
-import ai.freeplay.client.resources.recordings.RecordInfo;
+import ai.freeplay.client.resources.recordings.RecordPayload;
 import ai.freeplay.client.resources.recordings.RecordResponse;
 import ai.freeplay.client.resources.recordings.ResponseInfo;
-import ai.freeplay.client.resources.sessions.Session;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -133,7 +132,7 @@ public class OpenAIWithMediaTest {
         List<ChatMessage> sentMessages = new ArrayList<>(formattedPrompt.getFormattedPrompt());
         sentMessages.add(new ChatMessage("assistant", responseContent));
 
-        return freeplay.recordings().create(new RecordInfo(
+        return freeplay.recordings().create(new RecordPayload(
                 projectId,
                 sentMessages)
                 .inputs(variables)

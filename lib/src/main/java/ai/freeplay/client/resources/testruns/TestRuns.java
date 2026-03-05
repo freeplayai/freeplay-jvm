@@ -14,24 +14,24 @@ public class TestRuns {
     /**
      * Creates a new TestRunRequest.Builder to help construct a test run request.
      */
-    public TestRunRequest.Builder createRequest(String projectId, String testList) {
-        return new TestRunRequest.Builder(projectId, testList);
+    public TestRunRequest.Builder createRequest(String projectId, String datasetName) {
+        return new TestRunRequest.Builder(projectId, datasetName);
     }
 
     /**
      * @deprecated Use {@link #createRequest(String, String)} instead to construct a request
      */
     @Deprecated
-    public CompletableFuture<TestRun> create(String projectId, String testList) {
-        return create(new TestRunRequest.Builder(projectId, testList).build());
+    public CompletableFuture<TestRun> create(String projectId, String datasetName) {
+        return create(new TestRunRequest.Builder(projectId, datasetName).build());
     }
 
     /**
      * @deprecated Use {@link #createRequest(String, String)} instead to construct a request
      */
     @Deprecated
-    public CompletableFuture<TestRun> create(String projectId, String testList, boolean includeOutputs) {
-        return create(new TestRunRequest.Builder(projectId, testList)
+    public CompletableFuture<TestRun> create(String projectId, String datasetName, boolean includeOutputs) {
+        return create(new TestRunRequest.Builder(projectId, datasetName)
                 .includeOutputs(includeOutputs)
                 .build());
     }
@@ -40,8 +40,8 @@ public class TestRuns {
      * @deprecated Use {@link #createRequest(String, String)} instead to construct a request
      */
     @Deprecated
-    public CompletableFuture<TestRun> create(String projectId, String testList, boolean includeOutputs, String name, String description) {
-        return create(new TestRunRequest.Builder(projectId, testList)
+    public CompletableFuture<TestRun> create(String projectId, String datasetName, boolean includeOutputs, String name, String description) {
+        return create(new TestRunRequest.Builder(projectId, datasetName)
                 .includeOutputs(includeOutputs)
                 .name(name)
                 .description(description)
@@ -51,7 +51,7 @@ public class TestRuns {
     public CompletableFuture<TestRun> create(TestRunRequest request) {
         return callSupport.createTestRun(
             request.getProjectId(),
-            request.getTestList(),
+            request.getDatasetName(),
             request.includeOutputs(),
             request.getName(),
             request.getDescription(),

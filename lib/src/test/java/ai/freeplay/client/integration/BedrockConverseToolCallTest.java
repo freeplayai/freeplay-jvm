@@ -6,7 +6,7 @@ import ai.freeplay.client.resources.prompts.ChatMessage;
 import ai.freeplay.client.resources.prompts.FormattedPrompt;
 import ai.freeplay.client.resources.prompts.Prompts;
 import ai.freeplay.client.resources.recordings.CallInfo;
-import ai.freeplay.client.resources.recordings.RecordInfo;
+import ai.freeplay.client.resources.recordings.RecordPayload;
 import ai.freeplay.client.resources.recordings.RecordResponse;
 import ai.freeplay.client.resources.recordings.ResponseInfo;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -155,7 +155,7 @@ public class BedrockConverseToolCallTest {
         chatMessages.add(new ChatMessage("user", "Tool result: " + result));
         chatMessages.add(new ChatMessage("assistant", finalText));
 
-        RecordResponse recordResponse = freeplay.recordings().create(new RecordInfo(
+        RecordResponse recordResponse = freeplay.recordings().create(new RecordPayload(
                 projectId,
                 chatMessages)
                 .inputs(variables)

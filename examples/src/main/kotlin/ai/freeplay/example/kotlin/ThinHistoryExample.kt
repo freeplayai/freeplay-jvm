@@ -4,7 +4,7 @@ import ai.freeplay.client.Freeplay
 import ai.freeplay.client.resources.prompts.ChatMessage
 import ai.freeplay.client.resources.prompts.TemplatePrompt
 import ai.freeplay.client.resources.recordings.CallInfo
-import ai.freeplay.client.resources.recordings.RecordInfo
+import ai.freeplay.client.resources.recordings.RecordPayload
 import ai.freeplay.client.resources.recordings.ResponseInfo
 import ai.freeplay.example.java.ExampleUtils.callAnthropic
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -90,8 +90,8 @@ fun main(): Unit = runBlocking {
         )
         val responseInfo = ResponseInfo("stop_sequence" == bodyNode.path("stop_reason").asText())
 
-        val recordResponse = fpClient.recordings().create(
-                RecordInfo(
+        fpClient.recordings().create(
+                RecordPayload(
                         projectId,
                         allMessages
                 ).inputs(variables)

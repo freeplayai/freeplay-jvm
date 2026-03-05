@@ -83,7 +83,7 @@ AnthropicLLMAdapter adapter = (AnthropicLLMAdapter) LLMAdapters.adapterForFlavor
 **After** (recording is explicit):
 ```java
 import ai.freeplay.client.resources.recordings.CallInfo;
-import ai.freeplay.client.resources.recordings.RecordInfo;
+import ai.freeplay.client.resources.recordings.RecordPayload;
 import ai.freeplay.client.resources.recordings.ResponseInfo;
 
 long start = System.currentTimeMillis();
@@ -95,7 +95,7 @@ List<ChatMessage> allMessages = formatted.allMessages(
 );
 
 fp.recordings().create(
-    new RecordInfo(projectId, allMessages)
+    new RecordPayload(projectId, allMessages)
         .inputs(variables)
         .promptVersionInfo(formatted.getPromptInfo())
         .callInfo(CallInfo.from(formatted.getPromptInfo(), start, end))
@@ -119,7 +119,7 @@ import ai.freeplay.client.resources.sessions.SessionInfo;
 SessionInfo session = fp.sessions().create().getSessionInfo();
 
 fp.recordings().create(
-    new RecordInfo(projectId, allMessages)
+    new RecordPayload(projectId, allMessages)
         .sessionInfo(session)
         // ... other fields
 ).get();

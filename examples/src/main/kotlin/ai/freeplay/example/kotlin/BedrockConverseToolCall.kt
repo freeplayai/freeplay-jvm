@@ -4,18 +4,17 @@ import ai.freeplay.client.Freeplay
 import ai.freeplay.client.resources.prompts.ChatMessage
 import ai.freeplay.client.resources.prompts.Prompts
 import ai.freeplay.client.resources.recordings.CallInfo
-import ai.freeplay.client.resources.recordings.RecordInfo
+import ai.freeplay.client.resources.recordings.RecordPayload
 import ai.freeplay.client.resources.recordings.ResponseInfo
 import com.fasterxml.jackson.databind.ObjectMapper
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.runBlocking
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider
+import software.amazon.awssdk.core.document.Document
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.bedrockruntime.BedrockRuntimeClient
 import software.amazon.awssdk.services.bedrockruntime.model.*
-import software.amazon.awssdk.protocols.jsoncore.JsonNode
-import software.amazon.awssdk.core.document.Document
 
 // Tool functions
 fun addNumbers(numbers: List<Int>): Int = numbers.sum()
@@ -377,7 +376,7 @@ fun main(): Unit = runBlocking {
             println("Chat history length: ${chatHistory.size}")
 
             freeplayClient.recordings().create(
-                RecordInfo(
+                RecordPayload(
                     projectId,
                     chatHistory.toList()
                 ).inputs(promptVars)
@@ -417,7 +416,7 @@ fun main(): Unit = runBlocking {
             println("Chat history length: ${chatHistory.size}")
 
             freeplayClient.recordings().create(
-                RecordInfo(
+                RecordPayload(
                     projectId,
                     chatHistory.toList()
                 ).inputs(promptVars)

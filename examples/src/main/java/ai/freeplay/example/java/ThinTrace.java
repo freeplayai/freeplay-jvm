@@ -4,7 +4,7 @@ import ai.freeplay.client.Freeplay;
 import ai.freeplay.client.resources.prompts.ChatMessage;
 import ai.freeplay.client.resources.prompts.FormattedPrompt;
 import ai.freeplay.client.resources.recordings.CallInfo;
-import ai.freeplay.client.resources.recordings.RecordInfo;
+import ai.freeplay.client.resources.recordings.RecordPayload;
 import ai.freeplay.client.resources.recordings.ResponseInfo;
 import ai.freeplay.client.resources.sessions.Session;
 import ai.freeplay.client.resources.sessions.TraceInfo;
@@ -15,7 +15,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.net.http.HttpResponse;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 import static ai.freeplay.client.Freeplay.Config;
@@ -90,7 +89,7 @@ public class ThinTrace {
                             String output = bodyNode.path("content").get(0).path("text").asText();
                             System.out.println("Completion: " + output);
 
-                            RecordInfo recordInfo = new RecordInfo(
+                            RecordPayload recordPayload = new RecordPayload(
                                     projectId,
                                     allMessages
                             ).inputs(variables)
@@ -99,13 +98,14 @@ public class ThinTrace {
                                     .responseInfo(responseInfo)
                                     .traceInfo(traceInfo);
 
-                            fpClient.recordings().create(recordInfo);
-
-                            return CompletableFuture.completedFuture(output);
+                            return fpClient.recordings()
+                                    .create(recordPayload)
+                                    .thenApply(ignored -> output);
                         }
                 )
                 .exceptionally(exception -> {
                     System.out.println("Got exception: " + exception.getMessage());
+                    exception.printStackTrace();
                     return null;
                 })
                 .join();

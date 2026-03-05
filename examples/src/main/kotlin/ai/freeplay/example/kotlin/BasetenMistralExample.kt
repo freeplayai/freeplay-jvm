@@ -3,7 +3,7 @@ package ai.freeplay.example.kotlin
 import ai.freeplay.client.Freeplay
 import ai.freeplay.client.resources.prompts.ChatMessage
 import ai.freeplay.client.resources.recordings.CallInfo
-import ai.freeplay.client.resources.recordings.RecordInfo
+import ai.freeplay.client.resources.recordings.RecordPayload
 import ai.freeplay.client.resources.recordings.ResponseInfo
 import ai.freeplay.example.java.ExampleUtils.callBaseten
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -64,7 +64,7 @@ fun main(): Unit = runBlocking {
         .sessionInfo
 
     val recordResponse = fpClient.recordings().create(
-        RecordInfo(
+        RecordPayload(
             projectId,
             allMessages
         ).inputs(variables)

@@ -7,6 +7,7 @@ Notable additions, fixes, or breaking changes to the Freeplay SDK.
 ### Breaking changes
 
 - **Thick client removed.** The original `Freeplay` thick client and all associated classes have been removed. If you were using the thick client, please migrate to the thin client API (see below).
+
 - **Package restructure.** The thin client has been promoted from `ai.freeplay.client.thin.*` to `ai.freeplay.client.*`. Please update all imports by dropping the `thin.` segment:
   ```java
   // Before:
@@ -18,6 +19,7 @@ Notable additions, fixes, or breaking changes to the Freeplay SDK.
   import ai.freeplay.client.resources.prompts.ChatMessage;
   ```
 - **LLM adapters moved to `adapters` subpackage.** `OpenAILLMAdapter`, `AnthropicLLMAdapter`, `GeminiLLMAdapter`, `GeminiApiLLMAdapter`, `BedrockConverseAdapter`, and `LLMAdapters` are now under `ai.freeplay.client.adapters.*`.
+
 - **Removed classes** (no replacement — thick-client only):
   - `ProviderConfig` / `ProviderConfigs`
   - `RecordProcessor`
@@ -26,6 +28,30 @@ Notable additions, fixes, or breaking changes to the Freeplay SDK.
   - `ChatSession` / `CompletionSession` / `ChatStart`
   - `ChatCompletionResponse` / `CompletionResponse`
   - `IndexedChatMessage`
+
+- **`RecordInfo` renamed to `RecordPayload`** to match Python SDK naming (`RecordPayload`). Update all usages:
+  ```java
+  // Before:
+  new RecordInfo(projectId, allMessages)
+  RecordInfo.fromGeminiContent(...)
+
+  // After:
+  new RecordPayload(projectId, allMessages)
+  RecordPayload.fromGeminiContent(...)
+  ```
+
+- **`testList` parameter renamed to `datasetName`** in `TestRuns`, `TestRunRequest`, and `TestRunRequest.Builder`. The getter `getTestList()` is now `getDatasetName()`.
+  ```java
+  // Before:
+  fpClient.testRuns().createRequest(projectId, testList)
+  request.getTestList()
+
+  // After:
+  fpClient.testRuns().createRequest(projectId, datasetName)
+  request.getDatasetName()
+  ```
+
+- **`TestListDTO` renamed to `DatasetDTO`** (internal class — only relevant if you were referencing internal DTOs directly).
 
 ## [0.4.6] - 2026-02-10
 

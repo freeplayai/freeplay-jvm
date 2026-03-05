@@ -94,10 +94,10 @@ All other providers (OpenAI, Anthropic, Bedrock, etc.) work out of the box with 
 ## Quick Start
 
 ```java
-import ai.freeplay.client.thin.Freeplay;
-import ai.freeplay.client.thin.resources.prompts.FormattedPrompt;
-import ai.freeplay.client.thin.resources.prompts.ChatMessage;
-import ai.freeplay.client.thin.resources.recordings.RecordInfo;
+import ai.freeplay.client.Freeplay;
+import ai.freeplay.client.resources.prompts.FormattedPrompt;
+import ai.freeplay.client.resources.prompts.ChatMessage;
+import ai.freeplay.client.resources.recordings.RecordPayload;
 import java.util.List;
 import java.util.Map;
 
@@ -125,7 +125,7 @@ String assistantResponse = "Response from LLM";
 
 // Record the interaction for observability
 fpClient.recordings().create(
-    new RecordInfo(projectId, formattedPrompt.allMessages(
+    new RecordPayload(projectId, formattedPrompt.allMessages(
         Map.of("role", "assistant", "content", assistantResponse)
     ))
 ).get();
@@ -197,7 +197,7 @@ List<Map<String, Object>> toolSchema = List.of(
     )
 );
 
-RecordInfo info = new RecordInfo(projectId, messages)
+RecordPayload info = new RecordPayload(projectId, messages)
     .toolSchema(toolSchema)
     .callInfo(callInfo);
 ```

@@ -187,8 +187,8 @@ public class ThinTraceHierarchyExample {
                 "stop_sequence".equals(bodyNode.path("stop_reason").asText())
         );
 
-        // Create RecordInfo with parentId (new approach)
-        RecordInfo recordInfo = new RecordInfo(projectId, allMessages)
+        // Create RecordPayload with parentId (new approach)
+        RecordPayload recordPayload = new RecordPayload(projectId, allMessages)
                 .sessionInfo(sessionInfo)
                 .inputs(inputVariables)
                 .promptVersionInfo(formattedPrompt.getPromptInfo())
@@ -196,18 +196,18 @@ public class ThinTraceHierarchyExample {
                 .responseInfo(responseInfo)
                 .parentId(parentId);  // Using new parentId instead of deprecated traceInfo
 
-        // Print RecordInfo details before recording
-        System.out.println("RecordInfo details:");
-        System.out.println("  Project ID: " + recordInfo.getProjectId());
-        System.out.println("  Messages count: " + (recordInfo.getAllMessages() != null ? recordInfo.getAllMessages().size() : "null"));
-        System.out.println("  Session ID: " + (recordInfo.getSessionInfo() != null ? recordInfo.getSessionInfo().getSessionId() : "null"));
-        System.out.println("  Parent ID: " + recordInfo.getParentId());
-        System.out.println("  Inputs: " + recordInfo.getInputs());
-        System.out.println("  Prompt Version: " + (recordInfo.getPromptVersionInfo() != null ? recordInfo.getPromptVersionInfo().getPromptTemplateVersionId() : "null"));
-        System.out.println("  Call Info: " + (recordInfo.getCallInfo() != null ? "present" : "null"));
-        System.out.println("  Response Info: " + (recordInfo.getResponseInfo() != null ? "present" : "null"));
+        // Print RecordPayload details before recording
+        System.out.println("RecordPayload details:");
+        System.out.println("  Project ID: " + recordPayload.getProjectId());
+        System.out.println("  Messages count: " + (recordPayload.getAllMessages() != null ? recordPayload.getAllMessages().size() : "null"));
+        System.out.println("  Session ID: " + (recordPayload.getSessionInfo() != null ? recordPayload.getSessionInfo().getSessionId() : "null"));
+        System.out.println("  Parent ID: " + recordPayload.getParentId());
+        System.out.println("  Inputs: " + recordPayload.getInputs());
+        System.out.println("  Prompt Version: " + (recordPayload.getPromptVersionInfo() != null ? recordPayload.getPromptVersionInfo().getPromptTemplateVersionId() : "null"));
+        System.out.println("  Call Info: " + (recordPayload.getCallInfo() != null ? "present" : "null"));
+        System.out.println("  Response Info: " + (recordPayload.getResponseInfo() != null ? "present" : "null"));
 
-        RecordResponse recordResponse = fpClient.recordings().create(recordInfo).get();
+        RecordResponse recordResponse = fpClient.recordings().create(recordPayload).get();
 
         return new CallAndRecordResult(recordResponse.getCompletionId(), llmResponse);
     }

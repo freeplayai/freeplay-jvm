@@ -4,8 +4,7 @@ import ai.freeplay.client.Freeplay;
 import ai.freeplay.client.resources.prompts.ChatMessage;
 import ai.freeplay.client.resources.prompts.FormattedPrompt;
 import ai.freeplay.client.resources.recordings.CallInfo;
-import ai.freeplay.client.resources.recordings.RecordInfo;
-import ai.freeplay.client.resources.recordings.RecordResponse;
+import ai.freeplay.client.resources.recordings.RecordPayload;
 import ai.freeplay.client.resources.recordings.ResponseInfo;
 import ai.freeplay.client.resources.sessions.SessionDeleteResponse;
 import ai.freeplay.client.resources.sessions.SessionInfo;
@@ -16,7 +15,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.net.http.HttpResponse;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 import static ai.freeplay.client.Freeplay.Config;
@@ -89,17 +87,16 @@ public class ThinDeleteSession {
 
                             System.out.println("Completion: " + bodyNode.path("content").get(0).path("text").asText());
 
-                            CompletableFuture<RecordResponse> recordResponse = fpClient.recordings().create(
-                                    new RecordInfo(
+                            return fpClient.recordings().create(
+                                    new RecordPayload(
                                             projectId,
                                             allMessages
                                     ).inputs(variables)
                                             .sessionInfo(sessionInfo)
                                             .promptVersionInfo(formattedPrompt.getPromptInfo())
                                             .callInfo(callInfo)
-                                            .responseInfo(responseInfo));
-
-                            return fpClient.sessions().delete(projectId, sessionInfo.getSessionId());
+                                            .responseInfo(responseInfo)
+                            ).thenCompose(ignored -> fpClient.sessions().delete(projectId, sessionInfo.getSessionId()));
                         }
                 ).thenApply((SessionDeleteResponse deleteResponse) -> {
                     System.out.printf("Delete response: %s%n", deleteResponse);

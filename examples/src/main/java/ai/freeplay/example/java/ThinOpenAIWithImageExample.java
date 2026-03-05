@@ -3,7 +3,7 @@ package ai.freeplay.example.java;
 import ai.freeplay.client.Freeplay;
 import ai.freeplay.client.resources.prompts.ChatMessage;
 import ai.freeplay.client.resources.recordings.CallInfo;
-import ai.freeplay.client.resources.recordings.RecordInfo;
+import ai.freeplay.client.resources.recordings.RecordPayload;
 import ai.freeplay.client.resources.recordings.ResponseInfo;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -15,7 +15,6 @@ import java.util.concurrent.ExecutionException;
 
 import static ai.freeplay.client.Freeplay.Config;
 import static ai.freeplay.example.java.ExampleUtils.callOpenAI;
-import static java.lang.String.format;
 
 public class ThinOpenAIWithImageExample {
     private static final ObjectMapper objectMapper = new ObjectMapper();
@@ -72,7 +71,7 @@ public class ThinOpenAIWithImageExample {
         ResponseInfo responseInfo = new ResponseInfo(true);
 
         fpClient.recordings().create(
-                new RecordInfo(
+                new RecordPayload(
                         projectId,
                         messages
                 ).inputs(variables)

@@ -5,7 +5,7 @@ import ai.freeplay.client.resources.prompts.ChatMessage;
 import ai.freeplay.client.resources.prompts.FormattedPrompt;
 import ai.freeplay.client.resources.prompts.TemplatePrompt;
 import ai.freeplay.client.resources.recordings.CallInfo;
-import ai.freeplay.client.resources.recordings.RecordInfo;
+import ai.freeplay.client.resources.recordings.RecordPayload;
 import ai.freeplay.client.resources.recordings.ResponseInfo;
 import ai.freeplay.client.resources.sessions.SessionInfo;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -113,7 +113,7 @@ public class ThinHistoryExample {
             );
 
             fpClient.recordings().create(
-                    new RecordInfo(projectId, allMessages)
+                    new RecordPayload(projectId, allMessages)
                             .inputs(variables)
                             .sessionInfo(sessionInfo)
                             .promptVersionInfo(formatted.getPromptInfo())
