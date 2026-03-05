@@ -40,15 +40,15 @@ Notable additions, fixes, or breaking changes to the Freeplay SDK.
   RecordPayload.fromGeminiContent(...)
   ```
 
-- **`testList` parameter renamed to `testlist`** in `TestRuns`, `TestRunRequest`, and `TestRunRequest.Builder` to match Python SDK naming (`testlist=...`). The getter `getTestList()` is now `getTestlist()`.
+- **`testList` parameter renamed to `datasetName`** in `TestRuns`, `TestRunRequest`, and `TestRunRequest.Builder`. The getter `getTestList()` is now `getDatasetName()`.
   ```java
   // Before:
   fpClient.testRuns().createRequest(projectId, testList)
   request.getTestList()
 
   // After:
-  fpClient.testRuns().createRequest(projectId, testlist)
-  request.getTestlist()
+  fpClient.testRuns().createRequest(projectId, datasetName)
+  request.getDatasetName()
   ```
 
 - **`TestListDTO` renamed to `DatasetDTO`** (internal class — only relevant if you were referencing internal DTOs directly).

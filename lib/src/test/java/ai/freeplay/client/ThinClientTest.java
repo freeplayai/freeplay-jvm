@@ -801,11 +801,11 @@ public class ThinClientTest extends HttpClientTestBase {
         withMockedClient((HttpClient mockedClient) -> {
             mockCreateTestRunAsync(mockedClient);
 
-            String testListName = "core-tests";
+            String datasetName = "core-tests";
             Freeplay fpClient = new Freeplay(Config().freeplayAPIKey(freeplayApiKey).baseUrl(baseUrl));
             TestRun testRun = fpClient.testRuns().create(
                     projectId,
-                    testListName,
+                    datasetName,
                     true
             ).get();
 
@@ -825,11 +825,11 @@ public class ThinClientTest extends HttpClientTestBase {
         withMockedClient((HttpClient mockedClient) -> {
             mockCreateTestRunAsync(mockedClient);
 
-            String testListName = "core-tests";
+            String datasetName = "core-tests";
             Freeplay fpClient = new Freeplay(Config().freeplayAPIKey(freeplayApiKey).baseUrl(baseUrl));
             TestRun testRun = fpClient.testRuns().create(
                     projectId,
-                    testListName,
+                    datasetName,
                     true,
                     "test-run-name",
                     "test-run-description"
@@ -1193,12 +1193,12 @@ public class ThinClientTest extends HttpClientTestBase {
         withMockedClient((HttpClient mockedClient) -> {
             mockCreateTestRunAsync(mockedClient);
 
-            String testListName = "core-tests";
+            String datasetName = "core-tests";
             String flavorName = "anthropic_chat";
             Freeplay fpClient = new Freeplay(Config().freeplayAPIKey(freeplayApiKey).baseUrl(baseUrl));
 
             TestRunRequest testRunRequest = fpClient.testRuns()
-                    .createRequest(projectId, testListName)
+                    .createRequest(projectId, datasetName)
                     .flavorName(flavorName)
                     .includeOutputs(true)
                     .build();

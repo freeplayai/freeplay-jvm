@@ -202,13 +202,13 @@ public class CallSupport {
         });
     }
 
-    public CompletableFuture<TestRun> createTestRun(String projectId, String testList, boolean includeOutputs, String name, String description, String flavorName, List<UUID> targetEvaluationIds) {
+    public CompletableFuture<TestRun> createTestRun(String projectId, String datasetName, boolean includeOutputs, String name, String description, String flavorName, List<UUID> targetEvaluationIds) {
         String url = String.format("%s/v2/projects/%s/test-runs", baseUrl, projectId);
         return AsyncHttp.postJson(
                 url,
                 freeplayApiKey,
                 httpConfig,
-                new DatasetDTO(testList, includeOutputs, name, description, flavorName, targetEvaluationIds)
+                new DatasetDTO(datasetName, includeOutputs, name, description, flavorName, targetEvaluationIds)
         ).thenApply(httpResponse -> {
             throwFreeplayIfError(httpResponse, 201);
 

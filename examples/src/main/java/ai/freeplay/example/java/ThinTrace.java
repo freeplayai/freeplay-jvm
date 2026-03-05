@@ -15,7 +15,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.net.http.HttpResponse;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 import static ai.freeplay.client.Freeplay.Config;
@@ -99,13 +98,14 @@ public class ThinTrace {
                                     .responseInfo(responseInfo)
                                     .traceInfo(traceInfo);
 
-                            fpClient.recordings().create(recordPayload);
-
-                            return CompletableFuture.completedFuture(output);
+                            return fpClient.recordings()
+                                    .create(recordPayload)
+                                    .thenApply(ignored -> output);
                         }
                 )
                 .exceptionally(exception -> {
                     System.out.println("Got exception: " + exception.getMessage());
+                    exception.printStackTrace();
                     return null;
                 })
                 .join();

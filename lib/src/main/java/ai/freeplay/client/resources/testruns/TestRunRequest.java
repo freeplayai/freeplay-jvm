@@ -5,7 +5,7 @@ import java.util.UUID;
 
 public class TestRunRequest {
     private final String projectId;
-    private final String testList;
+    private final String datasetName;
     private final boolean includeOutputs;
     private final String name;
     private final String description;
@@ -14,7 +14,7 @@ public class TestRunRequest {
 
     private TestRunRequest(Builder builder) {
         this.projectId = builder.projectId;
-        this.testList = builder.testList;
+        this.datasetName = builder.datasetName;
         this.includeOutputs = builder.includeOutputs;
         this.name = builder.name;
         this.description = builder.description;
@@ -26,8 +26,8 @@ public class TestRunRequest {
         return projectId;
     }
 
-    public String getTestList() {
-        return testList;
+    public String getDatasetName() {
+        return datasetName;
     }
 
     public boolean includeOutputs() {
@@ -50,16 +50,16 @@ public class TestRunRequest {
 
     public static class Builder {
         private final String projectId;
-        private final String testList;
+        private final String datasetName;
         private boolean includeOutputs = false;
         private String name = null;
         private String description = null;
         private String flavorName = null;
         private List<UUID> targetEvaluationIds = null;
 
-        public Builder(String projectId, String testList) {
+        public Builder(String projectId, String datasetName) {
             this.projectId = projectId;
-            this.testList = testList;
+            this.datasetName = datasetName;
         }
 
         public Builder includeOutputs(boolean includeOutputs) {
