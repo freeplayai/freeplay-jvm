@@ -2,6 +2,31 @@
 
 Notable additions, fixes, or breaking changes to the Freeplay SDK.
 
+## [0.5.0] - 2026-03-05
+
+### Breaking changes
+
+- **Thick client removed.** The original `Freeplay` thick client and all associated classes have been removed. If you were using the thick client, please migrate to the thin client API (see below).
+- **Package restructure.** The thin client has been promoted from `ai.freeplay.client.thin.*` to `ai.freeplay.client.*`. Please update all imports by dropping the `thin.` segment:
+  ```java
+  // Before:
+  import ai.freeplay.client.thin.Freeplay;
+  import ai.freeplay.client.thin.resources.prompts.ChatMessage;
+
+  // After:
+  import ai.freeplay.client.Freeplay;
+  import ai.freeplay.client.resources.prompts.ChatMessage;
+  ```
+- **LLM adapters moved to `adapters` subpackage.** `OpenAILLMAdapter`, `AnthropicLLMAdapter`, `GeminiLLMAdapter`, `GeminiApiLLMAdapter`, `BedrockConverseAdapter`, and `LLMAdapters` are now under `ai.freeplay.client.adapters.*`.
+- **Removed classes** (no replacement — thick-client only):
+  - `ProviderConfig` / `ProviderConfigs`
+  - `RecordProcessor`
+  - `CompletionFeedback`
+  - `ChatFlavor` / `OpenAIChatFlavor` / `AnthropicChatFlavor` / `Flavors`
+  - `ChatSession` / `CompletionSession` / `ChatStart`
+  - `ChatCompletionResponse` / `CompletionResponse`
+  - `IndexedChatMessage`
+
 ## [0.4.6] - 2026-02-10
 
 ### Added

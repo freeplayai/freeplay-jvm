@@ -1,6 +1,5 @@
 package ai.freeplay.client;
 
-import ai.freeplay.client.HttpConfig;
 import ai.freeplay.client.exceptions.FreeplayConfigurationException;
 import ai.freeplay.client.internal.CallSupport;
 import ai.freeplay.client.resources.feedback.CustomerFeedback;
