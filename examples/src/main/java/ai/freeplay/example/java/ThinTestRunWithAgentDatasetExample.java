@@ -123,7 +123,7 @@ public class ThinTestRunWithAgentDatasetExample {
                     new RecordPayload(
                             projectId,
                             allMessages
-                    ).inputs(Map.of("question", completion))
+                    ).inputs(Map.of("question", testCase.getInput()))
                             .promptVersionInfo(formattedPrompt.getPromptInfo())
                             .callInfo(callInfo)
                             .toolSchema(formattedPrompt.getToolSchema())
