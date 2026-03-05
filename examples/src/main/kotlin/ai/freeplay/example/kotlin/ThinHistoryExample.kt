@@ -1,12 +1,12 @@
 package ai.freeplay.example.kotlin
 
-import ai.freeplay.client.thin.Freeplay
-import ai.freeplay.client.thin.resources.prompts.ChatMessage
-import ai.freeplay.client.thin.resources.prompts.TemplatePrompt
-import ai.freeplay.client.thin.resources.recordings.CallInfo
-import ai.freeplay.client.thin.resources.recordings.RecordInfo
-import ai.freeplay.client.thin.resources.recordings.ResponseInfo
-import ai.freeplay.example.java.ThinExampleUtils.callAnthropic
+import ai.freeplay.client.Freeplay
+import ai.freeplay.client.resources.prompts.ChatMessage
+import ai.freeplay.client.resources.prompts.TemplatePrompt
+import ai.freeplay.client.resources.recordings.CallInfo
+import ai.freeplay.client.resources.recordings.RecordInfo
+import ai.freeplay.client.resources.recordings.ResponseInfo
+import ai.freeplay.example.java.ExampleUtils.callAnthropic
 import com.fasterxml.jackson.databind.ObjectMapper
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.runBlocking

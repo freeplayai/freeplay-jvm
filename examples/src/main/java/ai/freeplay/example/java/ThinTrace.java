@@ -1,13 +1,13 @@
 package ai.freeplay.example.java;
 
-import ai.freeplay.client.thin.Freeplay;
-import ai.freeplay.client.thin.resources.prompts.ChatMessage;
-import ai.freeplay.client.thin.resources.prompts.FormattedPrompt;
-import ai.freeplay.client.thin.resources.recordings.CallInfo;
-import ai.freeplay.client.thin.resources.recordings.RecordInfo;
-import ai.freeplay.client.thin.resources.recordings.ResponseInfo;
-import ai.freeplay.client.thin.resources.sessions.Session;
-import ai.freeplay.client.thin.resources.sessions.TraceInfo;
+import ai.freeplay.client.Freeplay;
+import ai.freeplay.client.resources.prompts.ChatMessage;
+import ai.freeplay.client.resources.prompts.FormattedPrompt;
+import ai.freeplay.client.resources.recordings.CallInfo;
+import ai.freeplay.client.resources.recordings.RecordInfo;
+import ai.freeplay.client.resources.recordings.ResponseInfo;
+import ai.freeplay.client.resources.sessions.Session;
+import ai.freeplay.client.resources.sessions.TraceInfo;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -18,8 +18,8 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
-import static ai.freeplay.client.thin.Freeplay.Config;
-import static ai.freeplay.example.java.ThinExampleUtils.callAnthropic;
+import static ai.freeplay.client.Freeplay.Config;
+import static ai.freeplay.example.java.ExampleUtils.callAnthropic;
 import static java.lang.String.format;
 
 public class ThinTrace {
@@ -60,10 +60,10 @@ public class ThinTrace {
                                     formattedPrompt.getFormattedPrompt(),
                                     formattedPrompt.getSystemContent().orElse(null)
                             ).thenApply((HttpResponse<String> response) ->
-                                    new ThinExampleUtils.Tuple3<>(formattedPrompt, response, startTime)
+                                    new ExampleUtils.Tuple3<>(formattedPrompt, response, startTime)
                             );
                         }
-                ).thenCompose((ThinExampleUtils.Tuple3<FormattedPrompt<List<ChatMessage>>, HttpResponse<String>, Long> promptAndResponse) -> {
+                ).thenCompose((ExampleUtils.Tuple3<FormattedPrompt<List<ChatMessage>>, HttpResponse<String>, Long> promptAndResponse) -> {
                             FormattedPrompt<List<ChatMessage>> formattedPrompt = promptAndResponse.first;
                             HttpResponse<String> response = promptAndResponse.second;
                             long startTime = promptAndResponse.third;

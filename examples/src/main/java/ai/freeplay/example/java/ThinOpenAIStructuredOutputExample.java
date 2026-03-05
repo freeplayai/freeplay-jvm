@@ -1,20 +1,19 @@
 package ai.freeplay.example.java;
 
-import ai.freeplay.client.thin.Freeplay;
-import ai.freeplay.client.thin.resources.prompts.ChatMessage;
-import ai.freeplay.client.thin.resources.prompts.FormattedPrompt;
-import ai.freeplay.client.thin.resources.recordings.CallInfo;
-import ai.freeplay.client.thin.resources.recordings.CallInfo.ApiStyle;
-import ai.freeplay.client.thin.resources.recordings.RecordInfo;
-import ai.freeplay.client.thin.resources.recordings.RecordResponse;
-import ai.freeplay.client.thin.resources.recordings.ResponseInfo;
-import ai.freeplay.client.thin.resources.sessions.SessionInfo;
-import ai.freeplay.example.java.ThinExampleUtils.Tuple3;
+import ai.freeplay.client.Freeplay;
+import ai.freeplay.client.resources.prompts.ChatMessage;
+import ai.freeplay.client.resources.prompts.FormattedPrompt;
+import ai.freeplay.client.resources.recordings.CallInfo;
+import ai.freeplay.client.resources.recordings.CallInfo.ApiStyle;
+import ai.freeplay.client.resources.recordings.RecordInfo;
+import ai.freeplay.client.resources.recordings.RecordResponse;
+import ai.freeplay.client.resources.recordings.ResponseInfo;
+import ai.freeplay.client.resources.sessions.SessionInfo;
+import ai.freeplay.example.java.ExampleUtils.Tuple3;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -25,7 +24,7 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
-import static ai.freeplay.client.thin.Freeplay.Config;
+import static ai.freeplay.client.Freeplay.Config;
 import static java.lang.String.format;
 
 /**

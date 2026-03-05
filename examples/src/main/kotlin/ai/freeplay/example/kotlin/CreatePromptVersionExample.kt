@@ -1,9 +1,9 @@
 package ai.freeplay.example.kotlin
 
 import ai.freeplay.client.model.Provider
-import ai.freeplay.client.thin.Freeplay
-import ai.freeplay.client.thin.internal.v2dto.TemplateDTO
-import ai.freeplay.client.thin.resources.prompts.CreateVersionRequest
+import ai.freeplay.client.Freeplay
+import ai.freeplay.client.internal.v2dto.TemplateDTO
+import ai.freeplay.client.resources.prompts.CreateVersionRequest
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.runBlocking
 

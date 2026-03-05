@@ -1,17 +1,17 @@
 package ai.freeplay.example.java;
 
-import ai.freeplay.client.thin.Freeplay;
-import ai.freeplay.client.thin.resources.prompts.ChatMessage;
-import ai.freeplay.client.thin.resources.prompts.FormattedPrompt;
-import ai.freeplay.client.thin.resources.prompts.TemplatePrompt;
-import ai.freeplay.client.thin.resources.recordings.CallInfo;
-import ai.freeplay.client.thin.resources.recordings.RecordInfo;
-import ai.freeplay.client.thin.resources.recordings.RecordResponse;
-import ai.freeplay.client.thin.resources.recordings.ResponseInfo;
-import ai.freeplay.client.thin.resources.sessions.Session;
-import ai.freeplay.client.thin.resources.testruns.CompletionTestCase;
-import ai.freeplay.client.thin.resources.testruns.TestRun;
-import ai.freeplay.client.thin.resources.testruns.TestRunRequest;
+import ai.freeplay.client.Freeplay;
+import ai.freeplay.client.resources.prompts.ChatMessage;
+import ai.freeplay.client.resources.prompts.FormattedPrompt;
+import ai.freeplay.client.resources.prompts.TemplatePrompt;
+import ai.freeplay.client.resources.recordings.CallInfo;
+import ai.freeplay.client.resources.recordings.RecordInfo;
+import ai.freeplay.client.resources.recordings.RecordResponse;
+import ai.freeplay.client.resources.recordings.ResponseInfo;
+import ai.freeplay.client.resources.sessions.Session;
+import ai.freeplay.client.resources.testruns.CompletionTestCase;
+import ai.freeplay.client.resources.testruns.TestRun;
+import ai.freeplay.client.resources.testruns.TestRunRequest;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -23,8 +23,8 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
-import static ai.freeplay.client.thin.Freeplay.Config;
-import static ai.freeplay.example.java.ThinExampleUtils.callAnthropic;
+import static ai.freeplay.client.Freeplay.Config;
+import static ai.freeplay.example.java.ExampleUtils.callAnthropic;
 import static java.lang.String.format;
 import static java.util.stream.Collectors.toList;
 

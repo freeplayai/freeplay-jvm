@@ -1,448 +1,470 @@
 package ai.freeplay.client.internal;
 
-import ai.freeplay.client.Freeplay;
 import ai.freeplay.client.HttpConfig;
-import ai.freeplay.client.ProviderConfigs;
-import ai.freeplay.client.RecordProcessor;
-import ai.freeplay.client.exceptions.FreeplayConfigurationException;
-import ai.freeplay.client.exceptions.FreeplayException;
-import ai.freeplay.client.exceptions.FreeplayServerException;
-import ai.freeplay.client.flavor.ChatFlavor;
-import ai.freeplay.client.flavor.Flavors;
-import ai.freeplay.client.model.*;
-import ai.freeplay.client.processor.ChatPromptProcessor;
-import ai.freeplay.client.processor.LLMCallInfo;
-import ai.freeplay.client.processor.TemplateResolver;
+import ai.freeplay.client.exceptions.FreeplayClientException;
+import ai.freeplay.client.internal.AsyncHttp;
+import ai.freeplay.client.internal.JSONUtil;
+import ai.freeplay.client.media.MediaInput;
+import ai.freeplay.client.TemplateResolver;
+import ai.freeplay.client.internal.dto.*;
+import ai.freeplay.client.internal.v2dto.TemplateDTO;
+import ai.freeplay.client.resources.feedback.CustomerFeedbackResponse;
+import ai.freeplay.client.resources.feedback.TraceFeedbackResponse;
+import ai.freeplay.client.resources.metadata.MetadataUpdateResponse;
+import ai.freeplay.client.resources.prompts.ChatMessage;
+import ai.freeplay.client.resources.prompts.TemplateVersionResponse;
+import ai.freeplay.client.resources.recordings.RecordInfo;
+import ai.freeplay.client.resources.recordings.RecordResponse;
+import ai.freeplay.client.resources.recordings.TestRunInfo;
+import ai.freeplay.client.resources.sessions.SessionDeleteResponse;
+import ai.freeplay.client.resources.sessions.TraceInfo;
+import ai.freeplay.client.resources.sessions.TraceRecordResponse;
+import ai.freeplay.client.resources.testruns.CompletionTestCase;
+import ai.freeplay.client.resources.testruns.TestRun;
+import ai.freeplay.client.resources.testruns.TestRunResults;
+import ai.freeplay.client.resources.testruns.TraceTestCase;
+import com.fasterxml.jackson.databind.JsonNode;
 
-import java.net.http.HttpResponse;
-import java.time.Instant;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Stream;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
-import static ai.freeplay.client.internal.Http.authHeaders;
 import static ai.freeplay.client.internal.Http.throwFreeplayIfError;
+import static ai.freeplay.client.internal.ParameterUtils.validateBasicMap;
 import static ai.freeplay.client.internal.PromptUtils.getFinalEnvironment;
 import static java.lang.String.format;
-import static java.lang.String.valueOf;
-import static java.lang.System.currentTimeMillis;
-import static java.util.UUID.randomUUID;
+import static java.util.stream.Collectors.toList;
+
 
 public class CallSupport {
-    // Using the Freeplay class to make it nicer, since these will be in customer application logs
-    public static final System.Logger LOGGER = System.getLogger(Freeplay.class.getName());
-
-    private final String freeplayApiKey;
-    private final String baseUrl;
-    private final ChatFlavor clientFlavor;
-    private final Map<String, Object> clientLLMParameters;
-    private final ProviderConfigs providerConfig;
     private final HttpConfig httpConfig;
-    private final RecordProcessor recordProcessor;
     private final TemplateResolver templateResolver;
+    private final String baseUrl;
+    private final String freeplayApiKey;
 
     public CallSupport(
-            String freeplayApiKey,
-            String baseUrl,
-            ProviderConfigs providerConfig,
-            ChatFlavor flavor,
-            Map<String, Object> llmParameters,
             HttpConfig httpConfig,
-            RecordProcessor recordProcessor,
-            TemplateResolver templateResolver
+            TemplateResolver templateResolver,
+            String baseUrl,
+            String freeplayApiKey
     ) {
-        this.freeplayApiKey = freeplayApiKey;
-        this.baseUrl = baseUrl;
-        this.providerConfig = providerConfig;
-        this.clientFlavor = flavor;
-        this.clientLLMParameters = llmParameters != null ? llmParameters : Collections.emptyMap();
         this.httpConfig = httpConfig;
-        this.recordProcessor = recordProcessor != null ?
-                recordProcessor :
-                new DefaultRecordProcessor();
         this.templateResolver = templateResolver;
+        this.baseUrl = baseUrl;
+        this.freeplayApiKey = freeplayApiKey;
     }
 
-    public static String createSessionId() throws FreeplayException {
-        return randomUUID().toString();
+    public static String getActiveFlavorName(String callFlavorName, String templateFlavorName) {
+        return callFlavorName != null ? callFlavorName : templateFlavorName;
     }
 
-    public Collection<PromptTemplate> getPrompts(String projectId, String tag) throws FreeplayException {
-        String finalEnvironment = getFinalEnvironment(tag);
-        return templateResolver.getPrompts(projectId, finalEnvironment);
-    }
-
-    public Optional<PromptTemplate> findPrompt(Collection<PromptTemplate> templates, String templateName) {
-        return templates.stream()
-                .filter(template -> template.getName().equals(templateName))
-                .findFirst();
-    }
-
-    public TestRun createTestRun(String projectId, String environment, String testListName) {
-        String url = getUrl("v2/projects/%s/test-runs", projectId);
-        HttpResponse<String> response;
-        try {
-            response = Http.postJsonWithBearer(
-                    url,
-                    Map.of("playlist_name", testListName),
-                    freeplayApiKey,
-                    httpConfig
-            );
-        } catch (FreeplayException e) {
-            throw new FreeplayServerException("Error creating test run.", e);
-        }
-        throwFreeplayIfError(response, 201);
-
-        Map<String, Object> objectMap;
-        try {
-            objectMap = Http.parseBody(response);
-        } catch (FreeplayException e) {
-            throw new FreeplayServerException("Error creating test run.", e);
-        }
-
-        String testRunId = valueOf(objectMap.get("test_run_id"));
-        @SuppressWarnings("unchecked")
-        List<Map<String, Object>> inputs = (List<Map<String, Object>>) objectMap.get("inputs");
-        return new TestRun(this, projectId, environment, testRunId, inputs);
-    }
-
-    public CompletionResponse prepareAndMakeCall(
-            String sessionId,
-            Collection<PromptTemplate> templates,
+    public CompletableFuture<TemplateDTO> getPrompt(
+            String projectId,
             String templateName,
-            Map<String, Object> variables,
-            Map<String, Object> llmParameters,
-            Map<String, Object> customMetadata,
-            String tag,
-            String testRunId,
-            ChatFlavor flavor,
-            ChatPromptProcessor promptProcessor
-    ) throws FreeplayException {
-        Optional<PromptTemplate> maybePrompt = findPrompt(templates, templateName);
-        if (maybePrompt.isEmpty()) {
-            throw new FreeplayConfigurationException(
-                    "Prompt template " + templateName + " in environment " + tag + " not found.");
+            String environment
+    ) {
+        return templateResolver.getPrompt(projectId, templateName, getFinalEnvironment(environment));
+    }
+
+    public CompletableFuture<TemplateDTO> getPromptByVersionId(
+            String projectId,
+            String templateId,
+            String templateVersionId
+    ) {
+        return templateResolver.getPromptByVersionId(projectId, templateId, templateVersionId);
+    }
+
+    public CompletableFuture<RecordResponse> record(RecordInfo recordPayload) {
+
+        if (recordPayload.getAllMessages().isEmpty()) {
+            throw new FreeplayClientException("Messages list must have at least one message. " +
+                    "The last message should be the current response.");
         }
-        PromptTemplate template = maybePrompt.get();
 
-        Map<String, Object> mergedLLMParameters = getMergedParameters(template, llmParameters);
-        ChatFlavor activeFlavor = getActiveFlavor(flavor, template);
+        String testRunId =
+                recordPayload.getTestRunInfo() == null
+                        ? null
+                        : recordPayload.getTestRunInfo().getTestRunId();
+        String testCaseId =
+                recordPayload.getTestRunInfo() == null
+                        ? null
+                        : recordPayload.getTestRunInfo().getTestCaseId();
 
-        Collection<ChatMessage> formattedPrompt = activeFlavor.formatPrompt(template.getContent(), variables);
-        Collection<ChatMessage> modifiedPrompt = promptProcessor != null ?
-                promptProcessor.apply(
-                        formattedPrompt,
-                        new LLMCallInfo(activeFlavor.getProviderEnum(), mergedLLMParameters)) :
-                formattedPrompt;
-
-        Instant start = Instant.ofEpochMilli(currentTimeMillis());
-        CompletionResponse response = activeFlavor.callService(
-                modifiedPrompt,
-                providerConfig,
-                mergedLLMParameters,
-                httpConfig);
-        Instant end = Instant.ofEpochMilli(currentTimeMillis());
-        Optional<String> completionId = recordProcessor.record(
-                new PromptInfo(
-                        template.getPromptTemplateVersionId(),
-                        template.getPromptTemplateId(),
-                        activeFlavor.getFormatType(),
-                        activeFlavor.getProvider(),
-                        valueOf(mergedLLMParameters.get("model")),
-                        mergedLLMParameters
-                ),
-                new CallInfo(
-                        sessionId,
-                        testRunId,
-                        start,
-                        end,
-                        tag,
-                        variables,
-                        customMetadata,
-                        activeFlavor.serializeForRecord(modifiedPrompt),
-                        response.getContent(),
-                        response.isComplete()
-                )
-        );
-        completionId.ifPresent(response::setCompletionId);
-
-        return response;
-    }
-
-    public Stream<IndexedChatMessage> makeCallStream(
-            String sessionId,
-            PromptTemplate template,
-            Map<String, Object> variables,
-            Map<String, Object> llmParameters,
-            Map<String, Object> customMetadata,
-            String tag,
-            String testRunId,
-            ChatFlavor callFlavor,
-            ChatPromptProcessor promptProcessor
-    ) throws FreeplayException {
-        Map<String, Object> mergedLLMParameters = getMergedParameters(template, llmParameters);
-        ChatFlavor activeFlavor = getActiveFlavor(callFlavor, template);
-
-        Collection<ChatMessage> formattedPrompt = activeFlavor.formatPrompt(template.getContent(), variables);
-        Collection<ChatMessage> modifiedPrompt = promptProcessor != null ?
-                promptProcessor.apply(
-                        formattedPrompt,
-                        new LLMCallInfo(activeFlavor.getProviderEnum(), mergedLLMParameters)) :
-                formattedPrompt;
-
-        Instant start = Instant.ofEpochMilli(currentTimeMillis());
-        Stream<IndexedChatMessage> responseStream = activeFlavor.callServiceStream(
-                modifiedPrompt,
-                providerConfig,
-                mergedLLMParameters,
-                httpConfig);
-
-        return handleStream(
-                sessionId,
-                template,
-                variables,
-                tag,
-                testRunId,
-                mergedLLMParameters,
-                customMetadata,
-                activeFlavor,
-                modifiedPrompt,
-                start,
-                responseStream);
-    }
-
-    public ChatCompletionResponse makeContinueChatCall(
-            String sessionId,
-            Collection<PromptTemplate> templates,
-            String templateName,
-            Map<String, Object> variables,
-            Map<String, Object> llmParameters,
-            Map<String, Object> customMetadata,
-            String tag,
-            String testRunId,
-            ChatFlavor flavor,
-            ChatPromptProcessor promptProcessor
-    ) throws FreeplayException {
-        Optional<PromptTemplate> maybePrompt = findPrompt(templates, templateName);
-        return maybePrompt.map((PromptTemplate prompt) -> {
-            ChatFlavor activeFlavor = getActiveFlavor(flavor, prompt);
-            Collection<ChatMessage> formattedPrompt = activeFlavor.formatPrompt(prompt.getContent(), variables);
-            return makeContinueChatCall(
-                    sessionId,
-                    prompt,
-                    formattedPrompt,
-                    variables,
-                    llmParameters,
-                    customMetadata,
-                    tag,
-                    testRunId,
-                    promptProcessor
+        RecordDTO.ResponseInfoDTO responseInfo = null;
+        if (recordPayload.getResponseInfo() != null) {
+            responseInfo = new RecordDTO.ResponseInfoDTO(
+                    recordPayload.getResponseInfo().isComplete(),
+                    recordPayload.getResponseInfo().getFunctionCall() != null ? new RecordDTO.OpenAIFunctionCallDTO(
+                            recordPayload.getResponseInfo().getFunctionCall().getName(),
+                            recordPayload.getResponseInfo().getFunctionCall().getArguments()
+                    ) : null,
+                    recordPayload.getResponseInfo().getPromptTokens(),
+                    recordPayload.getResponseInfo().getResponseTokens()
             );
-        }).orElseThrow(() ->
-                new FreeplayConfigurationException(format("Prompt template %s not found in environment %s.", templateName, tag))
-        );
-    }
+        }
 
-    public ChatCompletionResponse makeContinueChatCall(
-            String sessionId,
-            PromptTemplate template,
-            Collection<ChatMessage> formattedMessages,
-            Map<String, Object> variables,
-            Map<String, Object> llmParameters,
-            Map<String, Object> customMetadata,
-            String tag,
-            String testRunId,
-            ChatPromptProcessor promptProcessor
-    ) throws FreeplayException {
-        Map<String, Object> mergedLLMParameters = getMergedParameters(template, llmParameters);
-        ChatFlavor activeFlavor = getActiveFlavor(clientFlavor, template);
-
-        Collection<ChatMessage> finalMessages = promptProcessor != null ?
-                promptProcessor.apply(
-                        formattedMessages,
-                        new LLMCallInfo(activeFlavor.getProviderEnum(), mergedLLMParameters)) :
-                formattedMessages;
-
-        Instant start = Instant.ofEpochMilli(currentTimeMillis());
-        ChatCompletionResponse response = activeFlavor.callChatService(
-                finalMessages, providerConfig, mergedLLMParameters, httpConfig);
-        Instant end = Instant.ofEpochMilli(currentTimeMillis());
-
-        Optional<String> completionId = recordProcessor.record(
-                new PromptInfo(
-                        template.getPromptTemplateVersionId(),
-                        template.getPromptTemplateId(),
-                        activeFlavor.getFormatType(),
-                        activeFlavor.getProvider(),
-                        valueOf(mergedLLMParameters.get("model")),
-                        mergedLLMParameters
-                ),
-                new CallInfo(
-                        sessionId,
-                        testRunId,
-                        start,
-                        end,
-                        tag,
-                        variables,
-                        customMetadata,
-                        activeFlavor.serializeForRecord(finalMessages),
-                        response.getContent(),
-                        response.isComplete()
-                )
-        );
-        completionId.ifPresent(response::setCompletionId);
-        return response;
-    }
-
-    public Stream<IndexedChatMessage> makeContinueChatCallStream(
-            String sessionId,
-            PromptTemplate template,
-            Collection<ChatMessage> formattedMessages,
-            Map<String, Object> variables,
-            Map<String, Object> llmParameters,
-            Map<String, Object> customMetadata,
-            String tag,
-            String testRunId
-    ) throws FreeplayException {
-        Map<String, Object> mergedLLMParameters = getMergedParameters(template, llmParameters);
-        ChatFlavor activeFlavor = getActiveFlavor(clientFlavor, template);
-
-        Instant start = Instant.ofEpochMilli(currentTimeMillis());
-        Stream<IndexedChatMessage> responseStream = activeFlavor.callServiceStream(
-                formattedMessages, providerConfig, mergedLLMParameters, httpConfig);
-
-        return handleStream(
-                sessionId,
-                template,
-                variables,
-                tag,
-                testRunId,
-                mergedLLMParameters,
-                customMetadata,
-                activeFlavor,
-                formattedMessages,
-                start,
-                responseStream);
-    }
-
-    private Stream<IndexedChatMessage> handleStream(
-            String sessionId,
-            PromptTemplate template,
-            Map<String, Object> variables,
-            String tag,
-            String testRunId,
-            Map<String, Object> mergedLLMParameters,
-            Map<String, Object> customMetadata,
-            ChatFlavor activeFlavor,
-            Collection<ChatMessage> formattedPrompt,
-            Instant start,
-            Stream<IndexedChatMessage> responseStream
-    ) {
-        AtomicReference<String> aggregatedContent = new AtomicReference<>("");
-        return responseStream.
-                map((IndexedChatMessage chunk) -> {
-                    aggregatedContent.getAndUpdate((String previous) -> previous + activeFlavor.getContentFromChunk(chunk));
-                    if (activeFlavor.isLastChunk(chunk)) {
-                        Instant end = Instant.ofEpochMilli(currentTimeMillis());
-                        Optional<String> completionId = recordProcessor.record(
-                                new PromptInfo(
-                                        template.getPromptTemplateVersionId(),
-                                        template.getPromptTemplateId(),
-                                        activeFlavor.getFormatType(),
-                                        activeFlavor.getProvider(),
-                                        valueOf(mergedLLMParameters.get("model")),
-                                        mergedLLMParameters
-                                ),
-                                new CallInfo(
-                                        sessionId,
-                                        testRunId,
-                                        start,
-                                        end,
-                                        tag,
-                                        variables,
-                                        customMetadata,
-                                        activeFlavor.serializeForRecord(formattedPrompt),
-                                        aggregatedContent.get(),
-                                        activeFlavor.isComplete(chunk)
-                                )
-                        );
-                        completionId.ifPresent(chunk::setCompletionId);
-                    }
-                    return chunk;
-                });
-    }
-
-    public ChatFlavor getActiveFlavor(ChatFlavor callFlavor, PromptTemplate prompt) {
-        if (callFlavor != null) return callFlavor;
-        if (this.clientFlavor != null) return this.clientFlavor;
-
-        String flavorName = prompt.getFlavorName();
-        return Flavors.getFlavorByName(flavorName);
-    }
-
-    private Map<String, Object> getMergedParameters(
-            PromptTemplate promptTemplate,
-            Map<String, Object> callLLMParameters
-    ) {
-        Map<String, Object> merged = new HashMap<>(16);
-        merged.putAll(promptTemplate.getLLMParameters());
-        merged.putAll(clientLLMParameters);
-        merged.putAll(callLLMParameters);
-        return merged;
-    }
-
-    private String getUrl(String path, Object... args) {
-        return format("%s/%s", baseUrl, format(path, args));
-    }
-
-    private class DefaultRecordProcessor implements RecordProcessor {
-        @Override
-        public Optional<String> record(PromptInfo promptInfo, CallInfo callInfo) {
-            String url = getUrl("v1/record");
-            Map<String, Object> payload = new HashMap<>(32);
-            payload.put("session_id", callInfo.getSessionId());
-            payload.put("project_version_id", promptInfo.getPromptTemplateVersionId());
-            payload.put("prompt_template_id", promptInfo.getPromptTemplateId());
-            payload.put("start_time", callInfo.getStartTime());
-            payload.put("end_time", callInfo.getEndTime());
-            payload.put("tag", callInfo.getTag());
-            payload.put("inputs", callInfo.getInputs());
-            payload.put("custom_metadata", callInfo.getCustomMetadata());
-            payload.put("prompt_content", callInfo.getPromptContent());
-            payload.put("return_content", callInfo.getReturnContent());
-            payload.put("format_type", promptInfo.getFormatType());
-            payload.put("is_complete", callInfo.isComplete());
-            payload.put("test_run_id", callInfo.getTestRunId());
-            payload.put("provider", promptInfo.getProvider());
-            payload.put("model", promptInfo.getModel());
-            payload.put("llm_parameters", promptInfo.getLLMParameters());
-
-            try {
-                HttpResponse<String> response = Http.postJsonWithBearer(url, payload, freeplayApiKey);
-                Map<String, Object> objectMap = Http.parseBody(response);
-                String completionId = valueOf(objectMap.get("completion_id"));
-                return Optional.of(completionId);
-            } catch (Exception e) {
-                LOGGER.log(System.Logger.Level.WARNING, "Unable to record LLM call. Cause: {0}", e.getMessage());
-                return Optional.empty();
+        Map<String, RecordDTO.MediaInputDTO> mediaInputs = new HashMap<>();
+        if (recordPayload.getMediaInputCollection() != null) {
+            for (Map.Entry<String, MediaInput> entry : recordPayload.getMediaInputCollection().entries()) {
+                mediaInputs.put(entry.getKey(), RecordDTO.MediaInputDTO.fromMediaInput(entry.getValue()));
             }
         }
+
+        // Handle optional PromptVersionInfo
+        RecordDTO.PromptVersionInfoDTO promptVersionInfoDTO = null;
+        if (recordPayload.getPromptVersionInfo() != null) {
+            promptVersionInfoDTO = new RecordDTO.PromptVersionInfoDTO(
+                    recordPayload.getPromptVersionInfo().getPromptTemplateVersionId(),
+                    recordPayload.getPromptVersionInfo().getEnvironment(),
+                    recordPayload.getProjectId()
+            );
+        }
+
+        // Handle optional CallInfo
+        RecordDTO.CallInfoDTO callInfoDTO = null;
+        if (recordPayload.getCallInfo() != null) {
+            callInfoDTO = new RecordDTO.CallInfoDTO(
+                    recordPayload.getCallInfo().getProvider(),
+                    recordPayload.getCallInfo().getModel(),
+                    recordPayload.getCallInfo().getStartTime(),
+                    recordPayload.getCallInfo().getEndTime(),
+                    recordPayload.getCallInfo().getModelParameters()
+            ).providerInfo(
+                    recordPayload.getCallInfo().getProviderInfo()
+            ).usage(
+                    recordPayload.getCallInfo().getUsage() != null ?
+                            new RecordDTO.CallInfoDTO.UsageTokensDTO(
+                                    recordPayload.getCallInfo().getUsage().getPromptTokens(),
+                                    recordPayload.getCallInfo().getUsage().getCompletionTokens()
+                            ) : null
+            ).apiStyle(recordPayload.getCallInfo().getApiStyle());
+        }
+
+        RecordDTO payload = new RecordDTO(
+                recordPayload.getAllMessages(),
+                recordPayload.getInputs(),
+                new RecordDTO.SessionInfoDTO(recordPayload.getSessionInfo().getSessionId(), recordPayload.getSessionInfo().getCustomMetadata()),
+                promptVersionInfoDTO,
+                callInfoDTO,
+                responseInfo,
+                testRunId != null ? new RecordDTO.TestRunInfoDTO(testRunId, testCaseId) : null,
+                recordPayload.getEvalResults(),
+                recordPayload.getTraceInfo() != null ? new RecordDTO.TraceInfoDTO(recordPayload.getTraceInfo().traceId) : null,
+                recordPayload.getParentId(),
+                recordPayload.getToolSchema(),
+                recordPayload.getOutputSchema(),
+                recordPayload.getCompletionId(),
+                mediaInputs
+        );
+
+        return AsyncHttp.postJson(
+                format("%s/v2/projects/%s/sessions/%s/completions", baseUrl, recordPayload.getProjectId(), recordPayload.getSessionInfo().getSessionId()),
+                freeplayApiKey,
+                httpConfig,
+                payload
+        ).thenApply(httpResponse -> {
+            throwFreeplayIfError(httpResponse, 201);
+            JsonNode responseNode = JSONUtil.parseDOM(httpResponse.body());
+            return new RecordResponse(responseNode.path("completion_id").asText(null));
+        });
     }
 
-    public void recordCompletionFeedback(String projectId, String completionId, Map<String, Object> feedback) throws FreeplayException {
-        ParameterUtils.validateBasicMap(feedback);
+    @SuppressWarnings("unused")
+    public CompletableFuture<TraceRecordResponse> recordTrace(String projectId, TraceInfo traceInfo) {
+        return recordTrace(projectId, traceInfo, null);
+    }
 
-        String url = getUrl("v2/projects/%s/completion-feedback/id/%s", projectId, completionId);
-        try {
-            Http.jsonRequest(
-                    url,
-                    JSONUtil.asString(feedback),
-                    HttpResponse.BodyHandlers.ofString(),
-                    httpConfig,
-                    "POST",
-                    authHeaders(freeplayApiKey));
-        } catch (FreeplayException e) {
-            throw new FreeplayServerException("Error creating session.", e);
+    public CompletableFuture<TraceRecordResponse> recordTrace(String projectId, TraceInfo traceInfo, TestRunInfo testRunInfo) {
+        if (traceInfo.input == null) {
+            throw new FreeplayClientException("Input needed to record a trace");
         }
+        TraceInfoDTO payload = new TraceInfoDTO(
+                traceInfo.getInput(),
+                traceInfo.getOutput(),
+                traceInfo.getAgentName(),
+                traceInfo.getCustomMetadata(),
+                traceInfo.getEvalResults(),
+                testRunInfo,
+                traceInfo.getParentId(),
+                traceInfo.getKind(),
+                traceInfo.getName(),
+                traceInfo.getStartTime(),
+                traceInfo.getEndTime()
+        );
+        return AsyncHttp.postJson(
+                format("%s/v2/projects/%s/sessions/%s/traces/id/%s", baseUrl, projectId, traceInfo.sessionId, traceInfo.traceId),
+                freeplayApiKey,
+                httpConfig,
+                payload
+        ).thenApply(httpResponse -> {
+            throwFreeplayIfError(httpResponse, 201);
+            return new TraceRecordResponse();
+        });
+    }
+
+    public CompletableFuture<TestRun> createTestRun(String projectId, String testList, boolean includeOutputs, String name, String description, String flavorName, List<UUID> targetEvaluationIds) {
+        String url = String.format("%s/v2/projects/%s/test-runs", baseUrl, projectId);
+        return AsyncHttp.postJson(
+                url,
+                freeplayApiKey,
+                httpConfig,
+                new TestListDTO(testList, includeOutputs, name, description, flavorName, targetEvaluationIds)
+        ).thenApply(httpResponse -> {
+            throwFreeplayIfError(httpResponse, 201);
+
+            TestRunDTO testRun =
+                    JSONUtil.parse(
+                            httpResponse.body(),
+                            TestRunDTO.class);
+
+            List<CompletionTestCase> completionTestCases = null;
+            List<TraceTestCase> traceTestCases = null;
+
+            if (testRun.getTestCases() != null && !testRun.getTestCases().isEmpty()) {
+                completionTestCases = testRun.getTestCases().stream()
+                        .map(testCase -> new CompletionTestCase(
+                                testCase.getTestCaseId(),
+                                testCase.getVariables(),
+                                testCase.getOutput(),
+                                testCase.getHistory(),
+                                testCase.getCustomMetadata()
+                        ))
+                        .collect(toList());
+            }
+
+            if (testRun.getTraceTestCases() != null && !testRun.getTraceTestCases().isEmpty()) {
+                traceTestCases = testRun.getTraceTestCases().stream()
+                        .map(testCase -> new TraceTestCase(
+                                testCase.getTestCaseId(),
+                                testCase.getInput(),
+                                testCase.getOutput(),
+                                testCase.getCustomMetadata()
+                        ))
+                        .collect(toList());
+            }
+
+            if (completionTestCases != null && !completionTestCases.isEmpty() &&
+                    traceTestCases != null && !traceTestCases.isEmpty()) {
+                throw new FreeplayClientException("Test cases and trace test cases cannot both be present.");
+            }
+
+            return new TestRun(testRun.getTestRunId(), completionTestCases, traceTestCases);
+        });
+    }
+
+    public CompletableFuture<TestRunResults> getTestRunResults(String projectId, String testRunId) {
+        String url = String.format("%s/v2/projects/%s/test-runs/id/%s", baseUrl, projectId, testRunId);
+        return AsyncHttp.get(
+                url,
+                freeplayApiKey,
+                httpConfig
+        ).thenApply(httpResponse -> {
+            throwFreeplayIfError(httpResponse, 200);
+
+            TestRunResultsDTO testRunResults = JSONUtil.parse(httpResponse.body(), TestRunResultsDTO.class);
+            return new TestRunResults(
+                    testRunResults.getId(),
+                    testRunResults.getName(),
+                    testRunResults.getDescription(),
+                    testRunResults.getSummaryStatistics()
+            );
+        });
+    }
+
+    public CompletableFuture<CustomerFeedbackResponse> updateCustomerFeedback(
+            String projectId,
+            String completionId,
+            Map<String, Object> feedback
+    ) {
+        validateBasicMap(feedback);
+        String url = String.format("%s/v2/projects/%s/completion-feedback/id/%s", baseUrl, projectId, completionId);
+        return AsyncHttp.postJson(
+                url,
+                freeplayApiKey,
+                httpConfig,
+                feedback
+        ).thenApply(httpResponse -> {
+            throwFreeplayIfError(httpResponse, 201);
+
+            return new CustomerFeedbackResponse();
+        });
+    }
+
+    public CompletableFuture<TraceFeedbackResponse> updateTraceFeedback(
+            String projectId,
+            String traceId,
+            Map<String, Object> feedback
+    ) {
+        validateBasicMap(feedback);
+        String url = String.format("%s/v2/projects/%s/trace-feedback/id/%s", baseUrl, projectId, traceId);
+        return AsyncHttp.postJson(
+                url,
+                freeplayApiKey,
+                httpConfig,
+                feedback
+        ).thenApply(httpResponse -> {
+            throwFreeplayIfError(httpResponse, 201);
+
+            return new TraceFeedbackResponse();
+        });
+    }
+
+    public CompletableFuture<SessionDeleteResponse> deleteSession(String projectId, String sessionId) {
+        String url = String.format("%s/v2/projects/%s/sessions/%s", baseUrl, projectId, sessionId);
+        return AsyncHttp.delete(
+                url,
+                freeplayApiKey,
+                httpConfig
+        ).thenApply(httpResponse -> {
+            throwFreeplayIfError(httpResponse, 201);
+            return new SessionDeleteResponse();
+        });
+    }
+
+    public CompletableFuture<TemplateVersionResponse> createPromptVersion(
+            String projectId,
+            String promptTemplateName,
+            List<TemplateDTO.Message> templateMessages,
+            String model,
+            String provider,
+            String versionName,
+            String versionDescription,
+            Map<String, Object> llmParameters,
+            List<TemplateDTO.ToolSchema> toolSchema,
+            List<String> environments
+    ) {
+        String encodedName = java.net.URLEncoder.encode(promptTemplateName, java.nio.charset.StandardCharsets.UTF_8).replace("+", "%20");
+        String url = String.format(
+                "%s/v2/projects/%s/prompt-templates/name/%s/versions",
+                baseUrl,
+                projectId,
+                encodedName
+        );
+        CreatePromptVersionDTO payload = new CreatePromptVersionDTO(
+                promptTemplateName,
+                templateMessages,
+                model,
+                provider,
+                versionName,
+                versionDescription,
+                llmParameters,
+                toolSchema,
+                environments
+        );
+
+        return AsyncHttp.postJson(
+                url,
+                freeplayApiKey,
+                httpConfig,
+                payload
+        ).thenApply(httpResponse -> {
+            throwFreeplayIfError(httpResponse, 201);
+
+            TemplateVersionResponseDTO responseDTO = JSONUtil.parse(
+                    httpResponse.body(),
+                    TemplateVersionResponseDTO.class
+            );
+
+            return new TemplateVersionResponse(
+                    responseDTO.getPromptTemplateId(),
+                    responseDTO.getPromptTemplateVersionId(),
+                    responseDTO.getPromptTemplateName(),
+                    responseDTO.getVersionName(),
+                    responseDTO.getVersionDescription(),
+                    new TemplateVersionResponse.PromptTemplateMetadata(
+                            responseDTO.getMetadata().getProvider(),
+                            responseDTO.getMetadata().getFlavor(),
+                            responseDTO.getMetadata().getModel(),
+                            responseDTO.getMetadata().getParams(),
+                            responseDTO.getMetadata().getProviderInfo()
+                    ),
+                    responseDTO.getFormatVersion(),
+                    responseDTO.getProjectId(),
+                    responseDTO.getContent(),
+                    responseDTO.getToolSchema()
+            );
+        });
+    }
+
+    public CompletableFuture<Void> updateTemplateVersionEnvironments(
+            String projectId,
+            String promptTemplateId,
+            String promptTemplateVersionId,
+            List<String> environments
+    ) {
+        String url = String.format(
+                "%s/v2/projects/%s/prompt-templates/id/%s/versions/%s/environments",
+                baseUrl,
+                projectId,
+                promptTemplateId,
+                promptTemplateVersionId
+        );
+        UpdateVersionEnvironmentsDTO payload = new UpdateVersionEnvironmentsDTO(environments);
+
+        return AsyncHttp.postJson(
+                url,
+                freeplayApiKey,
+                httpConfig,
+                payload
+        ).thenApply(httpResponse -> {
+            throwFreeplayIfError(httpResponse, 200);
+            return null;
+        });
+    }
+
+    public CompletableFuture<MetadataUpdateResponse> updateSessionMetadata(
+            String projectId,
+            String sessionId,
+            Map<String, Object> metadata
+    ) {
+        validateBasicMap(metadata);
+        String url = String.format(
+                "%s/v2/projects/%s/sessions/id/%s/metadata",
+                baseUrl,
+                projectId,
+                sessionId
+        );
+        return AsyncHttp.patchJson(
+                url,
+                freeplayApiKey,
+                httpConfig,
+                metadata
+        ).thenApply(httpResponse -> {
+            throwFreeplayIfError(httpResponse, 200);
+            return new MetadataUpdateResponse();
+        });
+    }
+
+    public CompletableFuture<MetadataUpdateResponse> updateTraceMetadata(
+            String projectId,
+            String sessionId,
+            String traceId,
+            Map<String, Object> metadata
+    ) {
+        validateBasicMap(metadata);
+        String url = String.format(
+                "%s/v2/projects/%s/sessions/%s/traces/id/%s/metadata",
+                baseUrl,
+                projectId,
+                sessionId,
+                traceId
+        );
+        return AsyncHttp.patchJson(
+                url,
+                freeplayApiKey,
+                httpConfig,
+                metadata
+        ).thenApply(httpResponse -> {
+            throwFreeplayIfError(httpResponse, 200);
+            return new MetadataUpdateResponse();
+        });
+    }
+
+    @SuppressWarnings("unused")
+    private static String historyAsString(List<ChatMessage> allMessages) {
+        List<ChatMessage> allButLast = allMessages.subList(0, allMessages.size() - 1);
+        return JSONUtil.toString(allButLast);
     }
 }

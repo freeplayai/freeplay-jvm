@@ -1,14 +1,14 @@
 package ai.freeplay.example.java;
 
-import ai.freeplay.client.thin.Freeplay;
-import ai.freeplay.client.thin.resources.prompts.ChatMessage;
-import ai.freeplay.client.thin.resources.prompts.FormattedPrompt;
-import ai.freeplay.client.thin.resources.recordings.CallInfo;
-import ai.freeplay.client.thin.resources.recordings.RecordInfo;
-import ai.freeplay.client.thin.resources.recordings.RecordResponse;
-import ai.freeplay.client.thin.resources.recordings.ResponseInfo;
-import ai.freeplay.client.thin.resources.sessions.SessionInfo;
-import ai.freeplay.example.java.ThinExampleUtils.Tuple3;
+import ai.freeplay.client.Freeplay;
+import ai.freeplay.client.resources.prompts.ChatMessage;
+import ai.freeplay.client.resources.prompts.FormattedPrompt;
+import ai.freeplay.client.resources.recordings.CallInfo;
+import ai.freeplay.client.resources.recordings.RecordInfo;
+import ai.freeplay.client.resources.recordings.RecordResponse;
+import ai.freeplay.client.resources.recordings.ResponseInfo;
+import ai.freeplay.client.resources.sessions.SessionInfo;
+import ai.freeplay.example.java.ExampleUtils.Tuple3;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -18,8 +18,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
-import static ai.freeplay.client.thin.Freeplay.Config;
-import static ai.freeplay.example.java.ThinExampleUtils.callAnthropic;
+import static ai.freeplay.client.Freeplay.Config;
+import static ai.freeplay.example.java.ExampleUtils.callAnthropic;
 import static java.lang.String.format;
 
 public class ThinAnthropicExample {
@@ -37,7 +37,7 @@ public class ThinAnthropicExample {
                 .baseUrl(baseUrl)
         );
 
-        Map<String, Object> variables = Map.of("location", "New York");
+        Map<String, Object> variables = Map.of("question", "Why is the sky blue?");
 
         fpClient.prompts()
                 .<List<ChatMessage>>getFormatted(
@@ -72,6 +72,7 @@ public class ThinAnthropicExample {
                                 throw new RuntimeException("Unable to parse response body.", e);
                             }
 
+                            @SuppressWarnings("unchecked")
                             List<Object> content = objectMapper.convertValue(bodyNode.get("content"), List.class);
 
                             List<ChatMessage> allMessages = formattedPrompt.allMessages(
@@ -108,6 +109,7 @@ public class ThinAnthropicExample {
                 )
                 .exceptionally(exception -> {
                     System.out.println("Got exception: " + exception.getMessage());
+                    exception.printStackTrace();
                     return new RecordResponse(null);
                 })
                 .join();
