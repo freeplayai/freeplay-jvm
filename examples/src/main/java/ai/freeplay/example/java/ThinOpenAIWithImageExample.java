@@ -2,27 +2,19 @@ package ai.freeplay.example.java;
 
 import ai.freeplay.client.Freeplay;
 import ai.freeplay.client.resources.prompts.ChatMessage;
-import ai.freeplay.client.resources.prompts.FormattedPrompt;
 import ai.freeplay.client.resources.recordings.CallInfo;
-import ai.freeplay.client.resources.recordings.CallInfo.ApiStyle;
 import ai.freeplay.client.resources.recordings.RecordInfo;
-import ai.freeplay.client.resources.recordings.RecordResponse;
 import ai.freeplay.client.resources.recordings.ResponseInfo;
-import ai.freeplay.client.resources.sessions.SessionInfo;
-import ai.freeplay.example.java.ThinExampleUtils.Tuple3;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import java.net.http.HttpResponse;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 import static ai.freeplay.client.Freeplay.Config;
-import static ai.freeplay.example.java.ThinExampleUtils.callOpenAI;
-import static ai.freeplay.example.java.ThinExampleUtils.callOpenAIWithTools;
+import static ai.freeplay.example.java.ExampleUtils.callOpenAI;
 import static java.lang.String.format;
 
 public class ThinOpenAIWithImageExample {

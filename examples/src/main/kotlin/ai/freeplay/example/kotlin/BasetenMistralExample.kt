@@ -5,7 +5,7 @@ import ai.freeplay.client.resources.prompts.ChatMessage
 import ai.freeplay.client.resources.recordings.CallInfo
 import ai.freeplay.client.resources.recordings.RecordInfo
 import ai.freeplay.client.resources.recordings.ResponseInfo
-import ai.freeplay.example.java.ThinExampleUtils.callBaseten
+import ai.freeplay.example.java.ExampleUtils.callBaseten
 import com.fasterxml.jackson.databind.ObjectMapper
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.runBlocking

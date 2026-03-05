@@ -21,7 +21,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 import static ai.freeplay.client.Freeplay.Config;
-import static ai.freeplay.example.java.ThinExampleUtils.callOpenAIWithTools;
+import static ai.freeplay.example.java.ExampleUtils.callOpenAIWithTools;
 import static java.lang.String.format;
 
 /**

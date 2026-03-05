@@ -19,7 +19,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 import static ai.freeplay.client.Freeplay.Config;
-import static ai.freeplay.example.java.ThinExampleUtils.callAnthropic;
+import static ai.freeplay.example.java.ExampleUtils.callAnthropic;
 import static java.lang.String.format;
 
 public class ThinTrace {
@@ -60,10 +60,10 @@ public class ThinTrace {
                                     formattedPrompt.getFormattedPrompt(),
                                     formattedPrompt.getSystemContent().orElse(null)
                             ).thenApply((HttpResponse<String> response) ->
-                                    new ThinExampleUtils.Tuple3<>(formattedPrompt, response, startTime)
+                                    new ExampleUtils.Tuple3<>(formattedPrompt, response, startTime)
                             );
                         }
-                ).thenCompose((ThinExampleUtils.Tuple3<FormattedPrompt<List<ChatMessage>>, HttpResponse<String>, Long> promptAndResponse) -> {
+                ).thenCompose((ExampleUtils.Tuple3<FormattedPrompt<List<ChatMessage>>, HttpResponse<String>, Long> promptAndResponse) -> {
                             FormattedPrompt<List<ChatMessage>> formattedPrompt = promptAndResponse.first;
                             HttpResponse<String> response = promptAndResponse.second;
                             long startTime = promptAndResponse.third;

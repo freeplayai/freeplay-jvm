@@ -19,7 +19,7 @@ import static java.lang.String.format;
 import static java.net.http.HttpRequest.BodyPublishers.ofString;
 
 @SuppressWarnings("unused")
-public class ThinExampleUtils {
+public class ExampleUtils {
     public static class Tuple2<Type1, Type2> {
         public final Type1 first;
         public final Type2 second;

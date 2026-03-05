@@ -8,7 +8,7 @@ import ai.freeplay.client.resources.recordings.RecordInfo;
 import ai.freeplay.client.resources.recordings.RecordResponse;
 import ai.freeplay.client.resources.recordings.ResponseInfo;
 import ai.freeplay.client.resources.sessions.SessionInfo;
-import ai.freeplay.example.java.ThinExampleUtils.Tuple3;
+import ai.freeplay.example.java.ExampleUtils.Tuple3;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -19,7 +19,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 import static ai.freeplay.client.Freeplay.Config;
-import static ai.freeplay.example.java.ThinExampleUtils.callAnthropic;
+import static ai.freeplay.example.java.ExampleUtils.callAnthropic;
 
 public class ThinFeedbackExample {
     private static final ObjectMapper objectMapper = new ObjectMapper();

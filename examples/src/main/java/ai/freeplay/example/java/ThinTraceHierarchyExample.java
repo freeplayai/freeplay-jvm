@@ -5,7 +5,6 @@ import ai.freeplay.client.resources.prompts.ChatMessage;
 import ai.freeplay.client.resources.prompts.FormattedPrompt;
 import ai.freeplay.client.resources.recordings.*;
 import ai.freeplay.client.resources.sessions.*;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -16,7 +15,7 @@ import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
-import static ai.freeplay.example.java.ThinExampleUtils.callAnthropic;
+import static ai.freeplay.example.java.ExampleUtils.callAnthropic;
 
 import static ai.freeplay.client.Freeplay.Config;
 

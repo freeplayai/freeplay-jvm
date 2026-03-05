@@ -9,12 +9,11 @@ import ai.freeplay.client.resources.recordings.RecordInfo;
 import ai.freeplay.client.resources.recordings.RecordResponse;
 import ai.freeplay.client.resources.recordings.ResponseInfo;
 import ai.freeplay.client.resources.sessions.SessionInfo;
-import ai.freeplay.example.java.ThinExampleUtils.Tuple3;
+import ai.freeplay.example.java.ExampleUtils.Tuple3;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;

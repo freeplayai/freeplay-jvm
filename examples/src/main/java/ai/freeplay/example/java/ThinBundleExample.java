@@ -13,7 +13,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 import static ai.freeplay.client.Freeplay.Config;
-import static ai.freeplay.example.java.ThinExampleUtils.callAnthropic;
+import static ai.freeplay.example.java.ExampleUtils.callAnthropic;
 import static java.lang.String.format;
 // TODO
 public class ThinBundleExample {
