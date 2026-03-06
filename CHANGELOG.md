@@ -53,6 +53,12 @@ Notable additions, fixes, or breaking changes to the Freeplay SDK.
 
 - **`TestListDTO` renamed to `DatasetDTO`** (internal class — only relevant if you were referencing internal DTOs directly).
 
+### New Features
+
+- **Prompt dataset management.** New `freeplay.promptDatasets()` resource provides full CRUD for prompt-level datasets and their test cases, including bulk create and bulk delete of test cases (max 100 per request).
+
+- **Agent dataset management.** New `freeplay.agentDatasets()` resource provides full CRUD for agent-level datasets and their test cases. Agent test cases use free-form JSON for inputs and outputs, and datasets can be linked to specific agents via `compatibleAgentIds` (must be valid agent UUIDs from your project).
+
 ## [0.4.6] - 2026-02-10
 
 ### Added

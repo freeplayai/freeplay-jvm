@@ -25,6 +25,7 @@ public class MockFixtures {
     public static final String openaiApiKey = "<openai-api-key>";
     public static final String anthropicApiKey = "<anthropic-api-key>";
     public static final String projectId = UUID.randomUUID().toString();
+    public static final String datasetId = UUID.randomUUID().toString();
 
     public static final String promptTemplateId = UUID.randomUUID().toString();
     public static final String promptTemplateVersionId = UUID.randomUUID().toString();
@@ -740,6 +741,325 @@ public class MockFixtures {
             when(requestAsync(mockedClient, "POST", matchUrl)).thenReturn(
                     asyncResponse(400, JSONUtil.asString(object("message", "Project not found")))
             );
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    // PromptDatasets fixtures
+
+    public static String getPromptDatasetPayload(String datasetId, String name) {
+        return JSONUtil.asString(object(
+                "id", datasetId,
+                "name", name,
+                "description", "A test dataset",
+                "input_names", array("question"),
+                "media_input_names", array(),
+                "support_history", false,
+                "tags", array()
+        ));
+    }
+
+    public static String getPromptDatasetListPayload(String datasetId, String name) {
+        return JSONUtil.asString(object(
+                "data", array(object(
+                        "id", datasetId,
+                        "name", name,
+                        "description", "A test dataset",
+                        "input_names", array("question"),
+                        "media_input_names", array(),
+                        "support_history", false,
+                        "tags", array()
+                )),
+                "pagination", object("page", 1, "page_size", 25, "has_next", false)
+        ));
+    }
+
+    public static String getPromptTestCasePayload(String testCaseId) {
+        return JSONUtil.asString(object(
+                "id", testCaseId,
+                "inputs", object("question", "What is 2+2?"),
+                "output", "4",
+                "output_message", null,
+                "metadata", object("source", "unit-test"),
+                "media_inputs", null,
+                "history", null
+        ));
+    }
+
+    public static String getPromptTestCaseListPayload(String testCaseId) {
+        return JSONUtil.asString(object(
+                "data", array(object(
+                        "id", testCaseId,
+                        "inputs", object("question", "What is 2+2?"),
+                        "output", "4",
+                        "metadata", object("source", "unit-test")
+                )),
+                "pagination", object("page", 1, "page_size", 25, "has_next", false)
+        ));
+    }
+
+    public static String getBulkCreatePromptTestCasesPayload(String testCaseId) {
+        return JSONUtil.asString(object(
+                "data", array(object(
+                        "id", testCaseId,
+                        "inputs", object("question", "What is 2+2?"),
+                        "output", "4",
+                        "metadata", null
+                ))
+        ));
+    }
+
+    public static void mockCreatePromptDatasetAsync(HttpClient mockedClient, String datasetId) throws RuntimeException {
+        try {
+            when(requestAsync(mockedClient, "POST", "v2/projects/[^/]*/prompt-datasets"))
+                    .thenReturn(asyncResponse(201, getPromptDatasetPayload(datasetId, "My Dataset")));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static void mockListPromptDatasetsAsync(HttpClient mockedClient, String datasetId) throws RuntimeException {
+        try {
+            when(requestAsync(mockedClient, "GET", "v2/projects/[^/]*/prompt-datasets.*"))
+                    .thenReturn(asyncResponse(200, getPromptDatasetListPayload(datasetId, "My Dataset")));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static void mockGetPromptDatasetAsync(HttpClient mockedClient, String datasetId) throws RuntimeException {
+        try {
+            when(requestAsync(mockedClient, "GET", "v2/projects/[^/]*/prompt-datasets/[^/?]+$"))
+                    .thenReturn(asyncResponse(200, getPromptDatasetPayload(datasetId, "My Dataset")));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static void mockUpdatePromptDatasetAsync(HttpClient mockedClient, String datasetId) throws RuntimeException {
+        try {
+            when(requestAsync(mockedClient, "PATCH", "v2/projects/[^/]*/prompt-datasets/[^/]+"))
+                    .thenReturn(asyncResponse(200, getPromptDatasetPayload(datasetId, "Updated Dataset")));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static void mockDeletePromptDatasetAsync(HttpClient mockedClient) throws RuntimeException {
+        try {
+            when(requestAsync(mockedClient, "DELETE", "v2/projects/[^/]*/prompt-datasets/[^/]+$"))
+                    .thenReturn(asyncResponse(200, ""));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static void mockListPromptTestCasesAsync(HttpClient mockedClient, String testCaseId) throws RuntimeException {
+        try {
+            when(requestAsync(mockedClient, "GET", "v2/projects/[^/]*/prompt-datasets/[^/]*/test-cases"))
+                    .thenReturn(asyncResponse(200, getPromptTestCaseListPayload(testCaseId)));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static void mockGetPromptTestCaseAsync(HttpClient mockedClient, String testCaseId) throws RuntimeException {
+        try {
+            when(requestAsync(mockedClient, "GET", "v2/projects/[^/]*/prompt-datasets/[^/]*/test-cases/[^/]+$"))
+                    .thenReturn(asyncResponse(200, getPromptTestCasePayload(testCaseId)));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static void mockBulkCreatePromptTestCasesAsync(HttpClient mockedClient, String testCaseId) throws RuntimeException {
+        try {
+            when(requestAsync(mockedClient, "POST", "v2/projects/[^/]*/prompt-datasets/[^/]*/test-cases/bulk"))
+                    .thenReturn(asyncResponse(201, getBulkCreatePromptTestCasesPayload(testCaseId)));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static void mockUpdatePromptTestCaseAsync(HttpClient mockedClient, String testCaseId) throws RuntimeException {
+        try {
+            when(requestAsync(mockedClient, "PATCH", "v2/projects/[^/]*/prompt-datasets/[^/]*/test-cases/[^/]+"))
+                    .thenReturn(asyncResponse(200, getPromptTestCasePayload(testCaseId)));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static void mockDeletePromptTestCaseAsync(HttpClient mockedClient) throws RuntimeException {
+        try {
+            when(requestAsync(mockedClient, "DELETE", "v2/projects/[^/]*/prompt-datasets/[^/]*/test-cases/[^/]+$"))
+                    .thenReturn(asyncResponse(200, ""));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static void mockBulkDeletePromptTestCasesAsync(HttpClient mockedClient) throws RuntimeException {
+        try {
+            when(requestAsync(mockedClient, "DELETE", "v2/projects/[^/]*/prompt-datasets/[^/]*/test-cases/bulk"))
+                    .thenReturn(asyncResponse(200, ""));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    // AgentDatasets fixtures
+
+    public static String getAgentDatasetPayload(String datasetId, String name) {
+        return JSONUtil.asString(object(
+                "id", datasetId,
+                "name", name,
+                "description", "An agent dataset",
+                "compatible_agent_ids", array("agent-1"),
+                "tags", array()
+        ));
+    }
+
+    public static String getAgentDatasetListPayload(String datasetId, String name) {
+        return JSONUtil.asString(object(
+                "data", array(object(
+                        "id", datasetId,
+                        "name", name,
+                        "description", "An agent dataset",
+                        "compatible_agent_ids", array("agent-1"),
+                        "tags", array()
+                )),
+                "pagination", object("page", 1, "page_size", 25, "has_next", false)
+        ));
+    }
+
+    public static String getAgentTestCasePayload(String testCaseId) {
+        return JSONUtil.asString(object(
+                "id", testCaseId,
+                "input", object("query", "hello"),
+                "output", object("response", "world"),
+                "metadata", object("source", "unit-test")
+        ));
+    }
+
+    public static String getAgentTestCaseListPayload(String testCaseId) {
+        return JSONUtil.asString(object(
+                "data", array(object(
+                        "id", testCaseId,
+                        "input", object("query", "hello"),
+                        "output", object("response", "world"),
+                        "metadata", object("source", "unit-test")
+                )),
+                "pagination", object("page", 1, "page_size", 25, "has_next", false)
+        ));
+    }
+
+    public static String getBulkCreateAgentTestCasesPayload(String testCaseId) {
+        return JSONUtil.asString(object(
+                "data", array(object(
+                        "id", testCaseId,
+                        "input", object("query", "hello"),
+                        "output", object("response", "world"),
+                        "metadata", null
+                ))
+        ));
+    }
+
+    public static void mockCreateAgentDatasetAsync(HttpClient mockedClient, String datasetId) throws RuntimeException {
+        try {
+            when(requestAsync(mockedClient, "POST", "v2/projects/[^/]*/agent-datasets"))
+                    .thenReturn(asyncResponse(201, getAgentDatasetPayload(datasetId, "My Agent Dataset")));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static void mockListAgentDatasetsAsync(HttpClient mockedClient, String datasetId) throws RuntimeException {
+        try {
+            when(requestAsync(mockedClient, "GET", "v2/projects/[^/]*/agent-datasets.*"))
+                    .thenReturn(asyncResponse(200, getAgentDatasetListPayload(datasetId, "My Agent Dataset")));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static void mockGetAgentDatasetAsync(HttpClient mockedClient, String datasetId) throws RuntimeException {
+        try {
+            when(requestAsync(mockedClient, "GET", "v2/projects/[^/]*/agent-datasets/[^/?]+$"))
+                    .thenReturn(asyncResponse(200, getAgentDatasetPayload(datasetId, "My Agent Dataset")));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static void mockUpdateAgentDatasetAsync(HttpClient mockedClient, String datasetId) throws RuntimeException {
+        try {
+            when(requestAsync(mockedClient, "PATCH", "v2/projects/[^/]*/agent-datasets/[^/]+"))
+                    .thenReturn(asyncResponse(200, getAgentDatasetPayload(datasetId, "Updated Agent Dataset")));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static void mockDeleteAgentDatasetAsync(HttpClient mockedClient) throws RuntimeException {
+        try {
+            when(requestAsync(mockedClient, "DELETE", "v2/projects/[^/]*/agent-datasets/[^/]+$"))
+                    .thenReturn(asyncResponse(200, ""));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static void mockListAgentTestCasesAsync(HttpClient mockedClient, String testCaseId) throws RuntimeException {
+        try {
+            when(requestAsync(mockedClient, "GET", "v2/projects/[^/]*/agent-datasets/[^/]*/test-cases"))
+                    .thenReturn(asyncResponse(200, getAgentTestCaseListPayload(testCaseId)));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static void mockGetAgentTestCaseAsync(HttpClient mockedClient, String testCaseId) throws RuntimeException {
+        try {
+            when(requestAsync(mockedClient, "GET", "v2/projects/[^/]*/agent-datasets/[^/]*/test-cases/[^/]+$"))
+                    .thenReturn(asyncResponse(200, getAgentTestCasePayload(testCaseId)));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static void mockBulkCreateAgentTestCasesAsync(HttpClient mockedClient, String testCaseId) throws RuntimeException {
+        try {
+            when(requestAsync(mockedClient, "POST", "v2/projects/[^/]*/agent-datasets/[^/]*/test-cases/bulk"))
+                    .thenReturn(asyncResponse(201, getBulkCreateAgentTestCasesPayload(testCaseId)));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static void mockUpdateAgentTestCaseAsync(HttpClient mockedClient, String testCaseId) throws RuntimeException {
+        try {
+            when(requestAsync(mockedClient, "PATCH", "v2/projects/[^/]*/agent-datasets/[^/]*/test-cases/[^/]+"))
+                    .thenReturn(asyncResponse(200, getAgentTestCasePayload(testCaseId)));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static void mockDeleteAgentTestCaseAsync(HttpClient mockedClient) throws RuntimeException {
+        try {
+            when(requestAsync(mockedClient, "DELETE", "v2/projects/[^/]*/agent-datasets/[^/]*/test-cases/[^/]+$"))
+                    .thenReturn(asyncResponse(200, ""));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static void mockBulkDeleteAgentTestCasesAsync(HttpClient mockedClient) throws RuntimeException {
+        try {
+            when(requestAsync(mockedClient, "DELETE", "v2/projects/[^/]*/agent-datasets/[^/]*/test-cases/bulk"))
+                    .thenReturn(asyncResponse(200, ""));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
