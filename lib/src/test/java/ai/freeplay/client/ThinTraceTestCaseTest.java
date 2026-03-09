@@ -12,6 +12,7 @@ import ai.freeplay.client.resources.testruns.TraceTestCase;
 import org.junit.Test;
 
 import java.net.http.HttpClient;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -180,6 +181,100 @@ public class ThinTraceTestCaseTest extends HttpClientTestBase {
         });
     }
 
+    @Test
+    @SuppressWarnings("deprecation")
+    public void testDeprecatedTestCaseStillWorks() {
+        withMockedClient((HttpClient mockedClient) -> {
+            mockCreateTestRunWithCompletionTestCasesAsync(mockedClient);
+
+            Freeplay fpClient = new Freeplay(Config().freeplayAPIKey(freeplayApiKey).baseUrl(baseUrl));
+            TestRun testRun = fpClient.testRuns().create(
+                    projectId,
+                    "completion-dataset",
+                    true
+            ).get();
+
+            assertEquals(2, testRun.getTestCases().size());
+            assertEquals("Why isn't my sink working?", testRun.getTestCases().get(0).getVariables().get("question"));
+        });
+    }
+
+    @Test
+    public void testBothTestCaseTypesPresentThrowsOnGetTestCases() {
+        List<CompletionTestCase> completionCases = List.of(
+                new CompletionTestCase(UUID.randomUUID().toString(), Map.of("q", "hello"), "output", null)
+        );
+        List<TraceTestCase> traceCases = List.of(
+                new TraceTestCase(UUID.randomUUID().toString(), "input", "output")
+        );
+        TestRun testRun = new TestRun(UUID.randomUUID().toString(), completionCases, traceCases);
+
+        FreeplayClientException exception = assertThrows(
+                FreeplayClientException.class,
+                testRun::getTestCases
+        );
+        assertEquals("Test case and trace test case cannot both be present", exception.getMessage());
+    }
+
+    @Test
+    public void testBothTestCaseTypesPresentThrowsOnGetTraceTestCases() {
+        List<CompletionTestCase> completionCases = List.of(
+                new CompletionTestCase(UUID.randomUUID().toString(), Map.of("q", "hello"), "output", null)
+        );
+        List<TraceTestCase> traceCases = List.of(
+                new TraceTestCase(UUID.randomUUID().toString(), "input", "output")
+        );
+        TestRun testRun = new TestRun(UUID.randomUUID().toString(), completionCases, traceCases);
+
+        FreeplayClientException exception = assertThrows(
+                FreeplayClientException.class,
+                testRun::getTraceTestCases
+        );
+        assertEquals("Test case and trace test case cannot both be present", exception.getMessage());
+    }
+
+    @Test
+    public void testTestCaseIdFlowsThroughToRecordedTracePayload() {
+        withMockedClient((HttpClient mockedClient) -> {
+            String testRunId = UUID.randomUUID().toString();
+            String testCaseId = UUID.randomUUID().toString();
+
+            try {
+                when(requestAsync(mockedClient, "POST", "v2/projects/[^/]*/test-runs"))
+                        .thenReturn(asyncResponse(201, buildSingleTraceTestRunPayload(testRunId, testCaseId)));
+                when(requestAsync(mockedClient, "POST", "v2/projects/[^/]*/sessions/[^/]*/traces/id/[^/]*"))
+                        .thenReturn(asyncResponse(201, ""));
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+
+            Freeplay fpClient = new Freeplay(Config().freeplayAPIKey(freeplayApiKey).baseUrl(baseUrl));
+            TestRun testRun = fpClient.testRuns().create(
+                    fpClient.testRuns().createRequest(projectId, "agent-dataset").build()
+            ).get();
+
+            TraceTestCase testCase = testRun.getTraceTestCases().get(0);
+
+            Session session = fpClient.sessions().create();
+            TraceInfo traceInfo = session.createTrace(testCase.getInput()).agentName("test-agent");
+
+            traceInfo.recordOutput(
+                    projectId,
+                    "test output",
+                    Map.of("score", 1.0),
+                    testRun.getTestRunInfo(testCase.getTestCaseId())
+            ).get();
+
+            String requestBody = getCapturedAsyncBody(mockedClient, 2, 1);
+            Map<String, Object> payload = JSONUtil.parseMap(requestBody);
+
+            @SuppressWarnings("unchecked")
+            Map<String, Object> testRunInfoPayload = (Map<String, Object>) payload.get("test_run_info");
+            assertEquals(testRunId, testRunInfoPayload.get("test_run_id"));
+            assertEquals(testCaseId, testRunInfoPayload.get("test_case_id"));
+        });
+    }
+
     // Helper methods for mocking
     private void mockCreateTestRunWithTraceTestCasesAsync(HttpClient mockedClient) throws RuntimeException {
         try {
@@ -208,6 +303,20 @@ public class ThinTraceTestCaseTest extends HttpClientTestBase {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private String buildSingleTraceTestRunPayload(String testRunId, String testCaseId) {
+        return JSONUtil.asString(
+                object(
+                        "test_run_id", testRunId,
+                        "trace_test_cases", array(
+                                object(
+                                        "test_case_id", testCaseId,
+                                        "input", "Tell me about AI",
+                                        "output", "AI is a field of computer science..."
+                                )
+                        )
+                ));
     }
 
     private String getTestRunTraceTestCasesResponsePayload(String testRunId) {
