@@ -2,15 +2,10 @@ package ai.freeplay.client.resources.promptdatasets;
 
 import ai.freeplay.client.media.MediaInput;
 import ai.freeplay.client.resources.prompts.ChatMessage;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.PropertyNamingStrategies;
-import com.fasterxml.jackson.databind.annotation.JsonNaming;
 
 import java.util.List;
 import java.util.Map;
 
-@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
-@JsonInclude(JsonInclude.Include.NON_NULL)
 public class PromptTestCaseInput {
     private final Map<String, Object> inputs;
     private String output;
