@@ -181,7 +181,6 @@ public class ThinTraceTestCaseTest extends HttpClientTestBase {
         });
     }
 
-
     @Test
     public void testBothTestCaseTypesPresentThrowsOnGetTestCases() {
         List<CompletionTestCase> completionCases = List.of(
