@@ -181,23 +181,6 @@ public class ThinTraceTestCaseTest extends HttpClientTestBase {
         });
     }
 
-    @Test
-    @SuppressWarnings("deprecation")
-    public void testDeprecatedTestCaseStillWorks() {
-        withMockedClient((HttpClient mockedClient) -> {
-            mockCreateTestRunWithCompletionTestCasesAsync(mockedClient);
-
-            Freeplay fpClient = new Freeplay(Config().freeplayAPIKey(freeplayApiKey).baseUrl(baseUrl));
-            TestRun testRun = fpClient.testRuns().create(
-                    projectId,
-                    "completion-dataset",
-                    true
-            ).get();
-
-            assertEquals(2, testRun.getTestCases().size());
-            assertEquals("Why isn't my sink working?", testRun.getTestCases().get(0).getVariables().get("question"));
-        });
-    }
 
     @Test
     public void testBothTestCaseTypesPresentThrowsOnGetTestCases() {
