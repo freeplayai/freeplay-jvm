@@ -151,7 +151,7 @@ public class CallSupport {
                 responseInfo,
                 testRunId != null ? new RecordDTO.TestRunInfoDTO(testRunId, testCaseId) : null,
                 recordPayload.getEvalResults(),
-                recordPayload.getTraceInfo() != null ? new RecordDTO.TraceInfoDTO(recordPayload.getTraceInfo().traceId) : null,
+                null,
                 recordPayload.getParentId(),
                 recordPayload.getToolSchema(),
                 recordPayload.getOutputSchema(),

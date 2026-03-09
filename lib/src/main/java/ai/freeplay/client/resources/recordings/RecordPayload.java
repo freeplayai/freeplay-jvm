@@ -1,11 +1,10 @@
 package ai.freeplay.client.resources.recordings;
 
-import ai.freeplay.client.media.MediaInputCollection;
 import ai.freeplay.client.adapters.GeminiLLMAdapter;
+import ai.freeplay.client.media.MediaInputCollection;
 import ai.freeplay.client.resources.prompts.ChatMessage;
 import ai.freeplay.client.resources.prompts.PromptVersionInfo;
 import ai.freeplay.client.resources.sessions.SessionInfo;
-import ai.freeplay.client.resources.sessions.TraceInfo;
 import com.google.cloud.vertexai.api.Content;
 
 import java.util.List;
@@ -25,7 +24,6 @@ public class RecordPayload {
     private TestRunInfo testRunInfo;
     private Map<String, Object> evalResults;
 
-    private TraceInfo traceInfo;
     private UUID parentId;
     private UUID completionId;
 
@@ -116,15 +114,6 @@ public class RecordPayload {
         return this;
     }
 
-    /**
-     * @deprecated Use {@link #parentId(UUID)} instead. This method will be removed in a future version.
-     */
-    @Deprecated
-    public RecordPayload traceInfo(TraceInfo traceInfo) {
-        this.traceInfo = traceInfo;
-        return this;
-    }
-
     public RecordPayload parentId(UUID parentId) {
         this.parentId = parentId;
         return this;
@@ -186,14 +175,6 @@ public class RecordPayload {
         return evalResults;
     }
 
-    /**
-     * @deprecated Use {@link #getParentId()} instead. This method will be removed in a future version.
-     */
-    @Deprecated
-    public TraceInfo getTraceInfo() {
-        return traceInfo;
-    }
-
     public UUID getParentId() {
         return parentId;
     }
@@ -227,7 +208,6 @@ public class RecordPayload {
                 ", responseInfo=" + responseInfo +
                 ", testRunInfo=" + testRunInfo +
                 ", evalResults=" + evalResults +
-                ", traceInfo=" + traceInfo +
                 ", parentId=" + parentId +
                 ", toolSchema=" + toolSchema +
                 ", outputSchema=" + outputSchema +

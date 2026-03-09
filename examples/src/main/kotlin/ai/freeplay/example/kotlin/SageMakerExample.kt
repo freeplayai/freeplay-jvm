@@ -2,6 +2,7 @@ package ai.freeplay.example.kotlin
 
 import ai.freeplay.client.Freeplay
 import ai.freeplay.client.resources.prompts.ChatMessage
+import ai.freeplay.client.resources.prompts.Prompts.GetFormattedRequest
 import ai.freeplay.client.resources.recordings.CallInfo
 import ai.freeplay.client.resources.recordings.RecordPayload
 import ai.freeplay.client.resources.recordings.ResponseInfo
@@ -31,10 +32,7 @@ fun main(): Unit = runBlocking {
     println("Getting the prompt...")
     val prompt = fpClient.prompts()
         .getFormatted<String>(
-            projectId,
-            "my-sagemaker-llama-3-prompt",
-            "latest",
-            variables
+            GetFormattedRequest(projectId, "my-sagemaker-llama-3-prompt", "latest", variables)
         ).await()
 
     val endpointName = prompt.promptInfo.providerInfo["endpoint_name"] as String

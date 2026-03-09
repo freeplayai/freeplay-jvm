@@ -3,8 +3,14 @@ package ai.freeplay.example.java;
 import ai.freeplay.client.Freeplay;
 import ai.freeplay.client.resources.prompts.ChatMessage;
 import ai.freeplay.client.resources.prompts.FormattedPrompt;
-import ai.freeplay.client.resources.recordings.*;
-import ai.freeplay.client.resources.sessions.*;
+import ai.freeplay.client.resources.prompts.Prompts.GetFormattedRequest;
+import ai.freeplay.client.resources.recordings.CallInfo;
+import ai.freeplay.client.resources.recordings.RecordPayload;
+import ai.freeplay.client.resources.recordings.RecordResponse;
+import ai.freeplay.client.resources.recordings.ResponseInfo;
+import ai.freeplay.client.resources.sessions.Session;
+import ai.freeplay.client.resources.sessions.SessionInfo;
+import ai.freeplay.client.resources.sessions.TraceInfo;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -15,9 +21,8 @@ import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
-import static ai.freeplay.example.java.ExampleUtils.callAnthropic;
-
 import static ai.freeplay.client.Freeplay.Config;
+import static ai.freeplay.example.java.ExampleUtils.callAnthropic;
 
 /**
  * Java equivalent of the Python trace hierarchy example.
@@ -54,9 +59,9 @@ public class ThinTraceHierarchyExample {
                 .customMetadata(Map.of("metadata_123", "blah"));
 
         String[] userQuestions = {
-            "answer life's most existential questions", 
-            "what is sand?", 
-            "how tall are lions?"
+                "answer life's most existential questions",
+                "what is sand?",
+                "how tall are lions?"
         };
 
         UUID lastTraceId = null;
@@ -70,53 +75,54 @@ public class ThinTraceHierarchyExample {
                     .customMetadata(Map.of("metadata_key", "hello"))
                     .parentId(lastTraceId);  // Using new parentId parameter
 
-            System.out.println("Created trace: " + traceInfo.getTraceId() + 
-                (traceInfo.getParentId() != null ? " (parent: " + traceInfo.getParentId() + ")" : " (root)"));
+            System.out.println("Created trace: " + traceInfo.getTraceId() +
+                    (traceInfo.getParentId() != null ? " (parent: " + traceInfo.getParentId() + ")" : " (root)"));
 
             // First LLM call - answer the question
             CallAndRecordResult botResponse = callAndRecord(
-                fpClient,
-                PROJECT_ID,
-                "my-anthropic-prompt",
-                "latest",
-                Map.of("question", question),
-                session.getSessionInfo(),
-                lastTraceId != null ? lastTraceId : traceInfo.getTraceId()
+                    fpClient,
+                    PROJECT_ID,
+                    "my-anthropic-prompt",
+                    "latest",
+                    Map.of("question", question),
+                    session.getSessionInfo(),
+                    traceInfo.getTraceId()
             );
 
             // Second LLM call - categorize the question (child of first completion)
+            UUID botCompletionId = botResponse.completionId != null ? UUID.fromString(botResponse.completionId) : null;
             CallAndRecordResult categorizationResult = callAndRecord(
-                fpClient,
-                PROJECT_ID,
-                "question-classifier", 
-                "latest",
-                Map.of("question", question),
-                session.getSessionInfo(),
-                UUID.fromString(botResponse.completionId)  // Parent is the first completion
+                    fpClient,
+                    PROJECT_ID,
+                    "question-classifier",
+                    "latest",
+                    Map.of("question", question),
+                    session.getSessionInfo(),
+                    botCompletionId  // Parent is the first completion
             );
 
             // Send customer feedback for the completion
             System.out.println("Sending customer feedback for completion id: " + botResponse.completionId);
             fpClient.customerFeedback().update(
-                PROJECT_ID,
-                botResponse.completionId,
-                Map.of(
-                    "is_it_good", random.nextBoolean() ? "yuh" : "nah",
-                    "topic", categorizationResult.llmResponse
-                )
+                    PROJECT_ID,
+                    botResponse.completionId,
+                    Map.of(
+                            "is_it_good", random.nextBoolean() ? "yuh" : "nah",
+                            "topic", categorizationResult.llmResponse
+                    )
             ).get();
 
             // Record trace output with eval results
             traceInfo.recordOutput(
-                PROJECT_ID,
-                botResponse.llmResponse,
-                Map.of("bool_field", false, "num_field", 0.9)
+                    PROJECT_ID,
+                    botResponse.llmResponse,
+                    Map.of("bool_field", false, "num_field", 0.9)
             ).get();
 
             // Record feedback for the trace
             Map<String, Object> traceFeedback = Map.of(
-                "is_it_good", random.nextBoolean(),
-                "freeplay_feedback", random.nextBoolean() ? "positive" : "negative"
+                    "is_it_good", random.nextBoolean(),
+                    "freeplay_feedback", random.nextBoolean() ? "positive" : "negative"
             );
             fpClient.customerFeedback().updateTrace(PROJECT_ID, traceInfo.getTraceId().toString(), traceFeedback).get();
 
@@ -138,13 +144,8 @@ public class ThinTraceHierarchyExample {
             SessionInfo sessionInfo,
             UUID parentId
     ) throws Exception {
-        // Get formatted prompt
         FormattedPrompt<Object> formattedPrompt = fpClient.prompts().getFormatted(
-                projectId,
-                templateName,
-                env,
-                inputVariables,
-                "anthropic_chat"
+                new GetFormattedRequest(projectId, templateName, env, inputVariables).flavorName("anthropic_chat")
         ).get();
 
         System.out.println("Ready for LLM: " + formattedPrompt.getFormattedPrompt());
@@ -163,10 +164,10 @@ public class ThinTraceHierarchyExample {
                 formattedPrompt.getSystemContent().orElse(null),
                 formattedPrompt.getToolSchema()
         );
-        
+
         HttpResponse<String> response = responseFuture.get();
         long end = System.currentTimeMillis();
-        
+
         // Parse Anthropic response
         JsonNode bodyNode = objectMapper.readTree(response.body());
         String llmResponse = bodyNode.path("content").get(0).path("text").asText();

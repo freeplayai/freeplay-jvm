@@ -3,6 +3,7 @@ package ai.freeplay.example.java;
 import ai.freeplay.client.Freeplay;
 import ai.freeplay.client.resources.prompts.ChatMessage;
 import ai.freeplay.client.resources.prompts.FormattedPrompt;
+import ai.freeplay.client.resources.prompts.Prompts.GetFormattedRequest;
 import ai.freeplay.client.resources.recordings.CallInfo;
 import ai.freeplay.client.resources.recordings.RecordPayload;
 import ai.freeplay.client.resources.recordings.RecordResponse;
@@ -39,11 +40,7 @@ public class ThinFeedbackExample {
 
         fpClient.prompts()
                 .<List<ChatMessage>>getFormatted(
-                        projectId,
-                        "my-anthropic-prompt",
-                        "latest",
-                        variables,
-                        null
+                        new GetFormattedRequest(projectId, "my-anthropic-prompt", "latest", variables)
                 ).thenCompose((FormattedPrompt<List<ChatMessage>> formattedPrompt) -> {
                             long startTime = System.currentTimeMillis();
                             return callAnthropic(

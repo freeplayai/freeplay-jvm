@@ -10,7 +10,9 @@ import ai.freeplay.client.internal.v2dto.TemplateDTO.ToolSchema;
 import ai.freeplay.client.resources.feedback.CustomerFeedbackResponse;
 import ai.freeplay.client.resources.feedback.TraceFeedbackResponse;
 import ai.freeplay.client.resources.prompts.*;
+import ai.freeplay.client.resources.prompts.Prompts.GetFormattedRequest;
 import ai.freeplay.client.resources.recordings.*;
+import ai.freeplay.client.resources.sessions.CreateTracePayload;
 import ai.freeplay.client.resources.sessions.Session;
 import ai.freeplay.client.resources.sessions.SpanKind;
 import ai.freeplay.client.resources.sessions.TraceInfo;
@@ -125,31 +127,19 @@ public class ThinClientTest extends HttpClientTestBase {
 
             // Calling getFormatted instead of chaining manually
             CompletableFuture<FormattedPrompt<List<ChatMessage>>> formattedPrompt = fpClient.prompts().getFormatted(
-                    projectId,
-                    templateName,
-                    "prod",
-                    variables,
-                    "openai_chat"
+                    new GetFormattedRequest(projectId, templateName, "prod", variables).flavorName("openai_chat")
             );
             assertEquals(expectedMessages, formattedPrompt.get().getFormattedPrompt());
 
             // Baseten Mistral (effectively OpenAI's format)
             CompletableFuture<FormattedPrompt<List<ChatMessage>>> basetenMistralPrompt = fpClient.prompts().getFormatted(
-                    projectId,
-                    templateName,
-                    "prod",
-                    variables,
-                    "baseten_mistral_chat"
+                    new GetFormattedRequest(projectId, templateName, "prod", variables).flavorName("baseten_mistral_chat")
             );
             assertEquals(expectedMessages, basetenMistralPrompt.get().getFormattedPrompt());
 
             // Gemini
             CompletableFuture<FormattedPrompt<List<Content>>> geminiPrompt = fpClient.prompts().getFormatted(
-                    projectId,
-                    templateName,
-                    "prod",
-                    variables,
-                    "gemini_chat"
+                    new GetFormattedRequest(projectId, templateName, "prod", variables).flavorName("gemini_chat")
             );
             assertEquals(List.of(
                     ContentMaker.forRole("model").fromString("How may I help you?"),
@@ -293,7 +283,7 @@ public class ThinClientTest extends HttpClientTestBase {
             Freeplay fpClient = new Freeplay(Config().freeplayAPIKey(freeplayApiKey).baseUrl(baseUrl));
 
             CompletableFuture<FormattedPrompt<String>> future = fpClient.prompts().getFormatted(
-                    projectId, templateName, "prod", variables, "anthropic_chat"
+                    new GetFormattedRequest(projectId, templateName, "prod", variables).flavorName("anthropic_chat")
             );
             FormattedPrompt<String> prompt = future.get();
 
@@ -562,7 +552,7 @@ public class ThinClientTest extends HttpClientTestBase {
             Freeplay fpClient = new Freeplay(Config().freeplayAPIKey(freeplayApiKey).baseUrl(baseUrl));
 
             CompletableFuture<FormattedPrompt<String>> future = fpClient.prompts().getFormatted(
-                    projectId, templateName, "prod", variables, "anthropic_chat"
+                    new GetFormattedRequest(projectId, templateName, "prod", variables).flavorName("anthropic_chat")
             );
             FormattedPrompt<String> prompt = future.get();
 
@@ -578,7 +568,7 @@ public class ThinClientTest extends HttpClientTestBase {
 
             Session session = fpClient.sessions().create()
                     .customMetadata(customMetadata);
-            TraceInfo traceInfo = session.createTrace(input, "agent_name", traceCustomMetadata);
+            TraceInfo traceInfo = session.createTrace(new CreateTracePayload(input).agentName("agent_name").customMetadata(traceCustomMetadata));
             traceInfo.kind(SpanKind.TOOL).name("test_tool_span");
             RecordPayload recordPayload = new RecordPayload(
                     projectId,
@@ -589,7 +579,7 @@ public class ThinClientTest extends HttpClientTestBase {
                     .callInfo(callInfo)
                     .responseInfo(responseInfo)
                     .evalResults(evalResults)
-                    .traceInfo(traceInfo);
+                    .parentId(traceInfo.getTraceId());
             CompletableFuture<RecordResponse> recordFuture = fpClient.recordings().create(recordPayload);
 
             // Assertions
@@ -611,8 +601,8 @@ public class ThinClientTest extends HttpClientTestBase {
                             responseInfo.getPromptTokens(), responseInfo.getResponseTokens()),
                     null,
                     Map.of("bool_value", true, "float_value", 0.23),
-                    new RecordDTO.TraceInfoDTO(traceInfo.getTraceId()),
                     null,
+                    traceInfo.getTraceId(),
                     null,
                     null,
                     null,
@@ -804,9 +794,7 @@ public class ThinClientTest extends HttpClientTestBase {
             String datasetName = "core-tests";
             Freeplay fpClient = new Freeplay(Config().freeplayAPIKey(freeplayApiKey).baseUrl(baseUrl));
             TestRun testRun = fpClient.testRuns().create(
-                    projectId,
-                    datasetName,
-                    true
+                    fpClient.testRuns().createRequest(projectId, datasetName).includeOutputs(true).build()
             ).get();
 
             // Completion
@@ -827,16 +815,13 @@ public class ThinClientTest extends HttpClientTestBase {
 
             String datasetName = "core-tests";
             Freeplay fpClient = new Freeplay(Config().freeplayAPIKey(freeplayApiKey).baseUrl(baseUrl));
-            TestRun testRun = fpClient.testRuns().create(
-                    projectId,
-                    datasetName,
-                    true,
-                    "test-run-name",
-                    "test-run-description"
+            fpClient.testRuns().create(
+                    fpClient.testRuns().createRequest(projectId, datasetName).includeOutputs(true).name("test-run-name").description("test-run-description").build()
             ).get();
 
-            // Completion
-            assertEquals(2, testRun.getTestCases().size());
+            String requestBody = getCapturedAsyncBody(mockedClient, 1, 0);
+            assertTrue(requestBody.contains("\"test_run_name\":\"test-run-name\""));
+            assertTrue(requestBody.contains("\"test_run_description\":\"test-run-description\""));
         });
     }
 
@@ -985,8 +970,7 @@ public class ThinClientTest extends HttpClientTestBase {
             ExecutionException exception = assertThrows(
                     ExecutionException.class,
                     () -> fpClient.testRuns().create(
-                            projectId,
-                            "core-tests"
+                            fpClient.testRuns().createRequest(projectId, "core-tests").build()
                     ).get());
             assertEquals("Error making call [401]", exception.getCause().getMessage());
         });
@@ -1016,7 +1000,7 @@ public class ThinClientTest extends HttpClientTestBase {
             ExecutionException exception2 = assertThrows(
                     ExecutionException.class,
                     () -> fpClient.prompts()
-                            .getFormatted(projectId, templateName, "prod", Map.of(), "not_a_flavor")
+                            .getFormatted(new GetFormattedRequest(projectId, templateName, "prod", Map.of()).flavorName("not_a_flavor"))
                             .get()
             );
             assertEquals(expectedExceptionMessage, exception2.getCause().getMessage());
@@ -1394,60 +1378,6 @@ public class ThinClientTest extends HttpClientTestBase {
         assertEquals(childAgentName, childTrace.getAgentName());
         assertEquals(parentId, childTrace.getParentId());
         assertEquals(childMetadata, childTrace.getCustomMetadata());
-    }
-
-    @Test
-    @SuppressWarnings("deprecation")
-    public void testDeprecatedTraceInfoMethodsStillWork() {
-        String projectId = "test-project";
-        List<ChatMessage> allMessages = List.of(
-                new ChatMessage("user", "test message"),
-                new ChatMessage("assistant", "test response")
-        );
-
-        CallSupport mockCallSupport = Mockito.mock(CallSupport.class);
-        UUID sessionId = UUID.randomUUID();
-        UUID traceId = UUID.randomUUID();
-        String input = "test input";
-
-        TraceInfo traceInfo = new TraceInfo(sessionId, traceId, input, mockCallSupport);
-
-        RecordPayload recordPayload = new RecordPayload(projectId, allMessages)
-                .traceInfo(traceInfo);
-
-        assertEquals(traceInfo, recordPayload.getTraceInfo());  // Using deprecated getter
-    }
-
-    @Test
-    public void testParentIdVsTraceInfoEquivalence() {
-        String projectId = "test-project";
-        List<ChatMessage> allMessages = List.of(
-                new ChatMessage("user", "test message"),
-                new ChatMessage("assistant", "test response")
-        );
-
-        CallSupport mockCallSupport = Mockito.mock(CallSupport.class);
-        UUID sessionId = UUID.randomUUID();
-        UUID traceId = UUID.randomUUID();
-        String input = "test input";
-
-        TraceInfo traceInfo = new TraceInfo(sessionId, traceId, input, mockCallSupport);
-
-        // Create with deprecated traceInfo
-        @SuppressWarnings("deprecation")
-        RecordPayload recordWithTraceInfo = new RecordPayload(projectId, allMessages)
-                .traceInfo(traceInfo);
-
-        // Create with new parentId approach
-        RecordPayload recordWithParentId = new RecordPayload(projectId, allMessages)
-                .parentId(traceInfo.getTraceId());
-
-        // Both should reference the same trace ID
-        @SuppressWarnings("deprecation")
-        UUID traceInfoId = recordWithTraceInfo.getTraceInfo().getTraceId();
-        UUID parentIdValue = recordWithParentId.getParentId();
-
-        assertEquals(traceInfoId, parentIdValue);
     }
 
     @Test

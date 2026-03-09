@@ -2,6 +2,7 @@ package ai.freeplay.example.java;
 
 import ai.freeplay.client.Freeplay;
 import ai.freeplay.client.resources.prompts.ChatMessage;
+import ai.freeplay.client.resources.prompts.Prompts.GetFormattedRequest;
 import ai.freeplay.client.resources.recordings.CallInfo;
 import ai.freeplay.client.resources.recordings.RecordPayload;
 import ai.freeplay.client.resources.recordings.ResponseInfo;
@@ -33,7 +34,7 @@ public class ThinOpenAIWithImageExample {
         Map<String, Object> variables = Map.of("question", "Will you describe this image?");
 
         var prompt = fpClient.prompts()
-                .getFormatted(projectId, "media", "latest", variables, null)
+                .getFormatted(new GetFormattedRequest(projectId, "media", "latest", variables))
                 .get();
 
         var messages = prompt.allMessages(

@@ -26,7 +26,7 @@ fun main(): Unit = runBlocking {
     )
 
     val templatePrompt = fpClient.prompts().get(projectId, "my-anthropic-prompt", "prod").await()
-    val testRun = fpClient.testRuns().create(projectId, "core-tests").await()
+    val testRun = fpClient.testRuns().create(fpClient.testRuns().createRequest(projectId, "core-tests").build()).await()
 
     for (testCase in testRun.testCases) {
         val formattedPrompt = templatePrompt.bind(TemplatePrompt.BindRequest(testCase.variables)).format<List<ChatMessage>>()

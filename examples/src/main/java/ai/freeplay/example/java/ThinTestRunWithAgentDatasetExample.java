@@ -128,7 +128,7 @@ public class ThinTestRunWithAgentDatasetExample {
                             .callInfo(callInfo)
                             .toolSchema(formattedPrompt.getToolSchema())
                             .sessionInfo(session.getSessionInfo())
-                            .traceInfo(traceInfo)
+                            .parentId(traceInfo.getTraceId())
             ).get();
 
 

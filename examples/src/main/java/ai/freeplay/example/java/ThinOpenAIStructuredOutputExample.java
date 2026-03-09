@@ -3,6 +3,7 @@ package ai.freeplay.example.java;
 import ai.freeplay.client.Freeplay;
 import ai.freeplay.client.resources.prompts.ChatMessage;
 import ai.freeplay.client.resources.prompts.FormattedPrompt;
+import ai.freeplay.client.resources.prompts.Prompts.GetFormattedRequest;
 import ai.freeplay.client.resources.recordings.CallInfo;
 import ai.freeplay.client.resources.recordings.CallInfo.ApiStyle;
 import ai.freeplay.client.resources.recordings.RecordPayload;
@@ -29,7 +30,7 @@ import static java.lang.String.format;
 
 /**
  * Example demonstrating structured output support with OpenAI.
- *
+ * <p>
  * This example shows how to:
  * 1. Define an output schema for structured responses
  * 2. Call OpenAI with the output schema
@@ -54,11 +55,7 @@ public class ThinOpenAIStructuredOutputExample {
 
         fpClient.prompts()
                 .<List<ChatMessage>>getFormatted(
-                        projectId,
-                        "my-chat-template",
-                        "latest",
-                        variables,
-                        null
+                        new GetFormattedRequest(projectId, "my-chat-template", "latest", variables)
                 ).thenCompose((FormattedPrompt<List<ChatMessage>> formattedPrompt) -> {
                             long startTime = System.currentTimeMillis();
 
@@ -131,12 +128,12 @@ public class ThinOpenAIStructuredOutputExample {
     /**
      * Calls OpenAI API with structured output schema support.
      *
-     * @param objectMapper Jackson ObjectMapper for JSON serialization
-     * @param openaiApiKey OpenAI API key
-     * @param model Model to use (e.g., "gpt-4o-mini")
+     * @param objectMapper    Jackson ObjectMapper for JSON serialization
+     * @param openaiApiKey    OpenAI API key
+     * @param model           Model to use (e.g., "gpt-4o-mini")
      * @param modelParameters Additional model parameters
-     * @param messages Messages to send
-     * @param outputSchema JSON schema defining the expected output structure
+     * @param messages        Messages to send
+     * @param outputSchema    JSON schema defining the expected output structure
      * @return CompletableFuture with the HTTP response
      */
     private static CompletableFuture<HttpResponse<String>> callOpenAIWithStructuredOutput(

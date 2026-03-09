@@ -4,6 +4,7 @@ import ai.freeplay.client.FilesystemTemplateResolver;
 import ai.freeplay.client.Freeplay;
 import ai.freeplay.client.resources.prompts.ChatMessage;
 import ai.freeplay.client.resources.prompts.FormattedPrompt;
+import ai.freeplay.client.resources.prompts.Prompts.GetFormattedRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.net.http.HttpResponse;
@@ -15,7 +16,7 @@ import java.util.concurrent.ExecutionException;
 import static ai.freeplay.client.Freeplay.Config;
 import static ai.freeplay.example.java.ExampleUtils.callAnthropic;
 import static java.lang.String.format;
-// TODO
+
 public class ThinBundleExample {
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -37,11 +38,7 @@ public class ThinBundleExample {
 
         fpClient.prompts()
                 .<List<ChatMessage>>getFormatted(
-                        projectId,
-                        "my-anthropic-prompt",
-                        "latest",
-                        variables,
-                        null
+                        new GetFormattedRequest(projectId, "my-anthropic-prompt", "latest", variables)
                 ).thenCompose((FormattedPrompt<List<ChatMessage>> formattedPrompt) ->
                         callAnthropic(
                                 objectMapper,

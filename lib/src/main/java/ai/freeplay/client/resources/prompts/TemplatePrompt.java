@@ -2,10 +2,10 @@ package ai.freeplay.client.resources.prompts;
 
 import ai.freeplay.client.exceptions.FreeplayClientException;
 import ai.freeplay.client.internal.TemplateUtils;
+import ai.freeplay.client.internal.v2dto.TemplateDTO.ToolSchema;
 import ai.freeplay.client.media.MediaInputBase64;
 import ai.freeplay.client.media.MediaInputCollection;
 import ai.freeplay.client.media.MediaInputUrl;
-import ai.freeplay.client.internal.v2dto.TemplateDTO.ToolSchema;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,7 +21,7 @@ public class TemplatePrompt {
 
     private final PromptInfo promptInfo;
     private final List<ChatMessage> messages;
-    private List<ToolSchema> toolSchema;
+    private final List<ToolSchema> toolSchema;
     private Map<String, Object> outputSchema;
 
     public TemplatePrompt(PromptInfo promptInfo, List<ChatMessage> messages) {
@@ -54,22 +54,6 @@ public class TemplatePrompt {
 
     public Map<String, Object> getOutputSchema() {
         return outputSchema;
-    }
-
-    /**
-     * @deprecated use {@link #bind(TemplatePrompt.BindRequest)} instead.
-     */
-    @Deprecated
-    public BoundPrompt bind(Map<String, Object> variables) {
-        return bind(new BindRequest(variables));
-    }
-
-    /**
-     * @deprecated use {@link #bind(TemplatePrompt.BindRequest)} instead.
-     */
-    @Deprecated
-    public BoundPrompt bind(Map<String, Object> variables, List<ChatMessage> history) {
-        return bind(new BindRequest(variables).history(history));
     }
 
     public BoundPrompt bind(BindRequest bindRequest) {
@@ -125,7 +109,7 @@ public class TemplatePrompt {
     }
 
     public static class BindRequest {
-        private Map<String, Object> variables;
+        private final Map<String, Object> variables;
         private List<ChatMessage> history;
         private MediaInputCollection mediaInputs;
 

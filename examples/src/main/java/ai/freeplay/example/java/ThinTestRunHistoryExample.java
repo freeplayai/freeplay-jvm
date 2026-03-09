@@ -42,31 +42,37 @@ public class ThinTestRunHistoryExample {
                 .customerDomain(customerDomain)
         );
         String testRunName = "Test run: " + UUID.randomUUID();
-        List<RecordResponse> recordResponses = fpClient.testRuns().create(projectId, "history-dataset", true, testRunName, "Run from JVM examples")
-                .thenCompose(testRun ->
-                        fpClient.prompts().get(projectId, "History-QA", "dev")
-                                .thenCompose(templatePrompt -> {
+        List<RecordResponse> recordResponses = fpClient.testRuns().create(
+                fpClient.testRuns()
+                        .createRequest(projectId, "history-dataset")
+                        .includeOutputs(true)
+                        .name(testRunName)
+                        .description("Run from JVM examples")
+                        .build()
+        ).thenCompose(testRun ->
+                fpClient.prompts().get(projectId, "History-QA", "dev")
+                        .thenCompose(templatePrompt -> {
 
-                                    var futures =
-                                            testRun.getTestCases().stream()
-                                                    .map(testCase ->
-                                                            handleTestCase(
-                                                                    fpClient,
-                                                                    projectId,
-                                                                    anthropicApiKey,
-                                                                    templatePrompt,
-                                                                    testRun,
-                                                                    testCase))
-                                                    .collect(toList());
+                            var futures =
+                                    testRun.getTestCases().stream()
+                                            .map(testCase ->
+                                                    handleTestCase(
+                                                            fpClient,
+                                                            projectId,
+                                                            anthropicApiKey,
+                                                            templatePrompt,
+                                                            testRun,
+                                                            testCase))
+                                            .collect(toList());
 
-                                    // It's not obvious why we have to go over the futures again after calling CompletableFuture.allOf().
-                                    // The allOf call can only return Void, so it is only telling us when the futures have completed, not
-                                    // what their result is. The join() call gets their result. It should not block or take a long time,
-                                    // because it is only called after we've gotten the callback that all the futures completed.
-                                    return CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new))
-                                            .thenApply((Void v) -> futures.stream().map(CompletableFuture::join).collect(toList()));
-                                })
-                ).join();
+                            // It's not obvious why we have to go over the futures again after calling CompletableFuture.allOf().
+                            // The allOf call can only return Void, so it is only telling us when the futures have completed, not
+                            // what their result is. The join() call gets their result. It should not block or take a long time,
+                            // because it is only called after we've gotten the callback that all the futures completed.
+                            return CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new))
+                                    .thenApply((Void v) -> futures.stream().map(CompletableFuture::join).collect(toList()));
+                        })
+        ).join();
 
         System.out.println("Record responses: " + recordResponses);
     }
