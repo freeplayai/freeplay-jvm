@@ -53,6 +53,11 @@ Notable additions, fixes, or breaking changes to the Freeplay SDK.
 
 - **`TestListDTO` renamed to `DatasetDTO`** (internal class — only relevant if you were referencing internal DTOs directly).
 
+### Added
+
+- **Reference example for agent evaluation** (`examples/.../ThinTestRunWithAgentDatasetExample.java`): end-to-end example that creates a trace-based test run against an agent dataset, iterates `TraceTestCase` entries, logs completions via `session.createTrace()`, and records results with `TestRunInfo` linking each trace back to its test case.
+
+
 ### New Features
 
 - **Prompt dataset management.** New `freeplay.promptDatasets()` resource provides full CRUD for prompt-level datasets and their test cases, including bulk create and bulk delete of test cases (max 100 per request).
