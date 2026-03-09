@@ -17,7 +17,6 @@ import static ai.freeplay.client.Freeplay.Config;
 import static ai.freeplay.example.java.ExampleUtils.callAnthropic;
 import static java.lang.String.format;
 
-// TODO
 public class ThinBundleExample {
     private static final ObjectMapper objectMapper = new ObjectMapper();
 

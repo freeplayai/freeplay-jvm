@@ -86,10 +86,11 @@ public class ThinTraceHierarchyExample {
                     "latest",
                     Map.of("question", question),
                     session.getSessionInfo(),
-                    lastTraceId != null ? lastTraceId : traceInfo.getTraceId()
+                    traceInfo.getTraceId()
             );
 
             // Second LLM call - categorize the question (child of first completion)
+            UUID botCompletionId = botResponse.completionId != null ? UUID.fromString(botResponse.completionId) : null;
             CallAndRecordResult categorizationResult = callAndRecord(
                     fpClient,
                     PROJECT_ID,
@@ -97,7 +98,7 @@ public class ThinTraceHierarchyExample {
                     "latest",
                     Map.of("question", question),
                     session.getSessionInfo(),
-                    UUID.fromString(botResponse.completionId)  // Parent is the first completion
+                    botCompletionId  // Parent is the first completion
             );
 
             // Send customer feedback for the completion
