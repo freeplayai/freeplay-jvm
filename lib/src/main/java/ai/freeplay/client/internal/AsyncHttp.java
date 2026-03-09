@@ -74,6 +74,15 @@ public class AsyncHttp {
         }
     }
 
+    public static CompletableFuture<HttpResponse<String>> deleteJson(
+            String url,
+            String apiKey,
+            HttpConfig httpConfig,
+            Object body
+    ) throws FreeplayException {
+        return sendJson(url, apiKey, httpConfig, "DELETE", body);
+    }
+
     private static CompletableFuture<HttpResponse<String>> sendJson(
             String url,
             String apiKey,

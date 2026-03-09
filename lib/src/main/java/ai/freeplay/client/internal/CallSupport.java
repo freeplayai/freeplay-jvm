@@ -6,9 +6,11 @@ import ai.freeplay.client.exceptions.FreeplayClientException;
 import ai.freeplay.client.internal.dto.*;
 import ai.freeplay.client.internal.v2dto.TemplateDTO;
 import ai.freeplay.client.media.MediaInput;
+import ai.freeplay.client.resources.agentdatasets.*;
 import ai.freeplay.client.resources.feedback.CustomerFeedbackResponse;
 import ai.freeplay.client.resources.feedback.TraceFeedbackResponse;
 import ai.freeplay.client.resources.metadata.MetadataUpdateResponse;
+import ai.freeplay.client.resources.promptdatasets.*;
 import ai.freeplay.client.resources.prompts.ChatMessage;
 import ai.freeplay.client.resources.prompts.TemplateVersionResponse;
 import ai.freeplay.client.resources.recordings.RecordPayload;
@@ -458,6 +460,243 @@ public class CallSupport {
             throwFreeplayIfError(httpResponse, 200);
             return new MetadataUpdateResponse();
         });
+    }
+
+    // ---- Prompt Datasets ----
+
+    public CompletableFuture<PromptDataset> createPromptDataset(String projectId, CreatePromptDatasetRequest request) {
+        String url = String.format("%s/v2/projects/%s/prompt-datasets", baseUrl, projectId);
+        return AsyncHttp.postJson(url, freeplayApiKey, httpConfig, request)
+                .thenApply(httpResponse -> {
+                    throwFreeplayIfError(httpResponse, 201);
+                    return JSONUtil.parse(httpResponse.body(), PromptDataset.class);
+                });
+    }
+
+    public CompletableFuture<PromptDatasetList> listPromptDatasets(String projectId, int page, int pageSize, String idFilter, String nameFilter) {
+        String url = buildUrl(String.format("%s/v2/projects/%s/prompt-datasets", baseUrl, projectId), page, pageSize, idFilter, nameFilter);
+        return AsyncHttp.get(url, freeplayApiKey, httpConfig)
+                .thenApply(httpResponse -> {
+                    throwFreeplayIfError(httpResponse, 200);
+                    return JSONUtil.parse(httpResponse.body(), PromptDatasetList.class);
+                });
+    }
+
+    public CompletableFuture<PromptDataset> getPromptDataset(String projectId, String datasetId) {
+        String url = String.format("%s/v2/projects/%s/prompt-datasets/%s", baseUrl, projectId, datasetId);
+        return AsyncHttp.get(url, freeplayApiKey, httpConfig)
+                .thenApply(httpResponse -> {
+                    throwFreeplayIfError(httpResponse, 200);
+                    return JSONUtil.parse(httpResponse.body(), PromptDataset.class);
+                });
+    }
+
+    public CompletableFuture<PromptDataset> updatePromptDataset(String projectId, String datasetId, UpdatePromptDatasetRequest request) {
+        String url = String.format("%s/v2/projects/%s/prompt-datasets/%s", baseUrl, projectId, datasetId);
+        return AsyncHttp.patchJson(url, freeplayApiKey, httpConfig, request)
+                .thenApply(httpResponse -> {
+                    throwFreeplayIfError(httpResponse, 200);
+                    return JSONUtil.parse(httpResponse.body(), PromptDataset.class);
+                });
+    }
+
+    public CompletableFuture<Void> deletePromptDataset(String projectId, String datasetId) {
+        String url = String.format("%s/v2/projects/%s/prompt-datasets/%s", baseUrl, projectId, datasetId);
+        return AsyncHttp.delete(url, freeplayApiKey, httpConfig)
+                .thenApply(httpResponse -> {
+                    throwFreeplayIfError(httpResponse, 200);
+                    return null;
+                });
+    }
+
+    public CompletableFuture<PromptTestCaseList> listPromptTestCases(String projectId, String datasetId, int page, int pageSize) {
+        String url = String.format("%s/v2/projects/%s/prompt-datasets/%s/test-cases?page=%d&page_size=%d", baseUrl, projectId, datasetId, page, pageSize);
+        return AsyncHttp.get(url, freeplayApiKey, httpConfig)
+                .thenApply(httpResponse -> {
+                    throwFreeplayIfError(httpResponse, 200);
+                    return JSONUtil.parse(httpResponse.body(), PromptTestCaseList.class);
+                });
+    }
+
+    public CompletableFuture<PromptTestCase> getPromptTestCase(String projectId, String datasetId, String testCaseId) {
+        String url = String.format("%s/v2/projects/%s/prompt-datasets/%s/test-cases/%s", baseUrl, projectId, datasetId, testCaseId);
+        return AsyncHttp.get(url, freeplayApiKey, httpConfig)
+                .thenApply(httpResponse -> {
+                    throwFreeplayIfError(httpResponse, 200);
+                    return JSONUtil.parse(httpResponse.body(), PromptTestCase.class);
+                });
+    }
+
+    public CompletableFuture<List<PromptTestCase>> bulkCreatePromptTestCases(String projectId, String datasetId, List<PromptTestCaseInput> testCases) {
+        String url = String.format("%s/v2/projects/%s/prompt-datasets/%s/test-cases/bulk", baseUrl, projectId, datasetId);
+        List<BulkCreatePromptTestCasesDTO.TestCaseDTO> dtos = testCases.stream()
+                .map(testCase -> {
+                    Map<String, RecordDTO.MediaInputDTO> mediaInputs = null;
+                    if (testCase.getMediaInputs() != null) {
+                        mediaInputs = new HashMap<>();
+                        for (Map.Entry<String, MediaInput> entry : testCase.getMediaInputs().entrySet()) {
+                            mediaInputs.put(entry.getKey(), RecordDTO.MediaInputDTO.fromMediaInput(entry.getValue()));
+                        }
+                    }
+                    return new BulkCreatePromptTestCasesDTO.TestCaseDTO(
+                            testCase.getInputs(), testCase.getOutput(), testCase.getMetadata(), testCase.getHistory(), mediaInputs
+                    );
+                })
+                .collect(toList());
+
+        return AsyncHttp.postJson(url, freeplayApiKey, httpConfig, new BulkCreatePromptTestCasesDTO(dtos))
+                .thenApply(httpResponse -> {
+                    throwFreeplayIfError(httpResponse, 201);
+                    return JSONUtil.parse(httpResponse.body(), PromptTestCaseList.class).getData();
+                });
+    }
+
+    public CompletableFuture<PromptTestCase> updatePromptTestCase(String projectId, String datasetId, String testCaseId, UpdatePromptTestCaseRequest request) {
+        String url = String.format("%s/v2/projects/%s/prompt-datasets/%s/test-cases/%s", baseUrl, projectId, datasetId, testCaseId);
+        Map<String, RecordDTO.MediaInputDTO> mediaInputs = null;
+        if (request.getMediaInputs() != null) {
+            mediaInputs = new HashMap<>();
+            for (Map.Entry<String, MediaInput> entry : request.getMediaInputs().entrySet()) {
+                mediaInputs.put(entry.getKey(), RecordDTO.MediaInputDTO.fromMediaInput(entry.getValue()));
+            }
+        }
+        UpdatePromptTestCaseDTO dto = new UpdatePromptTestCaseDTO(
+                request.getInputs(), request.getOutput(), request.getMetadata(), request.getHistory(), mediaInputs
+        );
+        return AsyncHttp.patchJson(url, freeplayApiKey, httpConfig, dto)
+                .thenApply(httpResponse -> {
+                    throwFreeplayIfError(httpResponse, 200);
+                    return JSONUtil.parse(httpResponse.body(), PromptTestCase.class);
+                });
+    }
+
+    public CompletableFuture<Void> deletePromptTestCase(String projectId, String datasetId, String testCaseId) {
+        String url = String.format("%s/v2/projects/%s/prompt-datasets/%s/test-cases/%s", baseUrl, projectId, datasetId, testCaseId);
+        return AsyncHttp.delete(url, freeplayApiKey, httpConfig)
+                .thenApply(httpResponse -> {
+                    throwFreeplayIfError(httpResponse, 200);
+                    return null;
+                });
+    }
+
+    public CompletableFuture<Void> bulkDeletePromptTestCases(String projectId, String datasetId, List<String> testCaseIds) {
+        String url = String.format("%s/v2/projects/%s/prompt-datasets/%s/test-cases/bulk", baseUrl, projectId, datasetId);
+        return AsyncHttp.deleteJson(url, freeplayApiKey, httpConfig, new BulkDeleteDTO(testCaseIds))
+                .thenApply(httpResponse -> {
+                    throwFreeplayIfError(httpResponse, 200);
+                    return null;
+                });
+    }
+
+    // ---- Agent Datasets ----
+
+    public CompletableFuture<AgentDataset> createAgentDataset(String projectId, CreateAgentDatasetRequest request) {
+        String url = String.format("%s/v2/projects/%s/agent-datasets", baseUrl, projectId);
+        return AsyncHttp.postJson(url, freeplayApiKey, httpConfig, request)
+                .thenApply(httpResponse -> {
+                    throwFreeplayIfError(httpResponse, 201);
+                    return JSONUtil.parse(httpResponse.body(), AgentDataset.class);
+                });
+    }
+
+    public CompletableFuture<AgentDatasetList> listAgentDatasets(String projectId, int page, int pageSize, String idFilter, String nameFilter) {
+        String url = buildUrl(String.format("%s/v2/projects/%s/agent-datasets", baseUrl, projectId), page, pageSize, idFilter, nameFilter);
+        return AsyncHttp.get(url, freeplayApiKey, httpConfig)
+                .thenApply(httpResponse -> {
+                    throwFreeplayIfError(httpResponse, 200);
+                    return JSONUtil.parse(httpResponse.body(), AgentDatasetList.class);
+                });
+    }
+
+    public CompletableFuture<AgentDataset> getAgentDataset(String projectId, String datasetId) {
+        String url = String.format("%s/v2/projects/%s/agent-datasets/%s", baseUrl, projectId, datasetId);
+        return AsyncHttp.get(url, freeplayApiKey, httpConfig)
+                .thenApply(httpResponse -> {
+                    throwFreeplayIfError(httpResponse, 200);
+                    return JSONUtil.parse(httpResponse.body(), AgentDataset.class);
+                });
+    }
+
+    public CompletableFuture<AgentDataset> updateAgentDataset(String projectId, String datasetId, UpdateAgentDatasetRequest request) {
+        String url = String.format("%s/v2/projects/%s/agent-datasets/%s", baseUrl, projectId, datasetId);
+        return AsyncHttp.patchJson(url, freeplayApiKey, httpConfig, request)
+                .thenApply(httpResponse -> {
+                    throwFreeplayIfError(httpResponse, 200);
+                    return JSONUtil.parse(httpResponse.body(), AgentDataset.class);
+                });
+    }
+
+    public CompletableFuture<Void> deleteAgentDataset(String projectId, String datasetId) {
+        String url = String.format("%s/v2/projects/%s/agent-datasets/%s", baseUrl, projectId, datasetId);
+        return AsyncHttp.delete(url, freeplayApiKey, httpConfig)
+                .thenApply(httpResponse -> {
+                    throwFreeplayIfError(httpResponse, 200);
+                    return null;
+                });
+    }
+
+    public CompletableFuture<AgentTestCaseList> listAgentTestCases(String projectId, String datasetId, int page, int pageSize) {
+        String url = String.format("%s/v2/projects/%s/agent-datasets/%s/test-cases?page=%d&page_size=%d", baseUrl, projectId, datasetId, page, pageSize);
+        return AsyncHttp.get(url, freeplayApiKey, httpConfig)
+                .thenApply(httpResponse -> {
+                    throwFreeplayIfError(httpResponse, 200);
+                    return JSONUtil.parse(httpResponse.body(), AgentTestCaseList.class);
+                });
+    }
+
+    public CompletableFuture<AgentTestCase> getAgentTestCase(String projectId, String datasetId, String testCaseId) {
+        String url = String.format("%s/v2/projects/%s/agent-datasets/%s/test-cases/%s", baseUrl, projectId, datasetId, testCaseId);
+        return AsyncHttp.get(url, freeplayApiKey, httpConfig)
+                .thenApply(httpResponse -> {
+                    throwFreeplayIfError(httpResponse, 200);
+                    return JSONUtil.parse(httpResponse.body(), AgentTestCase.class);
+                });
+    }
+
+    public CompletableFuture<List<AgentTestCase>> bulkCreateAgentTestCases(String projectId, String datasetId, List<AgentTestCaseInput> testCases) {
+        String url = String.format("%s/v2/projects/%s/agent-datasets/%s/test-cases/bulk", baseUrl, projectId, datasetId);
+        Map<String, Object> body = Map.of("data", testCases);
+        return AsyncHttp.postJson(url, freeplayApiKey, httpConfig, body)
+                .thenApply(httpResponse -> {
+                    throwFreeplayIfError(httpResponse, 201);
+                    return JSONUtil.parse(httpResponse.body(), AgentTestCaseList.class).getData();
+                });
+    }
+
+    public CompletableFuture<AgentTestCase> updateAgentTestCase(String projectId, String datasetId, String testCaseId, UpdateAgentTestCaseRequest request) {
+        String url = String.format("%s/v2/projects/%s/agent-datasets/%s/test-cases/%s", baseUrl, projectId, datasetId, testCaseId);
+        return AsyncHttp.patchJson(url, freeplayApiKey, httpConfig, request)
+                .thenApply(httpResponse -> {
+                    throwFreeplayIfError(httpResponse, 200);
+                    return JSONUtil.parse(httpResponse.body(), AgentTestCase.class);
+                });
+    }
+
+    public CompletableFuture<Void> deleteAgentTestCase(String projectId, String datasetId, String testCaseId) {
+        String url = String.format("%s/v2/projects/%s/agent-datasets/%s/test-cases/%s", baseUrl, projectId, datasetId, testCaseId);
+        return AsyncHttp.delete(url, freeplayApiKey, httpConfig)
+                .thenApply(httpResponse -> {
+                    throwFreeplayIfError(httpResponse, 200);
+                    return null;
+                });
+    }
+
+    public CompletableFuture<Void> bulkDeleteAgentTestCases(String projectId, String datasetId, List<String> testCaseIds) {
+        String url = String.format("%s/v2/projects/%s/agent-datasets/%s/test-cases/bulk", baseUrl, projectId, datasetId);
+        return AsyncHttp.deleteJson(url, freeplayApiKey, httpConfig, new BulkDeleteDTO(testCaseIds))
+                .thenApply(httpResponse -> {
+                    throwFreeplayIfError(httpResponse, 200);
+                    return null;
+                });
+    }
+
+    private static String buildUrl(String base, int page, int pageSize, String idFilter, String nameFilter) {
+        StringBuilder url = new StringBuilder(base)
+                .append("?page=").append(page)
+                .append("&page_size=").append(pageSize);
+        if (idFilter != null) url.append("&id=").append(java.net.URLEncoder.encode(idFilter, java.nio.charset.StandardCharsets.UTF_8));
+        if (nameFilter != null) url.append("&name=").append(java.net.URLEncoder.encode(nameFilter, java.nio.charset.StandardCharsets.UTF_8));
+        return url.toString();
     }
 
     @SuppressWarnings("unused")
