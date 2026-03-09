@@ -3,9 +3,11 @@ package ai.freeplay.example.java;
 import ai.freeplay.client.Freeplay;
 import ai.freeplay.client.resources.prompts.ChatMessage;
 import ai.freeplay.client.resources.prompts.FormattedPrompt;
+import ai.freeplay.client.resources.prompts.Prompts.GetFormattedRequest;
 import ai.freeplay.client.resources.recordings.CallInfo;
 import ai.freeplay.client.resources.recordings.RecordPayload;
 import ai.freeplay.client.resources.recordings.ResponseInfo;
+import ai.freeplay.client.resources.sessions.CreateTracePayload;
 import ai.freeplay.client.resources.sessions.Session;
 import ai.freeplay.client.resources.sessions.TraceInfo;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -39,16 +41,11 @@ public class ThinTrace {
             String templateName,
             String environment,
             Map<String, Object> variables,
-            Session session,
             TraceInfo traceInfo
     ) {
         return fpClient.prompts()
                 .<List<ChatMessage>>getFormatted(
-                        projectId,
-                        templateName,
-                        environment,
-                        variables,
-                        null
+                        new GetFormattedRequest(projectId, templateName, environment, variables)
                 ).thenCompose((FormattedPrompt<List<ChatMessage>> formattedPrompt) -> {
                             long startTime = System.currentTimeMillis();
                             return callAnthropic(
@@ -96,7 +93,7 @@ public class ThinTrace {
                                     .promptVersionInfo(formattedPrompt.getPromptInfo())
                                     .callInfo(callInfo)
                                     .responseInfo(responseInfo)
-                                    .traceInfo(traceInfo);
+                                    .parentId(traceInfo.getTraceId());
 
                             return fpClient.recordings()
                                     .create(recordPayload)
@@ -116,14 +113,13 @@ public class ThinTrace {
         Map<String, Object> inputVars = Map.of("question", input);
 
         Session session = fpClient.sessions().create();
-        TraceInfo traceInfo = session.createTrace(input, "agent_name", Map.of("some_custom_metadata", "hello"));
+        TraceInfo traceInfo = session.createTrace(new CreateTracePayload(input).agentName("agent_name").customMetadata(Map.of("some_custom_metadata", "hello")));
 
         String response = call(
                 projectId,
                 "my-anthropic-prompt",
                 "latest",
                 inputVars,
-                session,
                 traceInfo
         );
         System.out.println("First Completion: " + response);
@@ -134,7 +130,6 @@ public class ThinTrace {
                 "my-anthropic-prompt",
                 "latest",
                 inputVars2,
-                session,
                 traceInfo
         );
         traceInfo.recordOutput(projectId, response, Map.of("bool_field", true, "float_value", 0.2));

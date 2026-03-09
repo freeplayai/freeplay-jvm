@@ -3,6 +3,7 @@ package ai.freeplay.example.kotlin
 import ai.freeplay.client.Freeplay
 import ai.freeplay.client.resources.prompts.ChatMessage
 import ai.freeplay.client.resources.prompts.Prompts
+import ai.freeplay.client.resources.sessions.CreateTracePayload
 import ai.freeplay.client.resources.recordings.CallInfo
 import ai.freeplay.client.resources.recordings.RecordPayload
 import ai.freeplay.client.resources.recordings.ResponseInfo
@@ -69,7 +70,7 @@ fun main(): Unit = runBlocking {
     val session = fpClient.sessions().create()
         .customMetadata(mapOf("custom_field" to "custom_value"))
 
-    val trace = session.createTrace("input str", "agent name", null)
+    val trace = session.createTrace(CreateTracePayload("input str").agentName("agent name"))
 
     val recordResponse = fpClient.recordings().create(
         RecordPayload(
@@ -80,7 +81,7 @@ fun main(): Unit = runBlocking {
             .promptVersionInfo(prompt.promptInfo)
             .callInfo(callInfo)
             .responseInfo(responseInfo)
-            .traceInfo(trace)
+            .parentId(trace.traceId)
     ).await()
 
     trace.recordOutput(projectId, "output str").await()

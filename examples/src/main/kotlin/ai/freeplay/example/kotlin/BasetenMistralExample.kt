@@ -2,6 +2,7 @@ package ai.freeplay.example.kotlin
 
 import ai.freeplay.client.Freeplay
 import ai.freeplay.client.resources.prompts.ChatMessage
+import ai.freeplay.client.resources.prompts.Prompts.GetFormattedRequest
 import ai.freeplay.client.resources.recordings.CallInfo
 import ai.freeplay.client.resources.recordings.RecordPayload
 import ai.freeplay.client.resources.recordings.ResponseInfo
@@ -30,10 +31,7 @@ fun main(): Unit = runBlocking {
     println("Getting the prompt...")
     val prompt = fpClient.prompts()
         .getFormatted<List<ChatMessage>>(
-            projectId,
-            "my-baseten-mistral-prompt",
-            "latest",
-            variables
+            GetFormattedRequest(projectId, "my-baseten-mistral-prompt", "latest", variables)
         ).await()
 
     val startTime = System.currentTimeMillis()

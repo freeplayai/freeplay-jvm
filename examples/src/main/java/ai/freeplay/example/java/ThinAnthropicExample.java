@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 import static ai.freeplay.client.Freeplay.Config;
+import static ai.freeplay.client.resources.prompts.Prompts.GetFormattedRequest;
 import static ai.freeplay.example.java.ExampleUtils.callAnthropic;
 import static java.lang.String.format;
 
@@ -41,11 +42,7 @@ public class ThinAnthropicExample {
 
         fpClient.prompts()
                 .<List<ChatMessage>>getFormatted(
-                        projectId,
-                        "my-anthropic-prompt",
-                        "latest",
-                        variables,
-                        null
+                        new GetFormattedRequest(projectId, "my-anthropic-prompt", "latest", variables)
                 ).thenCompose((FormattedPrompt<List<ChatMessage>> formattedPrompt) -> {
                             long startTime = System.currentTimeMillis();
                             return callAnthropic(

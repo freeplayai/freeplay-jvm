@@ -1,11 +1,11 @@
 package ai.freeplay.client.resources.prompts;
 
-import ai.freeplay.client.exceptions.FreeplayConfigurationException;
-import ai.freeplay.client.media.MediaInputCollection;
 import ai.freeplay.client.adapters.LLMAdapters;
 import ai.freeplay.client.adapters.LLMAdapters.LLMAdapter;
+import ai.freeplay.client.exceptions.FreeplayConfigurationException;
 import ai.freeplay.client.internal.CallSupport;
 import ai.freeplay.client.internal.v2dto.TemplateDTO;
+import ai.freeplay.client.media.MediaInputCollection;
 
 import java.util.HashMap;
 import java.util.List;
@@ -41,35 +41,6 @@ public class Prompts {
         return callSupport
                 .getPromptByVersionId(projectId, templateId, templateVersionId)
                 .thenApply(template -> getTemplateFromDTO(projectId, null, template));
-    }
-
-    /**
-     * @deprecated use {@link #getFormatted(GetFormattedRequest)} instead.
-     */
-    @Deprecated
-    public <LLMFormat> CompletableFuture<FormattedPrompt<LLMFormat>> getFormatted(
-            String projectId,
-            String templateName,
-            String environment,
-            Map<String, Object> variables,
-            String flavorName
-    ) {
-        return getBound(projectId, templateName, environment, variables, null, null)
-                .thenApply(boundPrompt -> boundPrompt.format(flavorName));
-    }
-
-    /**
-     * @deprecated use {@link #getFormatted(GetFormattedRequest)} instead.
-     */
-    @Deprecated
-    public <LLMFormat> CompletableFuture<FormattedPrompt<LLMFormat>> getFormatted(
-            String projectId,
-            String templateName,
-            String environment,
-            Map<String, Object> variables
-    ) {
-        return getBound(projectId, templateName, environment, variables, null, null)
-                .thenApply(BoundPrompt::format);
     }
 
     public <LLMFormat> CompletableFuture<FormattedPrompt<LLMFormat>> getFormatted(GetFormattedRequest request) {

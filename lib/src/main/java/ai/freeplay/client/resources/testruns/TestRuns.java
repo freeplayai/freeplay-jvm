@@ -18,45 +18,15 @@ public class TestRuns {
         return new TestRunRequest.Builder(projectId, datasetName);
     }
 
-    /**
-     * @deprecated Use {@link #createRequest(String, String)} instead to construct a request
-     */
-    @Deprecated
-    public CompletableFuture<TestRun> create(String projectId, String datasetName) {
-        return create(new TestRunRequest.Builder(projectId, datasetName).build());
-    }
-
-    /**
-     * @deprecated Use {@link #createRequest(String, String)} instead to construct a request
-     */
-    @Deprecated
-    public CompletableFuture<TestRun> create(String projectId, String datasetName, boolean includeOutputs) {
-        return create(new TestRunRequest.Builder(projectId, datasetName)
-                .includeOutputs(includeOutputs)
-                .build());
-    }
-
-    /**
-     * @deprecated Use {@link #createRequest(String, String)} instead to construct a request
-     */
-    @Deprecated
-    public CompletableFuture<TestRun> create(String projectId, String datasetName, boolean includeOutputs, String name, String description) {
-        return create(new TestRunRequest.Builder(projectId, datasetName)
-                .includeOutputs(includeOutputs)
-                .name(name)
-                .description(description)
-                .build());
-    }
-
     public CompletableFuture<TestRun> create(TestRunRequest request) {
         return callSupport.createTestRun(
-            request.getProjectId(),
-            request.getDatasetName(),
-            request.includeOutputs(),
-            request.getName(),
-            request.getDescription(),
-            request.getFlavorName(),
-            request.getTargetEvaluationIds()
+                request.getProjectId(),
+                request.getDatasetName(),
+                request.includeOutputs(),
+                request.getName(),
+                request.getDescription(),
+                request.getFlavorName(),
+                request.getTargetEvaluationIds()
         );
     }
 
