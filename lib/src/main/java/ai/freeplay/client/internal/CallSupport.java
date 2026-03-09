@@ -694,7 +694,7 @@ public class CallSupport {
         StringBuilder url = new StringBuilder(base)
                 .append("?page=").append(page)
                 .append("&page_size=").append(pageSize);
-        if (idFilter != null) url.append("&id=").append(idFilter);
+        if (idFilter != null) url.append("&id=").append(java.net.URLEncoder.encode(idFilter, java.nio.charset.StandardCharsets.UTF_8));
         if (nameFilter != null) url.append("&name=").append(java.net.URLEncoder.encode(nameFilter, java.nio.charset.StandardCharsets.UTF_8));
         return url.toString();
     }

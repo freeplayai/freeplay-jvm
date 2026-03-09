@@ -1,5 +1,6 @@
 package ai.freeplay.client.resources.promptdatasets;
 
+import ai.freeplay.client.exceptions.FreeplayClientException;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
@@ -17,6 +18,9 @@ public class CreatePromptDatasetRequest {
     private List<String> tags;
 
     public CreatePromptDatasetRequest(String name) {
+        if (name == null || name.trim().isEmpty()) {
+            throw new FreeplayClientException("name must not be null or blank");
+        }
         this.name = name;
     }
 
