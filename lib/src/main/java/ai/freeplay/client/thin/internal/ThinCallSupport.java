@@ -268,7 +268,8 @@ public class ThinCallSupport {
                     testRunResults.getId(),
                     testRunResults.getName(),
                     testRunResults.getDescription(),
-                    testRunResults.getSummaryStatistics()
+                    testRunResults.getSummaryStatistics(),
+                    testRunResults.getStatus()
             );
         });
     }

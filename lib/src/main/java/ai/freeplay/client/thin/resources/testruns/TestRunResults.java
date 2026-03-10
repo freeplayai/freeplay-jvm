@@ -11,12 +11,14 @@ public class TestRunResults {
     private final String name;
     private final String description;
     private final Map<String, Object> summaryStatistics;
+    private final String status;
 
-    public TestRunResults(String id, String name, String description, Map<String, Object> summaryStatistics) {
+    public TestRunResults(String id, String name, String description, Map<String, Object> summaryStatistics, String status) {
         this.id = id;
         this.name = name;
         this.description = description;
         this.summaryStatistics = summaryStatistics;
+        this.status = status;
     }
 
     public String getId() {
@@ -34,6 +36,10 @@ public class TestRunResults {
         return summaryStatistics;
     }
 
+    public String getStatus() {
+        return status;
+    }
+
     @Override
     public String toString() {
         return "TestRunResults{" +
@@ -41,6 +47,7 @@ public class TestRunResults {
                 ", name='" + name + '\'' +
                 ", description='" + description + '\'' +
                 ", summaryStatistics=" + summaryStatistics +
+                ", status='" + status + '\'' +
                 '}';
     }
 }
