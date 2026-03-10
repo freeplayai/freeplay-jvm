@@ -1,7 +1,7 @@
 package ai.freeplay.client.adapters;
 
 import ai.freeplay.client.internal.v2dto.TemplateDTO.ToolSchema;
-import ai.freeplay.client.resources.prompts.ChatMessage;
+import ai.freeplay.client.resources.prompts.*;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -10,7 +10,6 @@ import java.util.Map;
 import static java.util.stream.Collectors.toList;
 
 public class OpenAIResponsesAdapter implements LLMAdapters.LLMAdapter<List<Map<String, Object>>> {
-    private final OpenAILLMAdapter delegate = new OpenAILLMAdapter();
 
     @Override
     public RoleSupport getRoleSupport() {
@@ -24,8 +23,7 @@ public class OpenAIResponsesAdapter implements LLMAdapters.LLMAdapter<List<Map<S
 
     @Override
     public List<Map<String, Object>> toLLMSyntax(List<ChatMessage> messages) {
-        List<ChatMessage> formatted = delegate.toLLMSyntax(messages);
-        return formatted.stream()
+        return messages.stream()
                 .filter(m -> !"system".equals(m.getRole()))
                 .map(this::toResponsesMessage)
                 .collect(toList());
@@ -38,11 +36,56 @@ public class OpenAIResponsesAdapter implements LLMAdapters.LLMAdapter<List<Map<S
         if (message.isStringMessage()) {
             map.put("content", message.getContent());
         } else if (message.isStructuredMessage()) {
-            map.put("content", message.getStructuredContent());
+            List<Object> converted = message.getStructuredContent().stream()
+                    .map(this::toResponsesContentPart)
+                    .collect(toList());
+            map.put("content", converted);
         } else if (message.isCompletionMessage()) {
             map.put("content", message.getCompletionMessage());
         }
         return map;
+    }
+
+    private Object toResponsesContentPart(Object part) {
+        if (part instanceof ContentPartText) {
+            ContentPartText text = (ContentPartText) part;
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("type", "input_text");
+            m.put("text", text.getText());
+            return m;
+        } else if (part instanceof ContentPartUrl) {
+            ContentPartUrl url = (ContentPartUrl) part;
+            if (url.getType() != MediaType.IMAGE) {
+                throw new IllegalStateException("Message contains a non-image URL, but OpenAI Responses API only supports image URLs.");
+            }
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("type", "input_image");
+            m.put("image_url", url.getUrl());
+            return m;
+        } else if (part instanceof ContentPartBase64) {
+            return encodeBase64Responses((ContentPartBase64) part);
+        }
+        return part;
+    }
+
+    private static Object encodeBase64Responses(ContentPartBase64 part) {
+        String base64Data = new String(part.getData());
+        String contentFormat = part.getContentType().split("/")[1];
+        if (part.getType() == MediaType.IMAGE) {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("type", "input_image");
+            m.put("image_url", String.format("data:%s;base64,%s", part.getContentType(), base64Data));
+            return m;
+        } else if (part.getType() == MediaType.FILE) {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("type", "input_file");
+            m.put("filename", String.format("%s.%s", part.getSlotName(), contentFormat));
+            m.put("file_data", String.format("data:%s;base64,%s", part.getContentType(), base64Data));
+            return m;
+        } else if (part.getType() == MediaType.AUDIO) {
+            throw new IllegalStateException("Audio content is not yet supported by the OpenAI Responses API.");
+        }
+        return part;
     }
 
     @Override

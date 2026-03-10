@@ -57,6 +57,48 @@ public class OpenAIResponsesAdapterTest {
         assertEquals(RoleSupport.OPENAI_RESPONSES, new OpenAIResponsesAdapter().getRoleSupport());
     }
 
+    @Test
+    public void testStructuredMediaContentUsesResponsesApiTypes() {
+        OpenAIResponsesAdapter adapter = new OpenAIResponsesAdapter();
+
+        List<Object> structuredContent = List.of(
+                new ContentPartText("Describe this image"),
+                new ContentPartUrl("img", MediaType.IMAGE, "https://example.com/photo.jpg"),
+                new ContentPartBase64("img2", MediaType.IMAGE, "image/png", "iVBOR".getBytes()),
+                new ContentPartBase64("doc", MediaType.FILE, "application/pdf", "JVBERi".getBytes())
+        );
+
+        List<Map<String, Object>> result = adapter.toLLMSyntax(List.of(
+                new ChatMessage("user", structuredContent)
+        ));
+
+        assertEquals(1, result.size());
+        Map<String, Object> msg = result.get(0);
+        assertEquals("message", msg.get("type"));
+        assertEquals("user", msg.get("role"));
+
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> content = (List<Map<String, Object>>) msg.get("content");
+        assertEquals(4, content.size());
+
+        // Text part
+        assertEquals("input_text", content.get(0).get("type"));
+        assertEquals("Describe this image", content.get(0).get("text"));
+
+        // Image URL part
+        assertEquals("input_image", content.get(1).get("type"));
+        assertEquals("https://example.com/photo.jpg", content.get(1).get("image_url"));
+
+        // Image base64 part
+        assertEquals("input_image", content.get(2).get("type"));
+        assertEquals("data:image/png;base64,iVBOR", content.get(2).get("image_url"));
+
+        // File base64 part
+        assertEquals("input_file", content.get(3).get("type"));
+        assertEquals("doc.pdf", content.get(3).get("filename"));
+        assertEquals("data:application/pdf;base64,JVBERi", content.get(3).get("file_data"));
+    }
+
     // -- Tool schema (flat format) --
 
     @Test
