@@ -2,6 +2,14 @@
 
 Notable additions, fixes, or breaking changes to the Freeplay SDK.
 
+## [0.6.0] - 2026-03-10
+
+### Added
+
+- **OpenAI Responses API support**: New `openai_responses` flavor with `OpenAIResponsesAdapter` that formats messages for the OpenAI Responses API (`{type: "message", role, content}`), strips system messages (use `instructions` parameter instead), and formats tool schemas in the flat Responses API style (`{type, name, description, parameters}`).
+- **`developer` role support**: New role coercion system via `RoleSupport.prepareMessages()`. The `developer` role passes through natively for `openai_responses`, is coerced to `system` (with a warning) for `openai_chat`, and throws for unsupported flavors.
+- **`allMessages(List<?>)` overload**: `FormattedPrompt.allMessages()` now accepts a list of messages to support Responses API `completion.output` arrays.
+
 ## [0.5.0] - 2026-03-05
 
 ### Breaking changes

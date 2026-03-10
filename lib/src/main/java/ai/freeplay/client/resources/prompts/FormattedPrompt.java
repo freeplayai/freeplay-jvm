@@ -77,4 +77,16 @@ public class FormattedPrompt<LLMContentFormat> {
         newList.add(new ChatMessage(completionMessage));
         return newList;
     }
+
+    public List<ChatMessage> allMessages(List<?> completionMessages) {
+        List<ChatMessage> newList = new ArrayList<>(boundMessages);
+        for (Object msg : completionMessages) {
+            if (msg instanceof ChatMessage) {
+                newList.add((ChatMessage) msg);
+            } else {
+                newList.add(new ChatMessage(msg));
+            }
+        }
+        return newList;
+    }
 }
