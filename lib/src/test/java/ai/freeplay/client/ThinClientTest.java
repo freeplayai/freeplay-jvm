@@ -483,6 +483,7 @@ public class ThinClientTest extends HttpClientTestBase {
             assertEquals(testRunId, testRunResults.get().getId());
             assertNull(testRunResults.get().getName());
             assertNull(testRunResults.get().getDescription());
+            assertEquals("complete", testRunResults.get().getStatus());
         });
     }
 

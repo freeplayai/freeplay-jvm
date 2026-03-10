@@ -11,6 +11,7 @@ public class TestRunResultsDTO {
     private String name;
     private String description;
     private Map<String, Object> summaryStatistics;
+    private String status;
 
     @SuppressWarnings("unused")
     public TestRunResultsDTO() {
@@ -21,12 +22,14 @@ public class TestRunResultsDTO {
             String id,
             String name,
             String description,
-            Map<String, Object> summaryStatistics
+            Map<String, Object> summaryStatistics,
+            String status
     ) {
         this.id = id;
         this.name = name;
         this.description = description;
         this.summaryStatistics = summaryStatistics;
+        this.status = status;
     }
 
     public String getId() {
@@ -40,6 +43,9 @@ public class TestRunResultsDTO {
     }
     public Map<String, Object> getSummaryStatistics() {
         return summaryStatistics;
+    }
+    public String getStatus() {
+        return status;
     }
 
 }
