@@ -15,6 +15,10 @@ public class LLMAdapters {
         String getProvider();
         LLMFormat toLLMSyntax(List<ChatMessage> messages);
 
+        default RoleSupport getRoleSupport() {
+            return RoleSupport.DEFAULT;
+        }
+
         default List<Map<String, Object>> toToolSchemaFormat(List<ToolSchema> toolSchema) {
             throw new UnsupportedOperationException("Tool schema format not supported for this model and provider.");
         }
@@ -38,6 +42,8 @@ public class LLMAdapters {
                 return new GeminiLLMAdapter();
             case "gemini_api_chat":
                 return new GeminiApiLLMAdapter();
+            case "openai_responses":
+                return new OpenAIResponsesAdapter();
             case "amazon_bedrock_converse":
             case "bedrock_converse":
                 return new BedrockConverseAdapter();

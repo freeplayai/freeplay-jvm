@@ -15,6 +15,11 @@ import static java.util.stream.Collectors.toUnmodifiableList;
 
 public class OpenAILLMAdapter implements LLMAdapters.LLMAdapter<List<ChatMessage>> {
     @Override
+    public RoleSupport getRoleSupport() {
+        return RoleSupport.OPENAI;
+    }
+
+    @Override
     public String getProvider() {
         return "openai";
     }

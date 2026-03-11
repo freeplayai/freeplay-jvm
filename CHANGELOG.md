@@ -2,7 +2,7 @@
 
 Notable additions, fixes, or breaking changes to the Freeplay SDK.
 
-## [0.5.0] - 2026-03-05
+## [0.5.0] - 2026-03-10
 
 ### Breaking changes
 
@@ -54,7 +54,8 @@ Notable additions, fixes, or breaking changes to the Freeplay SDK.
 - **`TestListDTO` renamed to `DatasetDTO`** (internal class — only relevant if you were referencing internal DTOs directly).
 
 ### Added
-
+- **OpenAI Responses API support**: New `openai_responses` flavor with `OpenAIResponsesAdapter` that formats messages for the OpenAI Responses API (`{type: "message", role, content}`), strips system messages (use `instructions` parameter instead), and formats tool schemas in the flat Responses API style (`{type, name, description, parameters}`).
+- **`developer` role support**: New role coercion system via `RoleSupport.prepareMessages()`. The `developer` role passes through natively for `openai_responses`, is coerced to `system` (with a warning) for `openai_chat`, and throws for unsupported flavors.
 - **Reference example for agent evaluation** (`examples/.../ThinTestRunWithAgentDatasetExample.java`): end-to-end example that creates a trace-based test run against an agent dataset, iterates `TraceTestCase` entries, logs completions via `session.createTrace()`, and records results with `TestRunInfo` linking each trace back to its test case.
 - **Prompt dataset management.** New `freeplay.promptDatasets()` resource provides full CRUD for prompt-level datasets and their test cases, including bulk create and bulk delete of test cases (max 100 per request).
 - **Agent dataset management.** New `freeplay.agentDatasets()` resource provides full CRUD for agent-level datasets and their test cases. Agent test cases use free-form JSON for inputs and outputs, and datasets can be linked to specific agents via `compatibleAgentIds` (must be valid agent UUIDs from your project).

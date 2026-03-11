@@ -1,6 +1,7 @@
 package ai.freeplay.client.resources.prompts;
 
 import ai.freeplay.client.adapters.LLMAdapters;
+import ai.freeplay.client.adapters.RoleSupport;
 import ai.freeplay.client.internal.CallSupport;
 import ai.freeplay.client.internal.v2dto.TemplateDTO.ToolSchema;
 
@@ -45,8 +46,24 @@ public class BoundPrompt {
 
         String finalFlavor = CallSupport.getActiveFlavorName(flavorName, promptInfo.getFlavorName());
         LLMAdapters.LLMAdapter<?> llmAdapter = LLMAdapters.adapterForFlavor(finalFlavor);
+
+        PromptInfo effectivePromptInfo = flavorName != null
+            ? new PromptInfo(
+                promptInfo.getPromptTemplateId(),
+                promptInfo.getPromptTemplateVersionId(),
+                promptInfo.getTemplateName(),
+                promptInfo.getEnvironment(),
+                promptInfo.getModelParameters(),
+                llmAdapter.getProvider(),
+                promptInfo.getModel(),
+                finalFlavor
+            )
+            : promptInfo;
+
+        List<ChatMessage> prepared = RoleSupport.prepareMessages(messages, llmAdapter.getRoleSupport(), finalFlavor);
+
         //noinspection unchecked
-        ContentFormat llmSyntax = (ContentFormat) llmAdapter.toLLMSyntax(messages);
+        ContentFormat llmSyntax = (ContentFormat) llmAdapter.toLLMSyntax(prepared);
 
         List<Map<String, Object>> formattedToolSchema = toolSchema != null
             ? llmAdapter.toToolSchemaFormat(toolSchema)
@@ -56,6 +73,6 @@ public class BoundPrompt {
             ? llmAdapter.toOutputSchemaFormat(outputSchema)
             : null;
 
-        return new FormattedPrompt<>(getPromptInfo(), getMessages(), llmSyntax, formattedToolSchema, formattedOutputSchema);
+        return new FormattedPrompt<>(effectivePromptInfo, prepared, llmSyntax, formattedToolSchema, formattedOutputSchema);
     }
 }
