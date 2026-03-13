@@ -1,5 +1,6 @@
 package ai.freeplay.client;
 
+import ai.freeplay.client.adapters.OpenAILLMAdapter;
 import ai.freeplay.client.exceptions.FreeplayConfigurationException;
 import ai.freeplay.client.internal.v2dto.TemplateDTO;
 import ai.freeplay.client.media.MediaInputBase64;
@@ -350,6 +351,55 @@ public class TemplatePromptTest extends HttpClientTestBase {
             ));
             assertEquals("POST", requestArg.getValue().method());
         });
+    }
+
+    @Test
+    public void testAllMessagesWithMediaContainsProviderFormattedContent() {
+        PromptInfo promptInfo = new PromptInfo(
+                "test-id",
+                "test-version-id",
+                "test-template",
+                "production",
+                Map.of(),
+                "openai",
+                "gpt-4",
+                "openai_chat"
+        );
+
+        List<ChatMessage> messages = List.of(
+                new ChatMessage("system", "Respond to the user's query"),
+                new ChatMessage("user", "{{query}}", List.of(
+                        new MediaSlot(MediaType.IMAGE, "some-image"),
+                        new MediaSlot(MediaType.AUDIO, "some-audio")
+                ))
+        );
+
+        TemplatePrompt prompt = new TemplatePrompt(promptInfo, messages);
+        MediaInputCollection mediaInputs = new MediaInputCollection();
+        mediaInputs.put("some-image", new MediaInputUrl("http://localhost/image"));
+        mediaInputs.put("some-audio", new MediaInputBase64("some data".getBytes(), "audio/mpeg"));
+
+        BoundPrompt boundPrompt = prompt.bind(
+                new TemplatePrompt.BindRequest(Map.of("query", "Some query")).mediaInputs(mediaInputs)
+        );
+
+        FormattedPrompt<?> formattedPrompt = boundPrompt.format("openai_chat");
+        List<ChatMessage> allMessages = formattedPrompt.allMessages(new ChatMessage("assistant", "Response"));
+
+        assertEquals(3, allMessages.size());
+
+        // The user message (index 1) should have structured content with provider-formatted parts
+        ChatMessage userMessage = allMessages.get(1);
+        assertTrue(userMessage.isStructuredMessage());
+
+        List<Object> structuredContent = userMessage.getStructuredContent();
+        for (Object part : structuredContent) {
+            // Each part should be the adapter's ContentPart, not internal types like ContentPartText/ContentPartUrl/ContentPartBase64
+            assertTrue(
+                    "Expected OpenAILLMAdapter.ContentPart but got " + part.getClass().getSimpleName(),
+                    part instanceof OpenAILLMAdapter.ContentPart
+            );
+        }
     }
 
     @Test

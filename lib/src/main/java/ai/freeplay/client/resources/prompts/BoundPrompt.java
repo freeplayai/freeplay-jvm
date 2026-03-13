@@ -5,6 +5,7 @@ import ai.freeplay.client.adapters.RoleSupport;
 import ai.freeplay.client.internal.CallSupport;
 import ai.freeplay.client.internal.v2dto.TemplateDTO.ToolSchema;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -64,6 +65,24 @@ public class BoundPrompt {
 
         //noinspection unchecked
         ContentFormat llmSyntax = (ContentFormat) llmAdapter.toLLMSyntax(prepared);
+
+        // Kind of a hack: bound messages contain internal content objects
+        // (ContentPartText, ContentPartBase64, etc.) that aren't provider-formatted.
+        // Ideally bind() wouldn't produce these internal objects.
+        // For now, re-run each structured message through the adapter to get
+        // provider-formatted content while preserving messages the adapter
+        // would otherwise drop (e.g. system for Responses API).
+        List<ChatMessage> convertedMessages = new ArrayList<>(prepared.size());
+        for (ChatMessage msg : prepared) {
+            if (msg.isStructuredMessage()) {
+                //noinspection unchecked
+                List<ChatMessage> converted = (List<ChatMessage>) llmAdapter.toLLMSyntax(List.of(msg));
+                convertedMessages.add(converted.get(0));
+            } else {
+                convertedMessages.add(msg);
+            }
+        }
+        prepared = convertedMessages;
 
         List<Map<String, Object>> formattedToolSchema = toolSchema != null
             ? llmAdapter.toToolSchemaFormat(toolSchema)
