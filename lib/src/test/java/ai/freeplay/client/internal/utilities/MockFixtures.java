@@ -262,7 +262,8 @@ public class MockFixtures {
                         "summary_statistics", object(
                                 "human_evaluation", object(),
                                 "auto_evaluation", object()
-                        )
+                        ),
+                        "status", "complete"
                 )
         );
         try {
