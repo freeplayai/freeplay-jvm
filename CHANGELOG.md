@@ -4,9 +4,14 @@ Notable additions, fixes, or breaking changes to the Freeplay SDK.
 
 ## [0.5.2] - 2026-03-16
 
+### Added
+
+- `FormattedPrompt.getLlmPrompt()` — alias for `getFormattedPrompt()`, consistent with Python/Node SDK naming.
+
 ### Deprecated
 
 - `FormattedPrompt.allMessages()` — use `getLlmPrompt()` with completion output directly when constructing `RecordPayload`.
+- `FormattedPrompt.getFormattedPrompt()` — use `getLlmPrompt()` instead.
 
 ## [0.5.1] - 2026-03-10
 
