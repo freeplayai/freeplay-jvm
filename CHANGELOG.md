@@ -2,6 +2,12 @@
 
 Notable additions, fixes, or breaking changes to the Freeplay SDK.
 
+## [0.5.2] - 2026-03-16
+
+### Deprecated
+
+- `FormattedPrompt.allMessages()` — use `getLlmPrompt()` with completion output directly when constructing `RecordPayload`.
+
 ## [0.5.1] - 2026-03-10
 
 ### Added
