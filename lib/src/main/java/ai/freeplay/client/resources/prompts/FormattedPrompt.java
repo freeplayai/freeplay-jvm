@@ -36,13 +36,14 @@ public class FormattedPrompt<LLMContentFormat> {
         return boundMessages;
     }
 
+    /**
+     * @deprecated Use {@link #getLlmPrompt()} instead.
+     */
+    @Deprecated
     public LLMContentFormat getFormattedPrompt() {
         return formattedPrompt;
     }
 
-    /**
-     * Alias for {@link #getFormattedPrompt()} — consistent with Python/Node SDK naming.
-     */
     public LLMContentFormat getLlmPrompt() {
         return formattedPrompt;
     }
