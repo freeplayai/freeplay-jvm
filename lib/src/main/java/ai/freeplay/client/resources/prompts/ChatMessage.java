@@ -58,6 +58,17 @@ public class ChatMessage {
         return role;
     }
 
+    public ChatMessage withRole(String newRole) {
+        ChatMessage copy = new ChatMessage();
+        copy.role = newRole;
+        copy.content = this.content;
+        copy.structuredContent = this.structuredContent;
+        copy.completionMessage = this.completionMessage;
+        copy.mediaSlots = this.mediaSlots;
+        copy.isGemini = this.isGemini;
+        return copy;
+    }
+
     public String getContent() {
         if (this.isEmptyMessage()) {
             return null;
