@@ -30,17 +30,19 @@ public class AnthropicLLMAdapter implements LLMAdapters.LLMAdapter<List<ChatMess
                     List<Object> content = chatMessage.getStructuredContent();
 
                     List<Object> anthropicContent = content.stream().map(part -> {
-                        if (part instanceof ContentPartText) {
-                            return new ContentPart<Void>(((ContentPartText) part).getText());
-                        } else if (part instanceof ContentPartUrl) {
-                            ContentPartUrl url = (ContentPartUrl) part;
-                            return new ContentPart<>(anthropicType(url.getType()), new UrlContent(url.getUrl()));
-                        } else if (part instanceof ContentPartBase64) {
-                            ContentPartBase64 base64 = (ContentPartBase64) part;
-                            return new ContentPart<>(anthropicType(base64.getType()), new Base64Content(
-                                    base64.getContentType(),
-                                    new String(base64.getData())
-                            ));
+                        if (part instanceof TextContent) {
+                            return new AnthropicContentPart<Void>(((TextContent) part).getText());
+                        } else if (part instanceof ImageUrlContent) {
+                            ImageUrlContent url = (ImageUrlContent) part;
+                            return new AnthropicContentPart<>(anthropicType(url.getMediaType()), new UrlContent(url.getUrl()));
+                        } else if (part instanceof ImageContent) {
+                            ImageContent img = (ImageContent) part;
+                            return new AnthropicContentPart<>("image", new Base64Content(img.getContentType(), img.getData()));
+                        } else if (part instanceof FileContent) {
+                            FileContent file = (FileContent) part;
+                            return new AnthropicContentPart<>("document", new Base64Content(file.getContentType(), file.getData()));
+                        } else if (part instanceof AudioContent) {
+                            throw new IllegalStateException("Anthropic does not support audio content");
                         } else {
                             return part;
                         }
@@ -69,12 +71,12 @@ public class AnthropicLLMAdapter implements LLMAdapters.LLMAdapter<List<ChatMess
                 .collect(toList());
     }
 
-    private String anthropicType(MediaType mediaType) {
-        if (mediaType == MediaType.AUDIO || mediaType == MediaType.VIDEO ) {
+    private String anthropicType(String mediaType) {
+        if ("audio".equals(mediaType) || "video".equals(mediaType)) {
             throw new IllegalStateException("Anthropic does not support audio or video content");
         }
 
-        if (mediaType == MediaType.IMAGE) {
+        if ("image".equals(mediaType)) {
             return "image";
         } else {
             return "document";
@@ -83,17 +85,17 @@ public class AnthropicLLMAdapter implements LLMAdapters.LLMAdapter<List<ChatMess
 
     @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    public static class ContentPart<T> {
+    public static class AnthropicContentPart<T> {
         private String type;
         private String text;
         private T source;
 
-        public ContentPart(String text) {
+        public AnthropicContentPart(String text) {
             this.type = "text";
             this.text = text;
         }
 
-        public ContentPart(String type, T source) {
+        public AnthropicContentPart(String type, T source) {
             this.type = type;
             this.source = source;
         }
@@ -113,7 +115,7 @@ public class AnthropicLLMAdapter implements LLMAdapters.LLMAdapter<List<ChatMess
         @Override
         public boolean equals(Object o) {
             if (o == null || getClass() != o.getClass()) return false;
-            ContentPart<?> that = (ContentPart<?>) o;
+            AnthropicContentPart<?> that = (AnthropicContentPart<?>) o;
             return Objects.equals(type, that.type) && Objects.equals(text, that.text) && Objects.equals(source, that.source);
         }
 
@@ -124,7 +126,7 @@ public class AnthropicLLMAdapter implements LLMAdapters.LLMAdapter<List<ChatMess
 
         @Override
         public String toString() {
-            return "ContentPart{" +
+            return "AnthropicContentPart{" +
                     "type='" + type + '\'' +
                     ", text='" + text + '\'' +
                     ", content=" + source +

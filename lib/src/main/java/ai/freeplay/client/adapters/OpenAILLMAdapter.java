@@ -33,16 +33,24 @@ public class OpenAILLMAdapter implements LLMAdapters.LLMAdapter<List<ChatMessage
             List<Object> content = chatMessage.getStructuredContent();
 
             List<Object> openAIContent = content.stream().map((part -> {
-                if (part instanceof ContentPartText) {
-                    return new ContentPart(((ContentPartText) part).getText());
-                } else if (part instanceof ContentPartUrl) {
-                    ContentPartUrl url = (ContentPartUrl) part;
-                    if (url.getType() != MediaType.IMAGE) {
-                        throw new IllegalStateException("Message contains a non-image URL, but OpenAI only supports image URLs.");
-                    }
-                    return new ContentPart(new ImageContent(url.getUrl()));
-                } else if (part instanceof ContentPartBase64) {
-                    return encodeBase64((ContentPartBase64) part);
+                if (part instanceof TextContent) {
+                    return new OpenAIContentPart(((TextContent) part).getText());
+                } else if (part instanceof ImageUrlContent) {
+                    return new OpenAIContentPart(new OpenAIImageContent(((ImageUrlContent) part).getUrl()));
+                } else if (part instanceof ImageContent) {
+                    ImageContent img = (ImageContent) part;
+                    return new OpenAIContentPart(new OpenAIImageContent(String.format("data:%s;base64,%s", img.getContentType(), img.getData())));
+                } else if (part instanceof AudioContent) {
+                    AudioContent audio = (AudioContent) part;
+                    String format = audio.getContentType().split("/")[1].replaceFirst("mpeg", "mp3");
+                    return new OpenAIContentPart(new OpenAIAudioContent(audio.getData(), format));
+                } else if (part instanceof FileContent) {
+                    FileContent file = (FileContent) part;
+                    String contentFormat = file.getContentType().split("/")[1];
+                    return new OpenAIContentPart(new OpenAIFileContent(
+                            String.format("%s.%s", file.getFilename(), contentFormat),
+                            String.format("data:%s;base64,%s", file.getContentType(), file.getData())
+                    ));
                 } else {
                     return part;
                 }
@@ -50,23 +58,6 @@ public class OpenAILLMAdapter implements LLMAdapters.LLMAdapter<List<ChatMessage
 
             return new ChatMessage(chatMessage.getRole(), openAIContent);
         }).collect(toUnmodifiableList());
-    }
-
-    private static Object encodeBase64(ContentPartBase64 part) {
-        String base64Data = new String(part.getData());
-        String contentFormat = part.getContentType().split("/")[1];
-        if (part.getType() == MediaType.IMAGE) {
-            return new ContentPart(new ImageContent(String.format("data:%s;base64,%s", part.getContentType(), base64Data)));
-        } else if (part.getType() == MediaType.FILE) {
-            return new ContentPart(new FileContent(
-                    String.format("%s.%s", part.getSlotName(), contentFormat),
-                    String.format("data:%s;base64,%s", part.getContentType(), base64Data)
-            ));
-        } else if (part.getType() == MediaType.AUDIO) {
-            return new ContentPart(new AudioContent(base64Data, contentFormat.replaceFirst("mpeg", "mp3")));
-        } else {
-            return part;
-        }
     }
 
     @Override
@@ -91,29 +82,29 @@ public class OpenAILLMAdapter implements LLMAdapters.LLMAdapter<List<ChatMessage
 
     @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    public static class ContentPart {
+    public static class OpenAIContentPart {
         private String type;
-        private AudioContent inputAudio;
-        private ImageContent imageUrl;
-        private FileContent file;
+        private OpenAIAudioContent inputAudio;
+        private OpenAIImageContent imageUrl;
+        private OpenAIFileContent file;
         private String text;
 
-        public ContentPart(AudioContent inputAudio) {
+        public OpenAIContentPart(OpenAIAudioContent inputAudio) {
             this.type = "input_audio";
             this.inputAudio = inputAudio;
         }
 
-        public ContentPart(ImageContent imageUrl) {
+        public OpenAIContentPart(OpenAIImageContent imageUrl) {
             this.type = "image_url";
             this.imageUrl = imageUrl;
         }
 
-        public ContentPart(FileContent file) {
+        public OpenAIContentPart(OpenAIFileContent file) {
             this.type = "file";
             this.file = file;
         }
 
-        public ContentPart(String text) {
+        public OpenAIContentPart(String text) {
             this.type = "text";
             this.text = text;
         }
@@ -122,15 +113,15 @@ public class OpenAILLMAdapter implements LLMAdapters.LLMAdapter<List<ChatMessage
             return type;
         }
 
-        public AudioContent getInputAudio() {
+        public OpenAIAudioContent getInputAudio() {
             return inputAudio;
         }
 
-        public ImageContent getImageUrl() {
+        public OpenAIImageContent getImageUrl() {
             return imageUrl;
         }
 
-        public FileContent getFile() {
+        public OpenAIFileContent getFile() {
             return file;
         }
 
@@ -141,7 +132,7 @@ public class OpenAILLMAdapter implements LLMAdapters.LLMAdapter<List<ChatMessage
         @Override
         public boolean equals(Object o) {
             if (o == null || getClass() != o.getClass()) return false;
-            ContentPart that = (ContentPart) o;
+            OpenAIContentPart that = (OpenAIContentPart) o;
             return Objects.equals(type, that.type) && Objects.equals(inputAudio, that.inputAudio) && Objects.equals(imageUrl, that.imageUrl) && Objects.equals(file, that.file) && Objects.equals(text, that.text);
         }
 
@@ -152,7 +143,7 @@ public class OpenAILLMAdapter implements LLMAdapters.LLMAdapter<List<ChatMessage
 
         @Override
         public String toString() {
-            return "ContentPart{" +
+            return "OpenAIContentPart{" +
                     "type='" + type + '\'' +
                     ", inputAudio=" + inputAudio +
                     ", imageUrl=" + imageUrl +
@@ -163,11 +154,11 @@ public class OpenAILLMAdapter implements LLMAdapters.LLMAdapter<List<ChatMessage
     }
 
     @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
-    public static class AudioContent {
+    public static class OpenAIAudioContent {
         private String data;
         private String format;
 
-        public AudioContent(String data, String format) {
+        public OpenAIAudioContent(String data, String format) {
             this.data = data;
             this.format = format;
         }
@@ -183,7 +174,7 @@ public class OpenAILLMAdapter implements LLMAdapters.LLMAdapter<List<ChatMessage
         @Override
         public boolean equals(Object o) {
             if (o == null || getClass() != o.getClass()) return false;
-            AudioContent that = (AudioContent) o;
+            OpenAIAudioContent that = (OpenAIAudioContent) o;
             return Objects.equals(data, that.data) && Objects.equals(format, that.format);
         }
 
@@ -194,7 +185,7 @@ public class OpenAILLMAdapter implements LLMAdapters.LLMAdapter<List<ChatMessage
 
         @Override
         public String toString() {
-            return "AudioContent{" +
+            return "OpenAIAudioContent{" +
                     "data='" + data + '\'' +
                     ", format='" + format + '\'' +
                     '}';
@@ -202,10 +193,10 @@ public class OpenAILLMAdapter implements LLMAdapters.LLMAdapter<List<ChatMessage
     }
 
     @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
-    public static class ImageContent {
+    public static class OpenAIImageContent {
         private String url;
 
-        public ImageContent(String url) {
+        public OpenAIImageContent(String url) {
             this.url = url;
         }
 
@@ -216,7 +207,7 @@ public class OpenAILLMAdapter implements LLMAdapters.LLMAdapter<List<ChatMessage
         @Override
         public boolean equals(Object o) {
             if (o == null || getClass() != o.getClass()) return false;
-            ImageContent that = (ImageContent) o;
+            OpenAIImageContent that = (OpenAIImageContent) o;
             return Objects.equals(url, that.url);
         }
 
@@ -227,18 +218,18 @@ public class OpenAILLMAdapter implements LLMAdapters.LLMAdapter<List<ChatMessage
 
         @Override
         public String toString() {
-            return "ImageContent{" +
+            return "OpenAIImageContent{" +
                     "url='" + url + '\'' +
                     '}';
         }
     }
 
     @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
-    public static class FileContent {
+    public static class OpenAIFileContent {
         private String filename;
         private String fileData;
 
-        public FileContent(String filename, String fileData) {
+        public OpenAIFileContent(String filename, String fileData) {
             this.filename = filename;
             this.fileData = fileData;
         }
@@ -254,7 +245,7 @@ public class OpenAILLMAdapter implements LLMAdapters.LLMAdapter<List<ChatMessage
         @Override
         public boolean equals(Object o) {
             if (o == null || getClass() != o.getClass()) return false;
-            FileContent that = (FileContent) o;
+            OpenAIFileContent that = (OpenAIFileContent) o;
             return Objects.equals(filename, that.filename) && Objects.equals(fileData, that.fileData);
         }
 
@@ -265,7 +256,7 @@ public class OpenAILLMAdapter implements LLMAdapters.LLMAdapter<List<ChatMessage
 
         @Override
         public String toString() {
-            return "FileContent{" +
+            return "OpenAIFileContent{" +
                     "filename='" + filename + '\'' +
                     ", fileData='" + fileData + '\'' +
                     '}';

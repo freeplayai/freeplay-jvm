@@ -3,10 +3,7 @@ package ai.freeplay.client;
 import ai.freeplay.client.adapters.*;
 
 import ai.freeplay.client.internal.v2dto.TemplateDTO.ToolSchema;
-import ai.freeplay.client.resources.prompts.ChatMessage;
-import ai.freeplay.client.resources.prompts.ContentPartBase64;
-import ai.freeplay.client.resources.prompts.ContentPartText;
-import ai.freeplay.client.resources.prompts.MediaType;
+import ai.freeplay.client.resources.prompts.*;
 import org.junit.Test;
 
 import java.util.*;
@@ -72,12 +69,11 @@ public class GeminiApiLLMAdapterTest {
     @Test
     public void testToLLMSyntaxWithStructuredContent() {
         GeminiApiLLMAdapter adapter = new GeminiApiLLMAdapter();
-        byte[] imageBytes = Base64.getEncoder().encode("image-data".getBytes());
 
         List<Map<String, Object>> result = adapter.toLLMSyntax(List.of(
                 new ChatMessage("user", List.of(
-                        new ContentPartText("Look at this image"),
-                        new ContentPartBase64("img1", MediaType.IMAGE, "image/png", imageBytes)
+                        new TextContent("Look at this image"),
+                        new ImageContent("image/png", Base64.getEncoder().encodeToString("image-data".getBytes()))
                 ))
         ));
 

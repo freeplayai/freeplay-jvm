@@ -2,7 +2,7 @@ package ai.freeplay.client.adapters;
 
 import ai.freeplay.client.exceptions.FreeplayConfigurationException;
 import ai.freeplay.client.internal.v2dto.TemplateDTO;
-import ai.freeplay.client.resources.prompts.ChatMessage;
+import ai.freeplay.client.resources.prompts.*;
 
 import java.nio.ByteBuffer;
 import java.util.*;
@@ -83,84 +83,42 @@ public class BedrockConverseAdapter implements LLMAdapters.LLMAdapter<List<Map<S
         return result;
     }
 
-    @SuppressWarnings("unchecked")
     private Object convertContentItem(Object item) {
-        if (item instanceof Map) {
-            Map<String, Object> itemMap = (Map<String, Object>) item;
-
-            // Check for text content
-            if (itemMap.containsKey("text")) {
-                Map<String, Object> textContent = new HashMap<>();
-                textContent.put("text", itemMap.get("text"));
-                return textContent;
-            }
-
-            // Check for image content with base64 data
-            if (itemMap.containsKey("slot_type") && "image".equals(itemMap.get("slot_type"))) {
-                if (itemMap.containsKey("data") && itemMap.containsKey("content_type")) {
-                    String format = extractFormat((String) itemMap.get("content_type"));
-                    Map<String, Object> imageContent = new HashMap<>();
-                    Map<String, Object> image = new HashMap<>();
-                    image.put("format", format);
-
-                    Map<String, Object> source = new HashMap<>();
-                    // Convert base64 string to bytes if needed
-                    Object data = itemMap.get("data");
-                    if (data instanceof String) {
-                        // Keep as base64 string, Bedrock client will handle conversion
-                        byte[] bytes = Base64.getDecoder().decode((String) data);
-                        source.put("bytes", bytes);
-                    } else if (data instanceof byte[]) {
-                        source.put("bytes", data);
-                    } else if (data instanceof ByteBuffer) {
-                        source.put("bytes", ((ByteBuffer) data).array());
-                    }
-
-                    image.put("source", source);
-                    imageContent.put("image", image);
-                    return imageContent;
-                }
-            }
-
-            // Check for document content with base64 data
-            if (itemMap.containsKey("slot_type") && "file".equals(itemMap.get("slot_type"))) {
-                if (itemMap.containsKey("data") && itemMap.containsKey("content_type")) {
-                    String format = extractFormat((String) itemMap.get("content_type"));
-                    String name = (String) itemMap.getOrDefault("slot_name", "document");
-
-                    Map<String, Object> documentContent = new HashMap<>();
-                    Map<String, Object> document = new HashMap<>();
-                    document.put("format", format);
-                    document.put("name", name);
-
-                    Map<String, Object> source = new HashMap<>();
-                    // Convert base64 string to bytes if needed
-                    Object data = itemMap.get("data");
-                    if (data instanceof String) {
-                        // Keep as base64 string, Bedrock client will handle conversion
-                        byte[] bytes = Base64.getDecoder().decode((String) data);
-                        source.put("bytes", bytes);
-                    } else if (data instanceof byte[]) {
-                        source.put("bytes", data);
-                    } else if (data instanceof ByteBuffer) {
-                        source.put("bytes", ((ByteBuffer) data).array());
-                    }
-
-                    document.put("source", source);
-                    documentContent.put("document", document);
-                    return documentContent;
-                }
-            }
-
-            // For audio/video, throw error
-            if (itemMap.containsKey("slot_type")) {
-                String slotType = (String) itemMap.get("slot_type");
-                if ("audio".equals(slotType) || "video".equals(slotType)) {
-                    throw new FreeplayConfigurationException(
-                        "Bedrock Converse does not support " + slotType + " content"
-                    );
-                }
-            }
+        if (item instanceof TextContent) {
+            Map<String, Object> textContent = new HashMap<>();
+            textContent.put("text", ((TextContent) item).getText());
+            return textContent;
+        } else if (item instanceof ImageContent) {
+            ImageContent img = (ImageContent) item;
+            String format = extractFormat(img.getContentType());
+            Map<String, Object> imageContent = new HashMap<>();
+            Map<String, Object> image = new HashMap<>();
+            image.put("format", format);
+            Map<String, Object> source = new HashMap<>();
+            source.put("bytes", Base64.getDecoder().decode(img.getData()));
+            image.put("source", source);
+            imageContent.put("image", image);
+            return imageContent;
+        } else if (item instanceof ImageUrlContent) {
+            throw new FreeplayConfigurationException(
+                "Bedrock Converse does not support URL-based media content"
+            );
+        } else if (item instanceof FileContent) {
+            FileContent file = (FileContent) item;
+            String format = extractFormat(file.getContentType());
+            Map<String, Object> documentContent = new HashMap<>();
+            Map<String, Object> document = new HashMap<>();
+            document.put("format", format);
+            document.put("name", file.getFilename());
+            Map<String, Object> source = new HashMap<>();
+            source.put("bytes", Base64.getDecoder().decode(file.getData()));
+            document.put("source", source);
+            documentContent.put("document", document);
+            return documentContent;
+        } else if (item instanceof AudioContent) {
+            throw new FreeplayConfigurationException(
+                "Bedrock Converse does not support audio content"
+            );
         }
 
         // Return as-is for other types

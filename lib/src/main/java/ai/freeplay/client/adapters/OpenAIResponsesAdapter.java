@@ -47,42 +47,31 @@ public class OpenAIResponsesAdapter implements LLMAdapters.LLMAdapter<List<Map<S
     }
 
     private Object toResponsesContentPart(Object part) {
-        if (part instanceof ContentPartText) {
-            ContentPartText text = (ContentPartText) part;
+        if (part instanceof TextContent) {
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("type", "input_text");
-            m.put("text", text.getText());
+            m.put("text", ((TextContent) part).getText());
             return m;
-        } else if (part instanceof ContentPartUrl) {
-            ContentPartUrl url = (ContentPartUrl) part;
-            if (url.getType() != MediaType.IMAGE) {
-                throw new IllegalStateException("Message contains a non-image URL, but OpenAI Responses API only supports image URLs.");
-            }
+        } else if (part instanceof ImageUrlContent) {
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("type", "input_image");
-            m.put("image_url", url.getUrl());
+            m.put("image_url", ((ImageUrlContent) part).getUrl());
             return m;
-        } else if (part instanceof ContentPartBase64) {
-            return encodeBase64Responses((ContentPartBase64) part);
-        }
-        return part;
-    }
-
-    private static Object encodeBase64Responses(ContentPartBase64 part) {
-        String base64Data = new String(part.getData());
-        String contentFormat = part.getContentType().split("/")[1];
-        if (part.getType() == MediaType.IMAGE) {
+        } else if (part instanceof ImageContent) {
+            ImageContent img = (ImageContent) part;
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("type", "input_image");
-            m.put("image_url", String.format("data:%s;base64,%s", part.getContentType(), base64Data));
+            m.put("image_url", String.format("data:%s;base64,%s", img.getContentType(), img.getData()));
             return m;
-        } else if (part.getType() == MediaType.FILE) {
+        } else if (part instanceof FileContent) {
+            FileContent file = (FileContent) part;
+            String contentFormat = file.getContentType().split("/")[1];
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("type", "input_file");
-            m.put("filename", String.format("%s.%s", part.getSlotName(), contentFormat));
-            m.put("file_data", String.format("data:%s;base64,%s", part.getContentType(), base64Data));
+            m.put("filename", String.format("%s.%s", file.getFilename(), contentFormat));
+            m.put("file_data", String.format("data:%s;base64,%s", file.getContentType(), file.getData()));
             return m;
-        } else if (part.getType() == MediaType.AUDIO) {
+        } else if (part instanceof AudioContent) {
             throw new IllegalStateException("Audio content is not yet supported by the OpenAI Responses API.");
         }
         return part;

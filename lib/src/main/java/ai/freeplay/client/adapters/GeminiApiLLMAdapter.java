@@ -2,10 +2,7 @@ package ai.freeplay.client.adapters;
 
 import ai.freeplay.client.exceptions.FreeplayConfigurationException;
 import ai.freeplay.client.internal.v2dto.TemplateDTO.ToolSchema;
-import ai.freeplay.client.resources.prompts.ChatMessage;
-import ai.freeplay.client.resources.prompts.ContentPartBase64;
-import ai.freeplay.client.resources.prompts.ContentPartText;
-import ai.freeplay.client.resources.prompts.ContentPartUrl;
+import ai.freeplay.client.resources.prompts.*;
 
 import java.util.*;
 
@@ -58,15 +55,27 @@ public class GeminiApiLLMAdapter implements LLMAdapters.LLMAdapter<List<Map<Stri
                     } else if (message.isStructuredMessage()) {
                         List<Map<String, Object>> parts = message.getStructuredContent().stream().map(item -> {
                             Map<String, Object> part = new LinkedHashMap<>();
-                            if (item instanceof ContentPartText) {
-                                part.put("text", ((ContentPartText) item).getText());
-                            } else if (item instanceof ContentPartUrl) {
+                            if (item instanceof TextContent) {
+                                part.put("text", ((TextContent) item).getText());
+                            } else if (item instanceof ImageUrlContent) {
                                 throw new IllegalStateException("Message contains a media URL, but media URLs are not supported by Gemini");
-                            } else if (item instanceof ContentPartBase64) {
-                                ContentPartBase64 base64 = (ContentPartBase64) item;
+                            } else if (item instanceof ImageContent) {
+                                ImageContent img = (ImageContent) item;
                                 Map<String, Object> inlineData = new LinkedHashMap<>();
-                                inlineData.put("mime_type", base64.getContentType());
-                                inlineData.put("data", base64.getData());
+                                inlineData.put("mime_type", img.getContentType());
+                                inlineData.put("data", img.getData());
+                                part.put("inline_data", inlineData);
+                            } else if (item instanceof AudioContent) {
+                                AudioContent audio = (AudioContent) item;
+                                Map<String, Object> inlineData = new LinkedHashMap<>();
+                                inlineData.put("mime_type", audio.getContentType());
+                                inlineData.put("data", audio.getData());
+                                part.put("inline_data", inlineData);
+                            } else if (item instanceof FileContent) {
+                                FileContent file = (FileContent) item;
+                                Map<String, Object> inlineData = new LinkedHashMap<>();
+                                inlineData.put("mime_type", file.getContentType());
+                                inlineData.put("data", file.getData());
                                 part.put("inline_data", inlineData);
                             }
                             return part;

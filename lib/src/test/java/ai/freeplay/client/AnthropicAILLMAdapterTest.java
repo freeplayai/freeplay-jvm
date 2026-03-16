@@ -18,24 +18,24 @@ public class AnthropicAILLMAdapterTest {
         Object formattedMessages = adapter.toLLMSyntax(List.of(
                 new ChatMessage("system", "Respond to the user's query"),
                 new ChatMessage("user", List.of(
-                        new ContentPartText("Some query"),
-                        new ContentPartUrl("some-image", MediaType.IMAGE, "http://localhost/image")
+                        new TextContent("Some query"),
+                        new ImageUrlContent("http://localhost/image", "image")
                 )),
                 new ChatMessage("user", List.of(
-                        new ContentPartText("Some other query"),
-                        new ContentPartBase64("some-file", MediaType.FILE, "application/pdf", Base64.getEncoder().encode("some pdf data".getBytes()))
+                        new TextContent("Some other query"),
+                        new FileContent("application/pdf", Base64.getEncoder().encodeToString("some pdf data".getBytes()), "some-file")
                 ))
 
         ));
 
         assertEquals(List.of(
                 new ChatMessage("user", List.of(
-                        new AnthropicLLMAdapter.ContentPart<Void>("Some query"),
-                        new AnthropicLLMAdapter.ContentPart<>("image", new AnthropicLLMAdapter.UrlContent("http://localhost/image"))
+                        new AnthropicLLMAdapter.AnthropicContentPart<Void>("Some query"),
+                        new AnthropicLLMAdapter.AnthropicContentPart<>("image", new AnthropicLLMAdapter.UrlContent("http://localhost/image"))
                 )),
                 new ChatMessage("user", List.of(
-                        new AnthropicLLMAdapter.ContentPart<Void>("Some other query"),
-                        new AnthropicLLMAdapter.ContentPart<>("document", new AnthropicLLMAdapter.Base64Content(
+                        new AnthropicLLMAdapter.AnthropicContentPart<Void>("Some other query"),
+                        new AnthropicLLMAdapter.AnthropicContentPart<>("document", new AnthropicLLMAdapter.Base64Content(
                                 "application/pdf",
                                 "c29tZSBwZGYgZGF0YQ=="
                         ))

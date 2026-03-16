@@ -2,7 +2,11 @@ package ai.freeplay.client;
 
 import ai.freeplay.client.adapters.*;
 
+import ai.freeplay.client.resources.prompts.AudioContent;
 import ai.freeplay.client.resources.prompts.ChatMessage;
+import ai.freeplay.client.resources.prompts.FileContent;
+import ai.freeplay.client.resources.prompts.ImageContent;
+import ai.freeplay.client.resources.prompts.TextContent;
 import org.junit.Test;
 
 import java.util.*;
@@ -19,46 +23,27 @@ public class BedrockConverseAdapterTest {
     }
 
     @Test
-    public void testSimpleTextMessage() {
-        // Create a simple text message
-        List<ChatMessage> messages = Arrays.asList(
-            new ChatMessage("user", "Hello, world!")
-        );
-
-        List<Map<String, Object>> result = adapter.toLLMSyntax(messages);
-
-        assertEquals(1, result.size());
-        Map<String, Object> msg = result.get(0);
-        assertEquals("user", msg.get("role"));
-
-        @SuppressWarnings("unchecked")
-        List<Map<String, Object>> content = (List<Map<String, Object>>) msg.get("content");
-        assertEquals(1, content.size());
-        assertEquals("Hello, world!", content.get(0).get("text"));
-    }
-
-    @Test
-    public void testFiltersSystemMessages() {
-        // Create messages including a system message
-        List<ChatMessage> messages = Arrays.asList(
-            new ChatMessage("system", "You are a helpful assistant"),
-            new ChatMessage("user", "Hello")
-        );
+    public void testTextOnlyContent() {
+        ChatMessage systemMsg = new ChatMessage("system", "You are a helpful assistant");
+        ChatMessage userMsg = new ChatMessage("user", "Hello");
+        List<ChatMessage> messages = Arrays.asList(systemMsg, userMsg);
 
         List<Map<String, Object>> result = adapter.toLLMSyntax(messages);
 
         // System message should be filtered out
         assertEquals(1, result.size());
         assertEquals("user", result.get(0).get("role"));
+
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> content = (List<Map<String, Object>>) result.get(0).get("content");
+        assertEquals(1, content.size());
+        assertEquals("Hello", content.get(0).get("text"));
     }
 
     @Test
-    public void testStructuredContentWithText() {
-        // Create structured content message
+    public void testStructuredTextContent() {
         List<Object> structuredContent = new ArrayList<>();
-        Map<String, Object> textItem = new HashMap<>();
-        textItem.put("text", "Analyze this");
-        structuredContent.add(textItem);
+        structuredContent.add(new TextContent("Analyze this"));
 
         ChatMessage message = new ChatMessage("user", structuredContent);
         List<ChatMessage> messages = Arrays.asList(message);
@@ -76,14 +61,11 @@ public class BedrockConverseAdapterTest {
 
     @Test
     public void testStructuredContentWithBase64Image() {
-        // Create structured content with base64 encoded image
         List<Object> structuredContent = new ArrayList<>();
-
-        Map<String, Object> imageItem = new HashMap<>();
-        imageItem.put("slot_type", "image");
-        imageItem.put("content_type", "image/png");
-        imageItem.put("data", "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==");
-        structuredContent.add(imageItem);
+        structuredContent.add(new ImageContent(
+                "image/png",
+                "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
+        ));
 
         ChatMessage message = new ChatMessage("user", structuredContent);
         List<ChatMessage> messages = Arrays.asList(message);
@@ -109,7 +91,6 @@ public class BedrockConverseAdapterTest {
         Map<String, Object> source = (Map<String, Object>) image.get("source");
         assertTrue(source.containsKey("bytes"));
 
-        // Verify bytes were decoded from base64
         byte[] bytes = (byte[]) source.get("bytes");
         assertNotNull(bytes);
         assertTrue(bytes.length > 0);
@@ -117,15 +98,12 @@ public class BedrockConverseAdapterTest {
 
     @Test
     public void testStructuredContentWithDocument() {
-        // Create structured content with document
         List<Object> structuredContent = new ArrayList<>();
-
-        Map<String, Object> docItem = new HashMap<>();
-        docItem.put("slot_type", "file");
-        docItem.put("slot_name", "test_doc");
-        docItem.put("content_type", "application/pdf");
-        docItem.put("data", "JVBERi0xLjQKJeLjz9M="); // Minimal PDF base64
-        structuredContent.add(docItem);
+        structuredContent.add(new FileContent(
+                "application/pdf",
+                "JVBERi0xLjQKJeLjz9M=",
+                "test_doc"
+        ));
 
         ChatMessage message = new ChatMessage("user", structuredContent);
         List<ChatMessage> messages = Arrays.asList(message);
@@ -156,32 +134,14 @@ public class BedrockConverseAdapterTest {
     @Test(expected = ai.freeplay.client.exceptions.FreeplayConfigurationException.class)
     public void testUnsupportedAudioThrowsException() {
         List<Object> structuredContent = new ArrayList<>();
-
-        Map<String, Object> audioItem = new HashMap<>();
-        audioItem.put("slot_type", "audio");
-        audioItem.put("content_type", "audio/mp3");
-        audioItem.put("data", "fake_audio_data");
-        structuredContent.add(audioItem);
+        structuredContent.add(new AudioContent("audio/mp3", "fake_audio_data"));
 
         ChatMessage message = new ChatMessage("user", structuredContent);
         List<ChatMessage> messages = Arrays.asList(message);
 
-        adapter.toLLMSyntax(messages); // Should throw exception
+        adapter.toLLMSyntax(messages);
     }
 
-    @Test(expected = ai.freeplay.client.exceptions.FreeplayConfigurationException.class)
-    public void testUnsupportedVideoThrowsException() {
-        List<Object> structuredContent = new ArrayList<>();
-
-        Map<String, Object> videoItem = new HashMap<>();
-        videoItem.put("slot_type", "video");
-        videoItem.put("content_type", "video/mp4");
-        videoItem.put("data", "fake_video_data");
-        structuredContent.add(videoItem);
-
-        ChatMessage message = new ChatMessage("user", structuredContent);
-        List<ChatMessage> messages = Arrays.asList(message);
-
-        adapter.toLLMSyntax(messages); // Should throw exception
-    }
+    // Video content is not a supported type — no VideoContent class exists,
+    // so it cannot be constructed through the SDK's bind() flow.
 }

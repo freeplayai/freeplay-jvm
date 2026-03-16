@@ -62,10 +62,10 @@ public class OpenAIResponsesAdapterTest {
         OpenAIResponsesAdapter adapter = new OpenAIResponsesAdapter();
 
         List<Object> structuredContent = List.of(
-                new ContentPartText("Describe this image"),
-                new ContentPartUrl("img", MediaType.IMAGE, "https://example.com/photo.jpg"),
-                new ContentPartBase64("img2", MediaType.IMAGE, "image/png", "iVBOR".getBytes()),
-                new ContentPartBase64("doc", MediaType.FILE, "application/pdf", "JVBERi".getBytes())
+                new TextContent("Describe this image"),
+                new ImageUrlContent("https://example.com/photo.jpg", "image"),
+                new ImageContent("image/png", "iVBOR"),
+                new FileContent("application/pdf", "JVBERi", "doc")
         );
 
         List<Map<String, Object>> result = adapter.toLLMSyntax(List.of(

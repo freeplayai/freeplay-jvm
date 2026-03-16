@@ -89,7 +89,7 @@ public class TemplatePrompt {
                             return Stream.of(new ChatMessage(chatMessage.getRole(), substitutedContent));
                         } else {
                             List<Object> messageContent = new ArrayList<>(contentParts.size() + 1);
-                            messageContent.add(new ContentPartText(substitutedContent));
+                            messageContent.add(new TextContent(substitutedContent));
                             messageContent.addAll(contentParts);
 
                             return Stream.of(new ChatMessage(
@@ -149,8 +149,8 @@ public class TemplatePrompt {
         }
     }
 
-    private List<ContentPart> extractContentParts(ChatMessage message, MediaInputCollection mediaInputs) {
-        List<ContentPart> result = new ArrayList<>();
+    private List<Object> extractContentParts(ChatMessage message, MediaInputCollection mediaInputs) {
+        List<Object> result = new ArrayList<>();
         for (MediaSlot slot : message.getMediaSlots()) {
             var maybeMatch = mediaInputs.get(slot.getPlaceholderName());
             if (maybeMatch.isEmpty()) {
@@ -159,10 +159,17 @@ public class TemplatePrompt {
             var match = maybeMatch.get();
             if (match instanceof MediaInputUrl) {
                 MediaInputUrl url = (MediaInputUrl) match;
-                result.add(new ContentPartUrl(slot.getPlaceholderName(), slot.getType(), url.getUrl()));
+                result.add(new ImageUrlContent(url.getUrl(), slot.getType().name().toLowerCase()));
             } else if (match instanceof MediaInputBase64) {
                 MediaInputBase64 base64 = (MediaInputBase64) match;
-                result.add(new ContentPartBase64(slot.getPlaceholderName(), slot.getType(), base64.getContentType(), base64.getData()));
+                String data = new String(base64.getData());
+                if (slot.getType() == MediaType.AUDIO) {
+                    result.add(new AudioContent(base64.getContentType(), data));
+                } else if (slot.getType() == MediaType.FILE) {
+                    result.add(new FileContent(base64.getContentType(), data, slot.getPlaceholderName()));
+                } else {
+                    result.add(new ImageContent(base64.getContentType(), data));
+                }
             }
         }
 

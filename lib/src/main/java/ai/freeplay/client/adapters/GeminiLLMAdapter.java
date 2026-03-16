@@ -1,10 +1,7 @@
 package ai.freeplay.client.adapters;
 
 import ai.freeplay.client.exceptions.FreeplayConfigurationException;
-import ai.freeplay.client.resources.prompts.ChatMessage;
-import ai.freeplay.client.resources.prompts.ContentPartBase64;
-import ai.freeplay.client.resources.prompts.ContentPartText;
-import ai.freeplay.client.resources.prompts.ContentPartUrl;
+import ai.freeplay.client.resources.prompts.*;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
@@ -75,16 +72,29 @@ public class GeminiLLMAdapter implements LLMAdapters.LLMAdapter<List<Content>> {
                                 return ContentMaker.forRole(translateRole(message.getRole())).fromString(message.getContent());
                             } else if (message.isStructuredMessage()) {
                                 Object[] parts = message.getStructuredContent().stream().map(item -> {
-                                    if (item instanceof ContentPartText) {
-                                        return Part.newBuilder().setText(((ContentPartText) item).getText()).build();
-                                    } else if (item instanceof ContentPartUrl) {
+                                    if (item instanceof TextContent) {
+                                        return Part.newBuilder().setText(((TextContent) item).getText()).build();
+                                    } else if (item instanceof ImageUrlContent) {
                                         throw new IllegalStateException("Message contains a media URL, but media URLs are not supported by Gemini");
-                                    } else if (item instanceof ContentPartBase64) {
-                                        ContentPartBase64 base64 = (ContentPartBase64) item;
-                                        byte[] decodedBytes = Base64.getDecoder().decode(base64.getData());
-
+                                    } else if (item instanceof ImageContent) {
+                                        ImageContent img = (ImageContent) item;
+                                        byte[] decodedBytes = Base64.getDecoder().decode(img.getData());
                                         return Part.newBuilder().setInlineData(Blob.newBuilder()
-                                                .setMimeType(base64.getContentType())
+                                                .setMimeType(img.getContentType())
+                                                .setData(ByteString.copyFrom(decodedBytes))
+                                        ).build();
+                                    } else if (item instanceof AudioContent) {
+                                        AudioContent audio = (AudioContent) item;
+                                        byte[] decodedBytes = Base64.getDecoder().decode(audio.getData());
+                                        return Part.newBuilder().setInlineData(Blob.newBuilder()
+                                                .setMimeType(audio.getContentType())
+                                                .setData(ByteString.copyFrom(decodedBytes))
+                                        ).build();
+                                    } else if (item instanceof FileContent) {
+                                        FileContent file = (FileContent) item;
+                                        byte[] decodedBytes = Base64.getDecoder().decode(file.getData());
+                                        return Part.newBuilder().setInlineData(Blob.newBuilder()
+                                                .setMimeType(file.getContentType())
                                                 .setData(ByteString.copyFrom(decodedBytes))
                                         ).build();
                                     } else {

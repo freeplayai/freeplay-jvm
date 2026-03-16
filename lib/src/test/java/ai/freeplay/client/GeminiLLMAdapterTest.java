@@ -2,10 +2,7 @@ package ai.freeplay.client;
 
 import ai.freeplay.client.adapters.*;
 
-import ai.freeplay.client.resources.prompts.ChatMessage;
-import ai.freeplay.client.resources.prompts.ContentPartBase64;
-import ai.freeplay.client.resources.prompts.ContentPartText;
-import ai.freeplay.client.resources.prompts.MediaType;
+import ai.freeplay.client.resources.prompts.*;
 import com.google.cloud.vertexai.api.Blob;
 import com.google.cloud.vertexai.api.Part;
 import com.google.cloud.vertexai.generativeai.ContentMaker;
@@ -21,20 +18,17 @@ public class GeminiLLMAdapterTest {
     @Test
     public void testToLLMSyntax() {
         LLMAdapters.LLMAdapter<?> adapter = LLMAdapters.adapterForFlavor("gemini_chat");
-        byte[] audioBytes = Base64.getEncoder().encode("some audio data".getBytes());
-        byte[] documentBytes = Base64.getEncoder().encode("some pdf data".getBytes());
-        byte[] imageBytes = Base64.getEncoder().encode("some image data".getBytes());
 
         Object formattedMessages = adapter.toLLMSyntax(List.of(
                 new ChatMessage("assistant", "Respond to the user's query"),
                 new ChatMessage("user", List.of(
-                        new ContentPartText("Some query"),
-                        new ContentPartBase64("some-audio", MediaType.AUDIO, "audio/mpeg", audioBytes)
+                        new TextContent("Some query"),
+                        new AudioContent("audio/mpeg", Base64.getEncoder().encodeToString("some audio data".getBytes()))
                 )),
                 new ChatMessage("user", List.of(
-                        new ContentPartText("Some other query"),
-                        new ContentPartBase64("some-file", MediaType.FILE, "application/pdf", documentBytes),
-                        new ContentPartBase64("some-image-base64", MediaType.IMAGE, "image/png", imageBytes)
+                        new TextContent("Some other query"),
+                        new FileContent("application/pdf", Base64.getEncoder().encodeToString("some pdf data".getBytes()), "some-file"),
+                        new ImageContent("image/png", Base64.getEncoder().encodeToString("some image data".getBytes()))
                 ))
 
         ));

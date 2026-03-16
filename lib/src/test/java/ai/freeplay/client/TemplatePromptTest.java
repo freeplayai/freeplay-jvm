@@ -58,9 +58,9 @@ public class TemplatePromptTest extends HttpClientTestBase {
         assertEquals(List.of(
                 new ChatMessage("system", "Respond to the user's query"),
                 new ChatMessage("user", List.of(
-                        new ContentPartText("Some query"),
-                        new ContentPartUrl("some-image", MediaType.IMAGE, "http://localhost/image"),
-                        new ContentPartBase64("some-audio", MediaType.AUDIO, "audio/mpeg", "some data".getBytes())
+                        new TextContent("Some query"),
+                        new ImageUrlContent("http://localhost/image", "image"),
+                        new AudioContent("audio/mpeg", "some data")
                 ))
         ), boundPrompt.getMessages());
     }

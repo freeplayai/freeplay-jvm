@@ -18,14 +18,14 @@ public class OpenAILLMAdapterTest {
         Object formattedMessages = adapter.toLLMSyntax(List.of(
                 new ChatMessage("system", "Respond to the user's query"),
                 new ChatMessage("user", List.of(
-                        new ContentPartText("Some query"),
-                        new ContentPartUrl("some-image", MediaType.IMAGE, "http://localhost/image"),
-                        new ContentPartBase64("some-audio", MediaType.AUDIO, "audio/mpeg", Base64.getEncoder().encode("some audio data".getBytes()))
+                        new TextContent("Some query"),
+                        new ImageUrlContent("http://localhost/image", "image"),
+                        new AudioContent("audio/mpeg", Base64.getEncoder().encodeToString("some audio data".getBytes()))
                 )),
                 new ChatMessage("user", List.of(
-                        new ContentPartText("Some other query"),
-                        new ContentPartBase64("some-file", MediaType.FILE, "application/pdf", Base64.getEncoder().encode("some pdf data".getBytes())),
-                        new ContentPartBase64("some-image-base64", MediaType.IMAGE, "image/png", Base64.getEncoder().encode("some image data".getBytes()))
+                        new TextContent("Some other query"),
+                        new FileContent("application/pdf", Base64.getEncoder().encodeToString("some pdf data".getBytes()), "some-file"),
+                        new ImageContent("image/png", Base64.getEncoder().encodeToString("some image data".getBytes()))
                 ))
 
         ));
@@ -33,21 +33,21 @@ public class OpenAILLMAdapterTest {
         assertEquals(List.of(
                 new ChatMessage("system", "Respond to the user's query"),
                 new ChatMessage("user", List.of(
-                        new OpenAILLMAdapter.ContentPart("Some query"),
-                        new OpenAILLMAdapter.ContentPart(new OpenAILLMAdapter.ImageContent("http://localhost/image")),
-                        new OpenAILLMAdapter.ContentPart(
-                                new OpenAILLMAdapter.AudioContent(Base64.getEncoder().encodeToString("some audio data".getBytes()),
+                        new OpenAILLMAdapter.OpenAIContentPart("Some query"),
+                        new OpenAILLMAdapter.OpenAIContentPart(new OpenAILLMAdapter.OpenAIImageContent("http://localhost/image")),
+                        new OpenAILLMAdapter.OpenAIContentPart(
+                                new OpenAILLMAdapter.OpenAIAudioContent(Base64.getEncoder().encodeToString("some audio data".getBytes()),
                                         "mp3"
                                 )
                         )
                 )),
                 new ChatMessage("user", List.of(
-                        new OpenAILLMAdapter.ContentPart("Some other query"),
-                        new OpenAILLMAdapter.ContentPart(new OpenAILLMAdapter.FileContent(
+                        new OpenAILLMAdapter.OpenAIContentPart("Some other query"),
+                        new OpenAILLMAdapter.OpenAIContentPart(new OpenAILLMAdapter.OpenAIFileContent(
                                 "some-file.pdf",
                                 "data:application/pdf;base64,c29tZSBwZGYgZGF0YQ=="
                         )),
-                        new OpenAILLMAdapter.ContentPart(new OpenAILLMAdapter.ImageContent("data:image/png;base64,c29tZSBpbWFnZSBkYXRh"))
+                        new OpenAILLMAdapter.OpenAIContentPart(new OpenAILLMAdapter.OpenAIImageContent("data:image/png;base64,c29tZSBpbWFnZSBkYXRh"))
                 ))
         ), formattedMessages);
     }
