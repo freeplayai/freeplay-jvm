@@ -67,7 +67,7 @@ public class FormattedPrompt<LLMContentFormat> {
     }
 
     /**
-     * @deprecated Use {@code getLlmPrompt()} with the completion output directly when constructing RecordPayload.
+     * @deprecated Use {@code getFormattedPrompt()} with the completion output directly when constructing RecordPayload.
      */
     @Deprecated
     public List<ChatMessage> allMessages(ChatMessage message) {
@@ -77,7 +77,7 @@ public class FormattedPrompt<LLMContentFormat> {
     }
 
     /**
-     * @deprecated Use {@code getLlmPrompt()} with the completion output directly when constructing RecordPayload.
+     * @deprecated Use {@code getFormattedPrompt()} with the completion output directly when constructing RecordPayload.
      */
     @Deprecated
     public List<ChatMessage> allMessages(Object completionMessage) {
@@ -87,7 +87,7 @@ public class FormattedPrompt<LLMContentFormat> {
     }
 
     /**
-     * @deprecated Use {@code getLlmPrompt()} with the completion output directly when constructing RecordPayload.
+     * @deprecated Use {@code getFormattedPrompt()} with the completion output directly when constructing RecordPayload.
      */
     @Deprecated
     public List<ChatMessage> allMessages(List<?> completionMessages) {
