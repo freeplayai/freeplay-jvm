@@ -393,6 +393,7 @@ public class TemplatePromptTest extends HttpClientTestBase {
         assertTrue(userMessage.isStructuredMessage());
 
         List<Object> structuredContent = userMessage.getStructuredContent();
+        assertEquals(3, structuredContent.size());
         for (Object part : structuredContent) {
             // Each part should be the adapter's ContentPart, not internal types like ContentPartText/ContentPartUrl/ContentPartBase64
             assertTrue(

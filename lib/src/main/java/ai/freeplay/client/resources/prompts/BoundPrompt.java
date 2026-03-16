@@ -75,9 +75,14 @@ public class BoundPrompt {
         List<ChatMessage> convertedMessages = new ArrayList<>(prepared.size());
         for (ChatMessage msg : prepared) {
             if (msg.isStructuredMessage()) {
-                //noinspection unchecked
-                List<ChatMessage> converted = (List<ChatMessage>) llmAdapter.toLLMSyntax(List.of(msg));
-                convertedMessages.add(converted.get(0));
+                Object converted = llmAdapter.toLLMSyntax(List.of(msg));
+                if (converted instanceof List
+                        && !((List<?>) converted).isEmpty()
+                        && ((List<?>) converted).get(0) instanceof ChatMessage) {
+                    convertedMessages.add((ChatMessage) ((List<?>) converted).get(0));
+                } else {
+                    convertedMessages.add(msg);
+                }
             } else {
                 convertedMessages.add(msg);
             }
