@@ -36,7 +36,15 @@ public class FormattedPrompt<LLMContentFormat> {
         return boundMessages;
     }
 
+    /**
+     * @deprecated Use {@link #getLlmPrompt()} instead.
+     */
+    @Deprecated
     public LLMContentFormat getFormattedPrompt() {
+        return formattedPrompt;
+    }
+
+    public LLMContentFormat getLlmPrompt() {
         return formattedPrompt;
     }
 
@@ -66,18 +74,30 @@ public class FormattedPrompt<LLMContentFormat> {
         return this;
     }
 
+    /**
+     * @deprecated Use {@code getLlmPrompt()} with the completion output directly when constructing RecordPayload.
+     */
+    @Deprecated
     public List<ChatMessage> allMessages(ChatMessage message) {
         List<ChatMessage> newList = new ArrayList<>(boundMessages);
         newList.add(message);
         return newList;
     }
 
+    /**
+     * @deprecated Use {@code getLlmPrompt()} with the completion output directly when constructing RecordPayload.
+     */
+    @Deprecated
     public List<ChatMessage> allMessages(Object completionMessage) {
         List<ChatMessage> newList = new ArrayList<>(boundMessages);
         newList.add(new ChatMessage(completionMessage));
         return newList;
     }
 
+    /**
+     * @deprecated Use {@code getLlmPrompt()} with the completion output directly when constructing RecordPayload.
+     */
+    @Deprecated
     public List<ChatMessage> allMessages(List<?> completionMessages) {
         List<ChatMessage> newList = new ArrayList<>(boundMessages);
         for (Object msg : completionMessages) {
