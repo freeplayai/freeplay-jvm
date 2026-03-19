@@ -23,6 +23,7 @@ import ai.freeplay.client.resources.testruns.CompletionTestCase;
 import ai.freeplay.client.resources.testruns.TestRun;
 import ai.freeplay.client.resources.testruns.TestRunResults;
 import ai.freeplay.client.resources.testruns.TraceTestCase;
+import ai.freeplay.client.resources.traces.TraceUpdateResponse;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import java.util.HashMap;
@@ -460,6 +461,32 @@ public class CallSupport {
         ).thenApply(httpResponse -> {
             throwFreeplayIfError(httpResponse, 200);
             return new MetadataUpdateResponse();
+        });
+    }
+
+    public CompletableFuture<TraceUpdateResponse> updateTrace(
+            String projectId,
+            String sessionId,
+            String traceId,
+            Object output,
+            Map<String, Object> evalResults
+    ) {
+        String url = String.format(
+                "%s/v2/projects/%s/sessions/%s/traces/id/%s",
+                baseUrl,
+                projectId,
+                sessionId,
+                traceId
+        );
+        TraceUpdateDTO payload = new TraceUpdateDTO(output, evalResults);
+        return AsyncHttp.patchJson(
+                url,
+                freeplayApiKey,
+                httpConfig,
+                payload
+        ).thenApply(httpResponse -> {
+            throwFreeplayIfError(httpResponse, 200);
+            return new TraceUpdateResponse();
         });
     }
 

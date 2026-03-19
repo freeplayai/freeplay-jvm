@@ -235,6 +235,15 @@ public class MockFixtures {
         }
     }
 
+    public static void mockUpdateTraceAsync(HttpClient mockedClient) throws RuntimeException {
+        try {
+            when(requestAsync(mockedClient, "PATCH", "v2/projects/[^/]*/sessions/[^/]*/traces/id/[^/]*$"))
+                    .thenReturn(asyncResponse(200, "{\"message\": \"Trace updated successfully\"}"));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public static void mockUnauthorizedUpdateSessionMetadataAsync(HttpClient mockedClient) throws RuntimeException {
         try {
             when(requestAsync(mockedClient, "PATCH", "v2/projects/[^/]*/sessions/id/[^/]*/metadata"))
