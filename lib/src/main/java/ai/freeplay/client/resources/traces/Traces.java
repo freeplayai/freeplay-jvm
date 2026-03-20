@@ -14,9 +14,14 @@ public class Traces {
     }
 
     public CompletableFuture<TraceUpdateResponse> update(TraceUpdatePayload payload) {
-        if (payload.getOutput() == null && payload.getEvalResults() == null) {
+        if (payload.getOutput() == null
+                && payload.getMetadata() == null
+                && payload.getFeedback() == null
+                && payload.getEvalResults() == null
+                && payload.getTestRunId() == null
+                && payload.getTestCaseId() == null) {
             throw new FreeplayClientException(
-                    "At least one of 'output' or 'evalResults' must be provided"
+                    "At least one of 'output', 'metadata', 'feedback', 'evalResults', or 'testRunInfo' must be provided"
             );
         }
         return callSupport.updateTrace(
@@ -24,7 +29,11 @@ public class Traces {
                 payload.getSessionId(),
                 payload.getTraceId(),
                 payload.getOutput(),
-                payload.getEvalResults()
+                payload.getMetadata(),
+                payload.getFeedback(),
+                payload.getEvalResults(),
+                payload.getTestRunId(),
+                payload.getTestCaseId()
         );
     }
 }

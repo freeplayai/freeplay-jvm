@@ -469,7 +469,11 @@ public class CallSupport {
             String sessionId,
             String traceId,
             Object output,
-            Map<String, Object> evalResults
+            Map<String, Object> metadata,
+            Map<String, Object> feedback,
+            Map<String, Object> evalResults,
+            String testRunId,
+            String testCaseId
     ) {
         String url = String.format(
                 "%s/v2/projects/%s/sessions/%s/traces/id/%s",
@@ -478,7 +482,7 @@ public class CallSupport {
                 sessionId,
                 traceId
         );
-        TraceUpdateDTO payload = new TraceUpdateDTO(output, evalResults);
+        TraceUpdateDTO payload = new TraceUpdateDTO(output, metadata, feedback, evalResults, testRunId, testCaseId);
         return AsyncHttp.patchJson(
                 url,
                 freeplayApiKey,

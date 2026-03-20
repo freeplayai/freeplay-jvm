@@ -93,6 +93,121 @@ public class TracesTest extends HttpClientTestBase {
     }
 
     @Test
+    public void testUpdateTraceWithMetadata() {
+        withMockedClient((HttpClient mockedClient) -> {
+            mockUpdateTraceAsync(mockedClient);
+            String projectId = UUID.randomUUID().toString();
+            String sessionId = UUID.randomUUID().toString();
+            String traceId = UUID.randomUUID().toString();
+
+            Map<String, Object> metadata = Map.of("env", "production", "version", 2);
+
+            Freeplay fpClient = new Freeplay(Config().freeplayAPIKey(freeplayApiKey).baseUrl(baseUrl));
+
+            TraceUpdateResponse response = fpClient.traces().update(
+                    new TraceUpdatePayload(projectId, sessionId, traceId)
+                            .metadata(metadata)
+            ).get();
+
+            assertNotNull(response);
+
+            Map<String, Object> requestBody = JSONUtil.parseMap(getCapturedAsyncBody(mockedClient, 1, 0));
+            assertEquals(metadata, requestBody.get("metadata"));
+            assertFalse(requestBody.containsKey("output"));
+            assertFalse(requestBody.containsKey("eval_results"));
+        });
+    }
+
+    @Test
+    public void testUpdateTraceWithFeedback() {
+        withMockedClient((HttpClient mockedClient) -> {
+            mockUpdateTraceAsync(mockedClient);
+            String projectId = UUID.randomUUID().toString();
+            String sessionId = UUID.randomUUID().toString();
+            String traceId = UUID.randomUUID().toString();
+
+            Map<String, Object> feedback = Map.of("freeplay_feedback", "positive", "custom_score", 0.9);
+
+            Freeplay fpClient = new Freeplay(Config().freeplayAPIKey(freeplayApiKey).baseUrl(baseUrl));
+
+            TraceUpdateResponse response = fpClient.traces().update(
+                    new TraceUpdatePayload(projectId, sessionId, traceId)
+                            .feedback(feedback)
+            ).get();
+
+            assertNotNull(response);
+
+            Map<String, Object> requestBody = JSONUtil.parseMap(getCapturedAsyncBody(mockedClient, 1, 0));
+            assertEquals(feedback, requestBody.get("feedback"));
+            assertFalse(requestBody.containsKey("output"));
+        });
+    }
+
+    @Test
+    public void testUpdateTraceWithTestRunInfo() {
+        withMockedClient((HttpClient mockedClient) -> {
+            mockUpdateTraceAsync(mockedClient);
+            String projectId = UUID.randomUUID().toString();
+            String sessionId = UUID.randomUUID().toString();
+            String traceId = UUID.randomUUID().toString();
+            String testRunId = UUID.randomUUID().toString();
+            String testCaseId = UUID.randomUUID().toString();
+
+            Freeplay fpClient = new Freeplay(Config().freeplayAPIKey(freeplayApiKey).baseUrl(baseUrl));
+
+            TraceUpdateResponse response = fpClient.traces().update(
+                    new TraceUpdatePayload(projectId, sessionId, traceId)
+                            .testRunInfo(testRunId, testCaseId)
+            ).get();
+
+            assertNotNull(response);
+
+            Map<String, Object> requestBody = JSONUtil.parseMap(getCapturedAsyncBody(mockedClient, 1, 0));
+            @SuppressWarnings("unchecked")
+            Map<String, Object> testRunInfo = (Map<String, Object>) requestBody.get("test_run_info");
+            assertNotNull(testRunInfo);
+            assertEquals(testRunId, testRunInfo.get("test_run_id"));
+            assertEquals(testCaseId, testRunInfo.get("test_case_id"));
+            assertFalse(requestBody.containsKey("output"));
+        });
+    }
+
+    @Test
+    public void testUpdateTraceWithAllFields() {
+        withMockedClient((HttpClient mockedClient) -> {
+            mockUpdateTraceAsync(mockedClient);
+            String projectId = UUID.randomUUID().toString();
+            String sessionId = UUID.randomUUID().toString();
+            String traceId = UUID.randomUUID().toString();
+            String testRunId = UUID.randomUUID().toString();
+            String testCaseId = UUID.randomUUID().toString();
+
+            Freeplay fpClient = new Freeplay(Config().freeplayAPIKey(freeplayApiKey).baseUrl(baseUrl));
+
+            TraceUpdateResponse response = fpClient.traces().update(
+                    new TraceUpdatePayload(projectId, sessionId, traceId)
+                            .output("updated")
+                            .metadata(Map.of("key", "value"))
+                            .feedback(Map.of("freeplay_feedback", "negative"))
+                            .evalResults(Map.of("accuracy", 0.99))
+                            .testRunInfo(testRunId, testCaseId)
+            ).get();
+
+            assertNotNull(response);
+
+            Map<String, Object> requestBody = JSONUtil.parseMap(getCapturedAsyncBody(mockedClient, 1, 0));
+            assertEquals("updated", requestBody.get("output"));
+            assertEquals(Map.of("key", "value"), requestBody.get("metadata"));
+            assertEquals(Map.of("freeplay_feedback", "negative"), requestBody.get("feedback"));
+            assertEquals(Map.of("accuracy", 0.99), requestBody.get("eval_results"));
+            @SuppressWarnings("unchecked")
+            Map<String, Object> testRunInfo = (Map<String, Object>) requestBody.get("test_run_info");
+            assertEquals(testRunId, testRunInfo.get("test_run_id"));
+            assertEquals(testCaseId, testRunInfo.get("test_case_id"));
+        });
+    }
+
+    @Test
     public void testUpdateTraceRequiresAtLeastOneField() {
         withMockedClient((HttpClient mockedClient) -> {
             mockUpdateTraceAsync(mockedClient);

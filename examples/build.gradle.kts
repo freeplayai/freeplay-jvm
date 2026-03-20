@@ -3,6 +3,10 @@ plugins {
     kotlin("jvm") version "1.9.22"
 }
 
+application {
+    mainClass.set(project.findProperty("mainClass") as String? ?: "ai.freeplay.example.QuickMetadataTest")
+}
+
 repositories {
     mavenCentral()
 }
