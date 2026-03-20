@@ -1324,6 +1324,45 @@ public class ThinClientTest extends HttpClientTestBase {
     }
 
     @Test
+    public void testRecordWithCustomCompletionId() {
+        withMockedClient((HttpClient mockedClient) -> {
+            mockGetPromptV2Async(
+                    mockedClient, templateName, "prod", getChatPromptContentObjects(), anthropicLLMParameters, "anthropic_chat"
+            );
+            mockRecordAsync(mockedClient);
+
+            Freeplay fpClient = new Freeplay(Config().freeplayAPIKey(freeplayApiKey).baseUrl(baseUrl));
+
+            FormattedPrompt<String> prompt = fpClient.prompts().<String>getFormatted(
+                    new GetFormattedRequest(projectId, templateName, "prod", variables).flavorName("anthropic_chat")
+            ).get();
+
+            long startTime = System.currentTimeMillis();
+            long endTime = startTime + 5;
+            CallInfo callInfo = CallInfo.from(prompt.getPromptInfo(), startTime, endTime);
+            ResponseInfo responseInfo = new ResponseInfo(true);
+            List<ChatMessage> allMessages = prompt.allMessages(new ChatMessage("assistant", "test response"));
+
+            Session session = fpClient.sessions().create();
+            UUID customCompletionId = UUID.randomUUID();
+
+            RecordPayload recordPayload = new RecordPayload(projectId, allMessages)
+                    .sessionInfo(session.getSessionInfo())
+                    .inputs(variables)
+                    .promptVersionInfo(prompt.getPromptInfo())
+                    .callInfo(callInfo)
+                    .responseInfo(responseInfo)
+                    .completionId(customCompletionId);
+
+            fpClient.recordings().create(recordPayload).get();
+
+            String requestBody = getCapturedAsyncBody(mockedClient, 2, 1);
+            RecordDTO apiPayload = JSONUtil.parse(requestBody, RecordDTO.class);
+            assertEquals(customCompletionId, apiPayload.getCompletionId());
+        });
+    }
+
+    @Test
     public void testTraceInfoParentId() {
         CallSupport mockCallSupport = Mockito.mock(CallSupport.class);
         UUID sessionId = UUID.randomUUID();
