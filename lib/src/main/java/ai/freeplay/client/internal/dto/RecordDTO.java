@@ -119,6 +119,10 @@ public class RecordDTO {
         return mediaInputs;
     }
 
+    public UUID getCompletionId() {
+        return completionId;
+    }
+
     @Override
     public String toString() {
         return "RecordDTO{" +
