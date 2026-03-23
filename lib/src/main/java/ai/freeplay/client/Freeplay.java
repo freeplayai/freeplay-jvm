@@ -10,6 +10,7 @@ import ai.freeplay.client.resources.sessions.Sessions;
 import ai.freeplay.client.resources.agentdatasets.AgentDatasets;
 import ai.freeplay.client.resources.promptdatasets.PromptDatasets;
 import ai.freeplay.client.resources.testruns.TestRuns;
+import ai.freeplay.client.resources.traces.Traces;
 
 public class Freeplay {
 
@@ -21,6 +22,7 @@ public class Freeplay {
     private final Metadata metadata;
     private final PromptDatasets promptDatasets;
     private final AgentDatasets agentDatasets;
+    private final Traces traces;
 
     public Freeplay(FreeplayConfig config) {
         config.validate();
@@ -38,6 +40,7 @@ public class Freeplay {
         metadata = new Metadata(callSupport);
         promptDatasets = new PromptDatasets(callSupport);
         agentDatasets = new AgentDatasets(callSupport);
+        traces = new Traces(callSupport);
     }
 
     public Sessions sessions() {
@@ -70,6 +73,10 @@ public class Freeplay {
 
     public AgentDatasets agentDatasets() {
         return agentDatasets;
+    }
+
+    public Traces traces() {
+        return traces;
     }
 
     public static FreeplayConfig Config() {
