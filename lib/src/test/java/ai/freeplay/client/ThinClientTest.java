@@ -242,7 +242,7 @@ public class ThinClientTest extends HttpClientTestBase {
     }
 
     @Test
-    public void testUnexpectedHistory() {
+    public void testHistoryWithoutPlaceholderAppendsAtEnd() {
         withMockedClient((HttpClient mockedClient) -> {
             mockGetPromptV2Async(
                     mockedClient, templateName, "prod", getChatPromptContentObjects(), anthropicLLMParameters, "anthropic_chat"
@@ -250,20 +250,21 @@ public class ThinClientTest extends HttpClientTestBase {
 
             Freeplay fpClient = new Freeplay(Config().freeplayAPIKey(freeplayApiKey).baseUrl(baseUrl));
             TemplatePrompt templatePrompt = fpClient.prompts().get(projectId, templateName, "prod").get();
-            Map<String, Object> variables = Map.of("number", "2");
+            Map<String, Object> variables = Map.of("question", "Why?");
 
-            // No history placeholder in the prompt
-            try {
-                templatePrompt.bind(new TemplatePrompt.BindRequest(variables).history(List.of(
-                        new ChatMessage("user", "User message 1")
-                )));
-                fail("Should have gotten an exception");
-            } catch (Exception e) {
-                assertEquals(
-                        "Received history but prompt 'my-prompt' does not have a history placeholder.",
-                        e.getMessage()
-                );
-            }
+            BoundPrompt boundPrompt = templatePrompt.bind(new TemplatePrompt.BindRequest(variables).history(List.of(
+                    new ChatMessage("user", "User message 1"),
+                    new ChatMessage("assistant", "assistant message 1")
+            )));
+
+            List<ChatMessage> expected = List.of(
+                    new ChatMessage("system", "You are a support agent."),
+                    new ChatMessage("assistant", "How may I help you?"),
+                    new ChatMessage("user", "Why?"),
+                    new ChatMessage("user", "User message 1"),
+                    new ChatMessage("assistant", "assistant message 1")
+            );
+            assertEquals(expected, boundPrompt.getMessages());
         });
     }
 

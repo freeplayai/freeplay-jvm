@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
-import static java.lang.String.format;
 import static java.lang.System.Logger.Level.WARNING;
 import static java.util.stream.Collectors.toList;
 
@@ -62,12 +61,6 @@ public class TemplatePrompt {
             throw new FreeplayClientException("StructuredMessage or CompletionMessage is not allowed when binding a prompt");
         }
 
-        if (!hasHistoryPlaceholder() && history != null) {
-            throw new FreeplayClientException(format(
-                    "Received history but prompt '%s' does not have a history placeholder.",
-                    promptInfo.getTemplateName()
-            ));
-        }
         if (hasHistoryPlaceholder() && history == null) {
             LOGGER.log(WARNING,
                     "Prompt '{0}' has a history placeholder but no history was provided.",
@@ -100,6 +93,10 @@ public class TemplatePrompt {
                     }
                 }
         ).collect(toList());
+
+        if (!hasHistoryPlaceholder() && history != null) {
+            messages.addAll(history);
+        }
 
         BoundPrompt boundPrompt = new BoundPrompt(promptInfo, messages, toolSchema);
         if (outputSchema != null) {
