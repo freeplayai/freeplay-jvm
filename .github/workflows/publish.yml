@@ -19,26 +19,32 @@ concurrency:
   group: "publish-maven"
   cancel-in-progress: true
 
+permissions: {}
+
 jobs:
   publish:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    environment: maven-central
     permissions:
       contents: write # Needed for creating releases
+      id-token: write # Needed for attestation signing
+      attestations: write # Needed for build provenance
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           fetch-depth: 0
 
       - name: Set up JDK 11
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4.8.0
         with:
           java-version: '11'
           distribution: 'temurin'
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@748248ddd2a24f49513d8f472f81c3a07d4d50e1 # v4.4.4
         with:
           cache-read-only: false
           cache-cleanup: on-success
@@ -86,6 +92,12 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 
+      - name: Attest build artifacts
+        if: github.event.inputs.dry_run == 'false'
+        uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
+        with:
+          subject-path: lib/build/libs/*
+
       - name: Publish to Sonatype (dry run)
         if: github.event.inputs.dry_run == 'true'
         run: |
@@ -125,7 +137,7 @@ jobs:
 
       - name: Create GitHub Release
         if: github.event.inputs.dry_run == 'false'
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@153bb8e04406b158c6c84fc1615b65b24149a1fe # v2.6.1
         with:
           tag_name: v${{ steps.version.outputs.new_version }}
           name: Release v${{ steps.version.outputs.new_version }}
