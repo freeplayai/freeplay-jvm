@@ -66,6 +66,67 @@ public class TemplatePromptTest extends HttpClientTestBase {
     }
 
     @Test
+    public void testBindWithHistoryAndPlaceholder() {
+        List<ChatMessage> messages = List.of(
+                new ChatMessage("system", "You are a support agent."),
+                new KindMessage("history"),
+                new ChatMessage("user", "{{query}}")
+        );
+
+        TemplatePrompt prompt = new TemplatePrompt(null, messages);
+        BoundPrompt boundPrompt = prompt.bind(new TemplatePrompt.BindRequest(Map.of("query", "Hello"))
+                .history(List.of(
+                        new ChatMessage("user", "Previous question"),
+                        new ChatMessage("assistant", "Previous answer")
+                )));
+
+        assertEquals(List.of(
+                new ChatMessage("system", "You are a support agent."),
+                new ChatMessage("user", "Previous question"),
+                new ChatMessage("assistant", "Previous answer"),
+                new ChatMessage("user", "Hello")
+        ), boundPrompt.getMessages());
+    }
+
+    @Test
+    public void testBindWithHistoryWithoutPlaceholder() {
+        List<ChatMessage> messages = List.of(
+                new ChatMessage("system", "You are a support agent."),
+                new ChatMessage("user", "{{query}}")
+        );
+
+        TemplatePrompt prompt = new TemplatePrompt(null, messages);
+        BoundPrompt boundPrompt = prompt.bind(new TemplatePrompt.BindRequest(Map.of("query", "Hello"))
+                .history(List.of(
+                        new ChatMessage("user", "Previous question"),
+                        new ChatMessage("assistant", "Previous answer")
+                )));
+
+        assertEquals(List.of(
+                new ChatMessage("system", "You are a support agent."),
+                new ChatMessage("user", "Hello"),
+                new ChatMessage("user", "Previous question"),
+                new ChatMessage("assistant", "Previous answer")
+        ), boundPrompt.getMessages());
+    }
+
+    @Test
+    public void testBindWithNoHistoryNoPlaceholder() {
+        List<ChatMessage> messages = List.of(
+                new ChatMessage("system", "You are a support agent."),
+                new ChatMessage("user", "{{query}}")
+        );
+
+        TemplatePrompt prompt = new TemplatePrompt(null, messages);
+        BoundPrompt boundPrompt = prompt.bind(new TemplatePrompt.BindRequest(Map.of("query", "Hello")));
+
+        assertEquals(List.of(
+                new ChatMessage("system", "You are a support agent."),
+                new ChatMessage("user", "Hello")
+        ), boundPrompt.getMessages());
+    }
+
+    @Test
     public void testOutputSchemaWithOpenAI() {
         Map<String, Object> outputSchema = new HashMap<>();
         outputSchema.put("type", "object");
