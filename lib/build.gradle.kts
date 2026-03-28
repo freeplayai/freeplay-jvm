@@ -28,8 +28,8 @@ dependencies {
     testImplementation("org.mockito:mockito-core:5.4.0")
     testImplementation("software.amazon.awssdk:bedrockruntime:2.35.3")
 
-    implementation("com.fasterxml.jackson.jr:jackson-jr-all:2.16.1")
-    implementation("com.fasterxml.jackson.core:jackson-databind:2.16.1")
+    implementation("com.fasterxml.jackson.jr:jackson-jr-all:2.18.6")
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.18.6")
     implementation("com.github.spullara.mustache.java:compiler:0.9.11")
     "geminiImplementation"("com.google.cloud:google-cloud-vertexai:1.5.0")
 

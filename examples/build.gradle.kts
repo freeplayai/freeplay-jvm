@@ -22,7 +22,7 @@ dependencies {
         }
     }
 
-    implementation("com.fasterxml.jackson.core:jackson-databind:2.16.1")
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.18.6")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.0-RC2")
     implementation("software.amazon.awssdk:sagemakerruntime:2.25.50")
     implementation("software.amazon.awssdk:bedrockruntime:2.35.3")
