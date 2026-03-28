@@ -29,6 +29,13 @@ dependencies {
     // If a customer is using the Vertex SDK themselves, they include this line.
     // If they have this line, they don't need the runtimeOnly declaration above.
     implementation("com.google.cloud:google-cloud-vertexai:1.5.0")
+
+    constraints {
+        implementation("io.netty:netty-codec-http:4.1.132.Final")
+        implementation("io.netty:netty-codec-http2:4.1.132.Final")
+        implementation("io.grpc:grpc-netty-shaded:1.75.0")
+        implementation("com.google.protobuf:protobuf-java:3.25.5")
+    }
 }
 
 java {

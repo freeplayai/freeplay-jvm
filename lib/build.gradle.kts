@@ -32,6 +32,13 @@ dependencies {
     implementation("com.fasterxml.jackson.core:jackson-databind:2.16.1")
     implementation("com.github.spullara.mustache.java:compiler:0.9.11")
     "geminiImplementation"("com.google.cloud:google-cloud-vertexai:1.5.0")
+
+    constraints {
+        implementation("io.netty:netty-codec-http:4.1.132.Final")
+        implementation("io.netty:netty-codec-http2:4.1.132.Final")
+        implementation("io.grpc:grpc-netty-shaded:1.75.0")
+        implementation("com.google.protobuf:protobuf-java:3.25.5")
+    }
 }
 
 tasks.register<Jar>("sourcesJar") {
