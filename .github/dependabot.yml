@@ -1,0 +1,39 @@
+version: 2
+updates:
+  # Gradle dependencies (lib + examples modules resolved from root)
+  - package-ecosystem: "gradle"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 3
+    labels:
+      - "dependencies"
+      - "java"
+      - "type::chore"
+    groups:
+      gradle-minor-patch:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+      gradle-major:
+        patterns:
+          - "*"
+        update-types:
+          - "major"
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 3
+    labels:
+      - "dependencies"
+      - "github-actions"
+      - "type::chore"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
