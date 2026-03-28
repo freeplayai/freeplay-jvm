@@ -37,7 +37,7 @@ dependencies {
         implementation("io.netty:netty-codec-http:4.1.132.Final")
         implementation("io.netty:netty-codec-http2:4.1.132.Final")
         implementation("io.grpc:grpc-netty-shaded:1.75.0")
-        implementation("com.google.protobuf:protobuf-java:3.25.5")
+        implementation("com.google.protobuf:protobuf-java:4.34.1")
     }
 }
 
