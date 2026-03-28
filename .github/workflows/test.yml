@@ -13,6 +13,7 @@ permissions: {}
 jobs:
   test:
     runs-on: ubuntu-latest
+    environment: test
     permissions:
       contents: read
 
