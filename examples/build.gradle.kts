@@ -1,6 +1,6 @@
 plugins {
     application
-    kotlin("jvm") version "1.9.22"
+    kotlin("jvm") version "2.3.0"
 }
 
 application {
@@ -40,6 +40,6 @@ dependencies {
 
 java {
     toolchain {
-        languageVersion.set(JavaLanguageVersion.of(11))
+        languageVersion.set(JavaLanguageVersion.of(17))
     }
 }
