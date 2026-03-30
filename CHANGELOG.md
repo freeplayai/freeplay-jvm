@@ -2,6 +2,23 @@
 
 Notable additions, fixes, or breaking changes to the Freeplay SDK.
 
+## [Unreleased]
+
+### Changed
+
+- **Dependency updates**: Updated multiple dependencies to their latest versions:
+  - `org.mockito:mockito-core` from 5.4.0 to 5.23.0
+  - `software.amazon.awssdk:bedrockruntime` from 2.35.3 to 2.42.23
+  - `com.fasterxml.jackson.jr:jackson-jr-all` from 2.18.6 to 2.21.2
+  - `com.fasterxml.jackson.core:jackson-databind` from 2.18.6 to 2.21.2
+  - `com.github.spullara.mustache.java:compiler` from 0.9.11 to 0.9.14
+  - `com.google.cloud:google-cloud-vertexai` from 1.5.0 to 1.49.0
+  - `io.netty:netty-codec-http` from 4.1.132.Final to 4.2.12.Final
+  - `io.netty:netty-codec-http2` from 4.1.132.Final to 4.2.12.Final (via constraints)
+  - `io.grpc:grpc-netty-shaded` from 1.75.0 to 1.80.0 (via constraints)
+  - `org.jetbrains.kotlinx:kotlinx-coroutines-core` from 1.8.0-RC2 to 1.10.2
+  - `software.amazon.awssdk:sagemakerruntime` from 2.25.50 to 2.42.23
+
 ## [0.5.2] - 2026-03-24
 
 ### Changed
