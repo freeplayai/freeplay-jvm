@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.mustachejava.Code;
 import com.github.mustachejava.DefaultMustacheFactory;
+import com.github.mustachejava.Iteration;
 import com.github.mustachejava.Mustache;
 import com.github.mustachejava.reflect.ReflectionObjectHandler;
 import com.github.mustachejava.util.Node;
@@ -13,6 +14,8 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -94,6 +97,42 @@ public class TemplateUtils {
             } catch (JsonProcessingException e) {
                 throw new FreeplayClientException("Error formatting template.", e);
             }
+        }
+
+        @Override
+        public Writer iterate(Iteration iteration, Writer writer, Object object, List<Object> scopes) {
+            // mustache.java treats numeric 0 as truthy by default, but Python & Node SDKs
+            // treat it as falsy. Skip iteration for zero to ensure consistent cross-SDK behavior.
+            if (isNumericZero(object)) {
+                return writer;
+            }
+            return super.iterate(iteration, writer, object, scopes);
+        }
+
+        @Override
+        public Writer falsey(Iteration iteration, Writer writer, Object object, List<Object> scopes) {
+            // Inverse sections ({{^var}}) should render when the value is numeric zero.
+            if (isNumericZero(object)) {
+                return iteration.next(writer, object, scopes);
+            }
+            return super.falsey(iteration, writer, object, scopes);
+        }
+
+        private static boolean isNumericZero(Object object) {
+            if (!(object instanceof Number)) {
+                return false;
+            }
+            if (object instanceof BigDecimal) {
+                return ((BigDecimal) object).compareTo(BigDecimal.ZERO) == 0;
+            }
+            if (object instanceof BigInteger) {
+                return ((BigInteger) object).compareTo(BigInteger.ZERO) == 0;
+            }
+            if (object instanceof Integer || object instanceof Long || object instanceof Short || object instanceof Byte) {
+                return ((Number) object).longValue() == 0L;
+            }
+            // Float and Double: doubleValue() is exact for these types
+            return ((Number) object).doubleValue() == 0.0;
         }
     }
 
