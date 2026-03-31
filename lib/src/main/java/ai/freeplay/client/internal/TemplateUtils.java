@@ -14,6 +14,8 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -117,7 +119,20 @@ public class TemplateUtils {
         }
 
         private static boolean isNumericZero(Object object) {
-            return object instanceof Number && ((Number) object).doubleValue() == 0.0;
+            if (!(object instanceof Number)) {
+                return false;
+            }
+            if (object instanceof BigDecimal) {
+                return ((BigDecimal) object).compareTo(BigDecimal.ZERO) == 0;
+            }
+            if (object instanceof BigInteger) {
+                return ((BigInteger) object).compareTo(BigInteger.ZERO) == 0;
+            }
+            if (object instanceof Integer || object instanceof Long || object instanceof Short || object instanceof Byte) {
+                return ((Number) object).longValue() == 0L;
+            }
+            // Float and Double: doubleValue() is exact for these types
+            return ((Number) object).doubleValue() == 0.0;
         }
     }
 
