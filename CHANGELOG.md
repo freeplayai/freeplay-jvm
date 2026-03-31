@@ -4,6 +4,12 @@ Notable additions, fixes, or breaking changes to the Freeplay SDK.
 
 ## [Unreleased]
 
+## [0.6.0]
+
+### Breaking Changes
+
+- **Mustache zero-value consistency**: Numeric `0` is now treated as falsy in template rendering, matching the behavior of the Python and Node SDKs. Previously, `{{#count}}` with `count=0` would render the section body; it now skips it, and `{{^count}}` renders as expected. Note that this is a **breaking change**. Templates using these constructs will need to invert their behavior.
+
 ### Changed
 
 - **Dependency updates**: Updated multiple dependencies to their latest versions:
