@@ -400,43 +400,51 @@ public class TemplateUtilsTest {
     }
 
     // ========== Zero Value Handling Tests ==========
-    // WARNING: mustache.java treats 0 as TRUTHY (different from Python & Node SDKs which treats it as falsy)
-    // This is a known issue and will be fixed in a future release.
+    // mustache.java by default treats 0 as TRUTHY. We override isFalsey() to treat numeric zero
+    // as falsy, matching the behavior of Python & Node SDKs.
+
+    @Test
+    public void testZeroIsFalsyConsistentWithPythonAndNodeSDKs() {
+        // Demonstrates the cross-SDK inconsistency that was fixed:
+        // Python & Node: count=0 → section skipped, inverse renders
+        // mustache.java default: count=0 → section renders "Count is: 0" (wrong)
+        String template = "{{#count}}Count is: {{.}}{{/count}}\n{{^count}}No count{{/count}}";
+        String result = TemplateUtils.format(template, Map.of("count", 0));
+        assertFalse("Section should not render for zero", result.contains("Count is:"));
+        assertTrue("Inverse section should render for zero", result.contains("No count"));
+    }
 
     @Test
     public void testZeroSimpleVariableRenders() {
-        // Zero as simple variable should render
+        // Zero as a simple interpolation (no section) should still render as "0"
         String template = "Count: {{count}}";
         String result = TemplateUtils.format(template, Map.of("count", 0));
         assertEquals("Count: 0", result);
     }
 
     @Test
-    public void testZeroSectionRenders() {
-        // Zero in section DOES render in mustache.java (differs from other SDKs)
-        // In mustache.java, 0 is truthy
+    public void testZeroSectionDoesNotRender() {
+        // Zero in a section should NOT render (falsy, consistent with Python & Node)
         String template = "{{#count}}Count is: {{.}}{{/count}}";
-        String result = TemplateUtils.format(template, Map.of("count", 0));
-        assertEquals("Count is: 0", result);
-    }
-
-    @Test
-    public void testZeroInverseNoRender() {
-        // Zero with inverse section does NOT render inverse in mustache.java (differs from other SDKs)
-        // In mustache.java, 0 is truthy
-        String template = "{{^count}}No count{{/count}}";
         String result = TemplateUtils.format(template, Map.of("count", 0));
         assertEquals("", result);
     }
 
     @Test
+    public void testZeroInverseRenders() {
+        // Zero with inverse section SHOULD render (falsy, consistent with Python & Node)
+        String template = "{{^count}}No count{{/count}}";
+        String result = TemplateUtils.format(template, Map.of("count", 0));
+        assertEquals("No count", result);
+    }
+
+    @Test
     public void testZeroBothSections() {
-        // Zero with both section and inverse - section renders, not inverse (differs from other SDKs)
-        // In mustache.java, 0 is truthy
+        // Zero with both section and inverse: inverse renders, section does not
         String template = "{{#count}}\nCount is: {{.}}\n{{/count}}\n{{^count}}\nCount is zero or missing\n{{/count}}";
         String result = TemplateUtils.format(template, Map.of("count", 0));
-        assertTrue(result.contains("Count is: 0"));
-        assertFalse(result.contains("Count is zero or missing"));
+        assertFalse(result.contains("Count is: 0"));
+        assertTrue(result.contains("Count is zero or missing"));
     }
 
     @Test

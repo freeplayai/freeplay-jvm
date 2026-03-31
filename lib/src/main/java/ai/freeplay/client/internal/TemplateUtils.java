@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.mustachejava.Code;
 import com.github.mustachejava.DefaultMustacheFactory;
+import com.github.mustachejava.Iteration;
 import com.github.mustachejava.Mustache;
 import com.github.mustachejava.reflect.ReflectionObjectHandler;
 import com.github.mustachejava.util.Node;
@@ -94,6 +95,29 @@ public class TemplateUtils {
             } catch (JsonProcessingException e) {
                 throw new FreeplayClientException("Error formatting template.", e);
             }
+        }
+
+        @Override
+        public Writer iterate(Iteration iteration, Writer writer, Object object, List<Object> scopes) {
+            // mustache.java treats numeric 0 as truthy by default, but Python & Node SDKs
+            // treat it as falsy. Skip iteration for zero to ensure consistent cross-SDK behavior.
+            if (isNumericZero(object)) {
+                return writer;
+            }
+            return super.iterate(iteration, writer, object, scopes);
+        }
+
+        @Override
+        public Writer falsey(Iteration iteration, Writer writer, Object object, List<Object> scopes) {
+            // Inverse sections ({{^var}}) should render when the value is numeric zero.
+            if (isNumericZero(object)) {
+                return iteration.next(writer, object, scopes);
+            }
+            return super.falsey(iteration, writer, object, scopes);
+        }
+
+        private static boolean isNumericZero(Object object) {
+            return object instanceof Number && ((Number) object).doubleValue() == 0.0;
         }
     }
 
