@@ -1,5 +1,6 @@
 package ai.freeplay.client.resources.prompts;
 
+import ai.freeplay.client.adapters.GeminiParameterMapper;
 import ai.freeplay.client.adapters.LLMAdapters;
 import ai.freeplay.client.adapters.RoleSupport;
 import ai.freeplay.client.internal.CallSupport;
@@ -47,18 +48,29 @@ public class BoundPrompt {
         String finalFlavor = CallSupport.getActiveFlavorName(flavorName, promptInfo.getFlavorName());
         LLMAdapters.LLMAdapter<?> llmAdapter = LLMAdapters.adapterForFlavor(finalFlavor);
 
-        PromptInfo effectivePromptInfo = flavorName != null
-            ? new PromptInfo(
+        Map<String, Object> effectiveModelParameters = promptInfo.getModelParameters();
+        if (isGeminiFlavor(finalFlavor)) {
+            effectiveModelParameters = GeminiParameterMapper.mapForGemini(effectiveModelParameters);
+        }
+
+        boolean paramsChanged = effectiveModelParameters != promptInfo.getModelParameters();
+        boolean flavorChanged = !finalFlavor.equals(promptInfo.getFlavorName());
+
+        PromptInfo effectivePromptInfo;
+        if (paramsChanged || flavorChanged) {
+            effectivePromptInfo = new PromptInfo(
                 promptInfo.getPromptTemplateId(),
                 promptInfo.getPromptTemplateVersionId(),
                 promptInfo.getTemplateName(),
                 promptInfo.getEnvironment(),
-                promptInfo.getModelParameters(),
+                effectiveModelParameters,
                 llmAdapter.getProvider(),
                 promptInfo.getModel(),
                 finalFlavor
-            )
-            : promptInfo;
+            ).providerInfo(promptInfo.getProviderInfo());
+        } else {
+            effectivePromptInfo = promptInfo;
+        }
 
         List<ChatMessage> prepared = RoleSupport.prepareMessages(messages, llmAdapter.getRoleSupport(), finalFlavor);
 
@@ -74,5 +86,9 @@ public class BoundPrompt {
             : null;
 
         return new FormattedPrompt<>(effectivePromptInfo, prepared, llmSyntax, formattedToolSchema, formattedOutputSchema);
+    }
+
+    private static boolean isGeminiFlavor(String flavor) {
+        return "gemini_chat".equals(flavor) || "gemini_api_chat".equals(flavor);
     }
 }
