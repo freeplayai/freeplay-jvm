@@ -1,6 +1,6 @@
 plugins {
     application
-    kotlin("jvm") version "2.1.0"
+    kotlin("jvm") version "2.3.20"
 }
 
 application {
@@ -24,11 +24,11 @@ dependencies {
 
     implementation("com.fasterxml.jackson.core:jackson-databind:2.21.2")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
-    implementation("software.amazon.awssdk:sagemakerruntime:2.42.23")
-    implementation("software.amazon.awssdk:bedrockruntime:2.42.23")
+    implementation("software.amazon.awssdk:sagemakerruntime:2.42.27")
+    implementation("software.amazon.awssdk:bedrockruntime:2.42.27")
     // If a customer is using the Vertex SDK themselves, they include this line.
     // If they have this line, they don't need the runtimeOnly declaration above.
-    implementation("com.google.cloud:google-cloud-vertexai:1.49.0")
+    implementation("com.google.cloud:google-cloud-vertexai:1.50.0")
 
     constraints {
         implementation("io.netty:netty-codec-http:4.2.12.Final")
