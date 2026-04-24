@@ -26,12 +26,12 @@ java {
 dependencies {
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.mockito:mockito-core:5.23.0")
-    testImplementation("software.amazon.awssdk:bedrockruntime:2.42.27")
+    testImplementation("software.amazon.awssdk:bedrockruntime:2.42.39")
 
     implementation("com.fasterxml.jackson.jr:jackson-jr-all:2.21.2")
     implementation("com.fasterxml.jackson.core:jackson-databind:2.21.2")
     implementation("com.github.spullara.mustache.java:compiler:0.9.14")
-    "geminiImplementation"("com.google.cloud:google-cloud-vertexai:1.50.0")
+    "geminiImplementation"("com.google.cloud:google-cloud-vertexai:1.52.0")
 
     constraints {
         implementation("io.netty:netty-codec-http:4.2.12.Final")
