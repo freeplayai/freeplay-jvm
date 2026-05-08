@@ -26,17 +26,17 @@ java {
 dependencies {
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.mockito:mockito-core:5.23.0")
-    testImplementation("software.amazon.awssdk:bedrockruntime:2.42.27")
+    testImplementation("software.amazon.awssdk:bedrockruntime:2.44.4")
 
-    implementation("com.fasterxml.jackson.jr:jackson-jr-all:2.21.2")
-    implementation("com.fasterxml.jackson.core:jackson-databind:2.21.2")
+    implementation("com.fasterxml.jackson.jr:jackson-jr-all:2.21.3")
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.21.3")
     implementation("com.github.spullara.mustache.java:compiler:0.9.14")
-    "geminiImplementation"("com.google.cloud:google-cloud-vertexai:1.50.0")
+    "geminiImplementation"("com.google.cloud:google-cloud-vertexai:1.52.0")
 
     constraints {
-        implementation("io.netty:netty-codec-http:4.2.12.Final")
-        implementation("io.netty:netty-codec-http2:4.2.12.Final")
-        implementation("io.grpc:grpc-netty-shaded:1.80.0")
+        implementation("io.netty:netty-codec-http:4.2.13.Final")
+        implementation("io.netty:netty-codec-http2:4.2.13.Final")
+        implementation("io.grpc:grpc-netty-shaded:1.81.0")
         implementation("com.google.protobuf:protobuf-java:4.34.1")
     }
 }
